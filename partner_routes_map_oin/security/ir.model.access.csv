@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_wizard_partner_route_map,access_wizard_partner_route_map,model_wizard_partner_route_map,base.group_user,1,1,1,1
+access_partner_route_map_lines,access_partner_route_map_lines,model_partner_route_map_lines,base.group_user,1,1,1,1
