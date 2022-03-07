@@ -73,29 +73,6 @@ class WizardPartnerRouteMap(models.TransientModel):
             partner_res += [i[0] + ',' + i[1] for i in coordinates]
             url += '&waypoints=%s' % ('|'.join(partner_res))
 
-        # Creando citas
-        for line in self.partner_route_ids:
-            vals = {
-                'partner_id': line.partner_id.id,
-                'user_id': line.user_id.id,
-                'visit_reason_id': line.visit_reason_id.id,
-                'date': line.visit_date,
-            }
-            if not line.visit_period:
-                self.env['customer.visits'].create(vals)
-            else:
-                days = {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6}
-                if line.start_period and line.end_period and line.days_period:
-                    for date in date_utils.date_range(
-                            start=datetime.combine(line.start_period, datetime.min.time()),
-                            end=datetime.combine(line.end_period, datetime.min.time()),
-                            step=relativedelta(days=line.days_period),
-                    ):
-                        if date.weekday() < 5 and not self.env['customer.visits'].search(
-                                [('date', '=', dateutil.parser.parse(line.visit_date.strftime('%Y-%m-%d')).date())]):
-                            vals['date'] = dateutil.parser.parse(date.strftime('%Y-%m-%d')).date()
-                            self.env['customer.visits'].create(vals)
-
         return {
             'type': 'ir.actions.act_url',
             'url': url,
@@ -123,8 +100,3 @@ class PartnerRouteLines(models.TransientModel):
     end_period = fields.Date(string="Fin de periodo de visita", required=False, store=True)
     days_period = fields.Integer(string="Días", required=False, store=True)
 
-    @api.onchange("visit_date")
-    def onchange_visit_date(self):
-        if self.env['customer.visits'].search(
-                [('date', '=', dateutil.parser.parse(self.visit_date.strftime('%Y-%m-%d')).date())]):
-            raise UserError(_("Ya existe una visita asignada en la fecha seleccionada"))

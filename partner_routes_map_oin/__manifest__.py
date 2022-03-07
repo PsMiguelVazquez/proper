@@ -30,7 +30,6 @@ information is present on the partner.
     'depends': [
         'base',
         'website_google_map',
-        'customer_visits'
     ],
     'data': [
         'security/ir.model.access.csv',
