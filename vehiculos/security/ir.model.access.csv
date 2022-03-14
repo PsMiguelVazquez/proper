@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_vehiculos_vehiculos,vehiculos.vehiculos,model_automovil,stock.group_stock_manager,1,1,1,0
+access_vehiculos_marca_automovil,marca.automovil,model_marca_automovil,stock.group_stock_manager,1,1,1,0
+access_vehiculos_modelo_automovil,modelo.automovil,model_modelo_automovil,stock.group_stock_manager,1,1,1,0

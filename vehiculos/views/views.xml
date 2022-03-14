@@ -1,0 +1,174 @@
+<odoo>
+    <data noupdate="1">
+                          <record id="sequence_self_ruta" model="ir.sequence">
+           <field name="name">seq_ruta</field>
+           <field name="code">ruta</field>
+            <field name="prefix">Expedición-</field>
+           <field name="active">TRUE</field>
+           <field name="padding">6</field>
+           <field name="number_next">1</field>
+           <field name="number_increment">1</field>
+        </record>
+    </data>
+
+  <data>
+    <!-- explicit list view definition -->
+    <record model="ir.ui.view" id="automovil_list">
+      <field name="name">automovil.list</field>
+      <field name="model">automovil</field>
+      <field name="arch" type="xml">
+        <tree string="Automovil">
+            <field name="name" modifiers="{}"/>
+            <field name="modelo" modifiers="{}"/>
+            <field name="ano_modelo" modifiers="{}"/>
+            <field name="fecha_adquisicion" modifiers="{}"/>
+        </tree>
+      </field>
+    </record>
+  
+    <record model="ir.ui.view" id="automovil_form">
+      <field name="name">automovil.form</field>
+      <field name="model">automovil</field>
+      <field name="arch" type="xml">
+        <form>
+              <sheet>
+        <header></header>
+        <div class="oe_button_box" name="button_box">
+            <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                <field name="active" widget="boolean_button" options="{&quot;terminology&quot;: &quot;archive&quot;}"/>
+            </button>
+            <!--<button class="oe_stat_button" icon="fa-file-o" type="action" name="1534">
+                <field name="x_rel_vehiculo__registro_odometro_count" string="Odometros" widget="statinfo"/>
+            </button>-->
+        </div>
+        <field name="imagen" widget="image" class="oe_avatar"/>
+        <div class="oe_title">
+            <label for="modelo" class="oe_edit_only"/>
+            <h1>
+                <field name="modelo" placeholder="e.g. Model S"/>
+            </h1>
+            <label for="license_plate" class="oe_edit_only"/>
+            <h2>
+                <field name="license_plate" class="oe_inline" placeholder="e.g. PAE 326"/>
+            </h2>
+        </div>
+        <group>
+            <group>
+                <field name="driver_id"/>
+                <field name="ubicacion"/>
+                <field name="vin_sn"/>
+                <field name="ano_modelo"/>
+                <field name="compania" groups="base.group_multi_company"/>
+            </group>
+            <group>
+                <label for="odometro"/>
+                <div class="o_row">
+                    <field name="odometro"/>
+                    <field name="unidad_odometro"/>
+                </div>
+                <field name="fecha_adquisicion"/>
+                <field name="valor_auto"/>
+            </group>
+        </group>
+        <group>
+            <group string="Additional Properties">
+                <field name="asientos"/>
+                <field name="puertas"/>
+                <field name="color"/>
+            </group>
+            <group string="Engine Options">
+                <field name="transmision"/>
+                <field name="fuel_type"/>
+                <field name="caballos"/>
+            </group>
+        </group>
+    </sheet>
+    <div class="oe_chatter">
+        <field name="message_follower_ids" widget="mail_followers"/>
+        <field name="message_ids" widget="mail_thread"/>
+    </div>
+        </form>
+      </field>
+    </record>
+    <!-- actions opening views on models -->
+
+    <record model="ir.actions.act_window" id="automovil_action_window">
+      <field name="name">automovil</field>
+      <field name="res_model">automovil</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- explicit list view definition -->
+    <record model="ir.ui.view" id="creacion_ruta_list">
+      <field name="name">creacion.ruta.list</field>
+      <field name="model">creacion.ruta</field>
+      <field name="arch" type="xml">
+          <tree string="creacion.ruta" delete="false">
+              <field name="id" />
+              <field name="create_date" />
+              <field name="name" modifiers="{}"/>
+              <field name="tipo"/>
+              <field name="chofer"/>
+              <field name="vehiculo"/>
+              <field name="zona"/>
+              <field name="create_uid"/>
+              <field name="EstadoPais"/>
+          </tree>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="ruta_form">
+      <field name="name">creacion.ruta.form</field>
+      <field name="model">creacion.ruta</field>
+      <field name="arch" type="xml">
+      <form>
+          <header>
+              <button name="confirmar" type="object" string="Confirmar"  attrs="{'invisible': [['estado','=','valido']]}"></button>
+              <field name="estado" widget="statusbar"></field>
+          </header>
+          <sheet string="creacion.ruta">
+              <h2>
+                  <field name="name" attrs="{'invisible': [['id','=',False]]}"/>
+              </h2>
+              <group>
+                  <group>
+                      <field name="chofer"  required="1"/>
+                      <field name="vehiculo" required="1"/>
+                      <field name="tipo"/>
+                  </group>
+                  <group>
+                      <field name="zona"  required="1"/>
+                      <field name="odometro"  string="Odometro" required="1"/>
+                      <field name="nivel_tanque"  string="Nivel del tanque" required="1"/>
+                  </group>
+              </group>
+              <field name="ordenes">
+                  <tree string="Picking list" editable="bottom">
+                      <field name="id" invisible="1"/>
+                      <field name="ruta_id"  invisible="1"/>
+                      <field name="name" invisible="1"/>
+                      <field name="origin" readonly="1" string="Orden"/>
+                      <field name="carrier_tracking_ref" />
+                      <!--<button name="comentario" type="object" string="Comentario y/o evidencia" attrs="{'invisible': ['|',['state','=','done'],['ruta_id','=',False]]}" ></button>-->
+                      <button name="guia" type="object" string="Guia" attrs="{'invisible': ['|','|',['state','=','done'],['carrier_tracking_ref','!=',False],['ruta_id','=',False]]}"/>
+                      <button name="button_validate" attrs="{'invisible': ['|', ('state', 'in', ('waiting','confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" class="oe_highlight" groups="stock.group_stock_user"/>
+                      <button name="button_validate" attrs="{'invisible': ['|', ('state', 'not in', ('waiting', 'confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" groups="stock.group_stock_user" class="o_btn_validate"/>
+                      <field name="state" invisible="1"/>
+                      <field name="show_validate" invisible="1"/>
+                  </tree>
+              </field>
+          </sheet>
+      </form>
+      </field>
+    </record>
+    <record model="ir.actions.act_window" id="creacion_ruta_action_window">
+      <field name="name">ruta</field>
+      <field name="res_model">creacion.ruta</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem name="Distribucion" id="distribucion_menu" parent="stock.menu_stock_root" sequence="5"/>
+    <menuitem name="Vehiculos" id="vehiculos_menu" parent="distribucion_menu" action="automovil_action_window" />
+    <menuitem name="Ruta" id="ruta_menu" parent="vehiculos.distribucion_menu" action="creacion_ruta_action_window" />
+
+  </data>
+</odoo>
