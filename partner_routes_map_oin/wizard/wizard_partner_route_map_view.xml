@@ -6,7 +6,7 @@
         <field name="res_model">wizard.partner.route.map</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
-        <field name="binding_model_id" ref="stock.model_stock_picking" />
+        <field name="binding_model_id" ref="vehiculos.model_creacion_ruta" />
     </record>
 
     <!-- wizard view -->

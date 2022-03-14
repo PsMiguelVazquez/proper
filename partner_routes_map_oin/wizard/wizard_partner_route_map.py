@@ -27,8 +27,8 @@ class WizardPartnerRouteMap(models.TransientModel):
         ctx = dict(self.env.context)
         partner_route_ids = []
         sequence = 1
-        pickings = self.env['stock.picking'].browse(ctx.get('active_ids', []))
-        for partner in pickings.mapped('partner_id'):
+        pickings = self.env['creacion.ruta'].browse(ctx.get('active_ids', []))
+        for partner in pickings.mapped('ordenes.partner_id'):
             partner_route_ids.append(
                 (0, 0, {'partner_id': partner.id, 'sequence': sequence}))
             sequence += 1

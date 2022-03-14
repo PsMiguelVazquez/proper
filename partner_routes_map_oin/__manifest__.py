@@ -30,6 +30,7 @@ information is present on the partner.
     'depends': [
         'base',
         'website_google_map',
+        'vehiculos'
     ],
     'data': [
         'security/ir.model.access.csv',
