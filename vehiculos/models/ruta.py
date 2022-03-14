@@ -84,3 +84,5 @@ class StockPicking(Model):
     _inherit = 'stock.picking'
     ruta_id = fields.Many2one('creacion.ruta')
     guia = fields.Char()
+    estado = fields.Selection([('recepcion','Recepción'),('draft', 'Draft'),('almacen', 'Almacen'),('compras', 'Solicitud de Compra'),('waiting', 'Esperando otra operación'),('confirmed', 'Sin Stock'),('assigned', 'Por Validar'),('done', 'Validado'),('distribucion', 'Distribución'),('cancel', 'Cancelled'),('aDistribucion', 'A Distribución'),('Xenrutar', 'Por en Rutar'),('ruta', 'En Ruta'),('entregado', 'Entregado')],store=True)
+
