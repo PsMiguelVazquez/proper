@@ -83,3 +83,4 @@ class CreacionRuta(Model):
 class StockPicking(Model):
     _inherit = 'stock.picking'
     ruta_id = fields.Many2one('creacion.ruta')
+    guia = fields.Char()

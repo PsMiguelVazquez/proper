@@ -3,6 +3,8 @@ from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models, _
 from odoo.osv import expression
+
+
 class MarcaAutomovil(models.Model):
     _name='marca.automovil'
     _description='Marca del Automovil'
@@ -16,7 +18,8 @@ class ModelAutomovil(models.Model):
     name = fields.Char('Nombre del modelo', required=True)
     marca_id = fields.Many2one('marca.automovil', string='Marca', required=True)
     imagen = fields.Binary(related='marca_id.imagen', string="Logo", readonly=False)
-    
+
+
 class Automovil(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _name = 'automovil'
@@ -42,6 +45,8 @@ class Automovil(models.Model):
     imagen = fields.Binary(related='modelo.imagen', string="Logo", readonly=False)
     valor_auto = fields.Float(string="Valor de catalogo (IVA Incl.)")
     odometro_registro=fields.One2many('registro.odometro','rel_vehiculo')
+
+
 class Odometro(models.Model):
     _name='registro.odometro'
     _description='Registro de Odometro'
