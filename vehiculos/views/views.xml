@@ -142,7 +142,7 @@
                       <field name="nivel_tanque"  string="Nivel del tanque" required="1"/>
                   </group>
               </group>
-              <field name="ordenes">
+              <field name="ordenes" domain="[['picking_type_id.code','=','outgoing']]">
                   <tree string="Picking list" editable="bottom">
                       <field name="id" invisible="1"/>
                       <field name="ruta_id"  invisible="1"/>
