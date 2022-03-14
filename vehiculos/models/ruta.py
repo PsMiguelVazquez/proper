@@ -28,8 +28,7 @@ class CreacionRuta(Model):
     active = fields.Boolean('Active', default=True, track_visibility=True)
 
     def confirmar(self):
-        t=""
-        if(len(self.ordenes)>0):
+        if len(self.ordenes) > 0:
             self.ordenes.write({'ruta_id':self.id})
             self.ordenes.write({'estado':'ruta'})
             self.ordenes.write({'ajusta':True})
@@ -41,27 +40,12 @@ class CreacionRuta(Model):
                 raise UserError(_('Tiene que ingresas el Odometro'))
             for o in self.ordenes:
                 o.write({'ruta_id': self.id, 'chofer': self.chofer.id})
-            #     if(o.sale_id.id):
-            #         if (o.sale_id.x_studio_field_bxHgp.stage_id.id!=18 and o.sale_id.x_studio_field_bxHgp.stage_id.id!=4):
-            #             o.sale_id.x_studio_field_bxHgp.write({'stage_id':108})
-            #         if(o.sale_id.x_studio_requiere_instalacin_1==True and o.sale_id.x_studio_field_bxHgp.id==False):
-            #             series=o.sale_id.mapped('order_line.x_studio_field_9nQhR')
-            #             tickets=[]
-            #             for s in series:
-            #                 ti=self.env['helpdesk.ticket'].create({'x_studio_field_nO7Xg':o.sale_id.id,'x_studio_tipo_de_vale':'Instalación','partner_id':o.partner_id.parent_id.id,'x_studio_empresas_relacionadas':o.partner_id.id,'team_id':9,'diagnosticos':[(0,0,{'estadoTicket':'Abierto','comentario':'Instalacion de Equipo '+s.name})],'stage_id':89,'name':'Instalaccion '+'Serie: '+s.name,'x_studio_equipo_por_nmero_de_serie':[(6,0,[s.id])]})
-            #                 tickets.append(ti.id)
-            #             o.sale_id.write({'tickets':[(6,0,tickets)]})
-            #         if(o.sale_id.x_studio_field_bxHgp.id):
-            #             t=t+str(o.sale_id.x_studio_field_bxHgp.id)+','
-            #     if(o.sale_id.id==False):
-            #         t=t+str(o.origin)+','
-            # odometroAnterior=self.env['registro.odometro'].search([['rel_vehiculo','=',self.vehiculo.id]],order='id desc',limit=1)
-            # odometroAnt=odometroAnterior.odometro if(odometroAnterior.id) else 0
+            odometroAnterior=self.env['registro.odometro'].search([['rel_vehiculo','=',self.vehiculo.id]],order='id desc',limit=1)
+            odometroAnt=odometroAnterior.odometro if(odometroAnterior.id) else 0
             if(odometroAnt>=self.odometro and self.tipo.lower()=="local"):
                 raise UserError(_('Registro de odometro invalido debe ser mayor al anterior. Favor de revisar'))    
             if(self.odometro>odometroAnt): 
                 self.env['registro.odometro'].sudo().create({'rel_vehiculo':self.vehiculo.id,'odometro':self.odometro,'nivel_tanque':self.nivel_tanque,'chofer':self.chofer.id})
-            self.ticket=t
         else:
             raise UserError(_('No se ha selaccionado ninguna orden'))
 
