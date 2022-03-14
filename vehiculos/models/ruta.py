@@ -78,3 +78,8 @@ class CreacionRuta(Model):
         u=operacion
         res['domain'] = {'ordenes':["&","&","&",["picking_type_id.id","in",u.mapped('id')],["ruta_id","=",False],["state","=","assigned"],["state","!=","done"]]}
         return res
+
+
+class StockPicking(Model):
+    _inherit = 'stock.picking'
+    ruta_id = fields.Many2one('creacion.ruta')
