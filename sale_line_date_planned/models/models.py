@@ -86,7 +86,7 @@ class StockMove(models.Model):
                         new_picking = True
                         fecha = moves.picking_id.partner_id
                         if fecha != moves.sale_line_id.date_planned_line:
-                            picking = self.env['stock.picking'].search([['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')], ['partner_id', '=', moves.sale_line_id.date_planned_line]])
+                            picking = self.env['stock.picking'].search([['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]])
                             if picking:
                                 #moves.write({'date_expected': moves.sale_line_id.date_planned_line})
                                 moves.write({'picking_id': picking.id})
