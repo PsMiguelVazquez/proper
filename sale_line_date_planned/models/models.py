@@ -94,7 +94,7 @@ class StockMove(models.Model):
                             else:
                                 #moves.write({'date_expected': moves.sale_line_id.date_planned_line})
                                 rr = moves._get_new_picking_values()
-                                rr['partner_id'] = moves.sale_line_id.date_planned_line
+                                rr['partner_id'] = moves.sale_line_id.date_planned_line.id
                                 picking = Picking.create(rr)
                                 #picking.write({'scheduled_date':moves.sale_line_id.date_planned_line})
                                 moves.write({'picking_id': picking.id})
