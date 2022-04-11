@@ -45,7 +45,7 @@ class CreacionRuta(Model):
             if(odometroAnt>=self.odometro and self.tipo.lower()=="local"):
                 raise UserError(_('Registro de odometro invalido debe ser mayor al anterior. Favor de revisar'))    
             if(self.odometro>odometroAnt):
-                self.env['fleet.vehicle.assignation.log'].create({'driver_id': self.chofer.id, 'date_start': fields.Date.today(), 'date_end': fields.Date.today()})
+                self.env['fleet.vehicle.assignation.log'].create({'vehicle_id': self.vehiculo.id, 'driver_id': self.chofer.id, 'date_start': fields.Date.today(), 'date_end': fields.Date.today()})
                 self.env['fleet.vehicle.odometer'].sudo().create({'vehicle_id': self.vehiculo.id, 'value': self.odometro, 'nivel_tanque': self.nivel_tanque,'driver_id': self.chofer.id})
         else:
             raise UserError(_('No se ha selaccionado ninguna orden'))
