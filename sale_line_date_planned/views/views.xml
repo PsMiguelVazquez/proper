@@ -9,7 +9,7 @@
             <field name='date_planned_line'/>
           </xpath>
           <xpath expr="//field[@name='order_line']" position="attributes">
-              <attribute name="context">{'default_date_time_planned_line':partner_shipping_id}</attribute>
+              <attribute name="context">{'default_date_planned_line':partner_shipping_id}</attribute>
           </xpath>
       </field>
       </record>
