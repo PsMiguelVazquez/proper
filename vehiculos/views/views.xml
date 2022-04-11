@@ -134,7 +134,7 @@
                   <group>
                       <field name="chofer"  required="1"/>
                       <field name="vehiculo" required="1"/>
-                      <field name="tipo"/>
+                      <field name="tipo" required="1"/>
                   </group>
                   <group>
                       <field name="zona"  required="1"/>
