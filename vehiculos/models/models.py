@@ -55,3 +55,8 @@ class Odometro(models.Model):
     nivel_tanque=fields.Selection([["reserva","Reserva"],[".25","1/4"],[".5","1/2"],[".75","3/4"],["1","Lleno"]])
     rel_vehiculo=fields.Many2one('automovil')
 
+
+class Fleet(models.Model):
+    _inherit = 'fleet.vehicle'
+    nivel_tanque=fields.Selection([["reserva","Reserva"],[".25","1/4"],[".5","1/2"],[".75","3/4"],["1","Lleno"]])
+

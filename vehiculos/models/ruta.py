@@ -10,8 +10,8 @@ class CreacionRuta(Model):
     _name='creacion.ruta'
     _description = 'Ruta'
     name=fields.Char()
-    chofer=fields.Many2one('hr.employee')
-    vehiculo=fields.Many2one('automovil')
+    chofer = fields.Many2one('res.users')
+    vehiculo=fields.Many2one('fleet.vehicle')
     ordenes=fields.Many2many('stock.picking')
     zona=fields.Selection([["SUR","SUR"],["NORTE","NORTE"],["PONIENTE","PONIENTE"],["ORIENTE","ORIENTE"],["CENTRO","CENTRO"],["DISTRIBUIDOR","DISTRIBUIDOR"],["MONTERREY","MONTERREY"],["CUERNAVACA","CUERNAVACA"],["GUADALAJARA","GUADALAJARA"],["QUERETARO","QUERETARO"],["CANCUN","CANCUN"],["VERACRUZ","VERACRUZ"],["PUEBLA","PUEBLA"],["TOLUCA","TOLUCA"],["LEON","LEON"],["COMODIN","COMODIN"],["VILLAHERMOSA","VILLAHERMOSA"],["MERIDA","MERIDA"],["VERACRUZ","VERACRUZ"],["ALTAMIRA","ALTAMIRA"]])
     estado=fields.Selection([["borrador","Borrador"],["valido","Confirmado"]])
@@ -23,7 +23,7 @@ class CreacionRuta(Model):
     ticket=fields.Char()
     #almacen=fields.Many2one('stock.warehouse')
     #picking_type=fields.Many2many('stock.picking.type')
-    usuarios=fields.Many2many('res.users')
+    usuarios = fields.Many2many('res.users')
     arreglo=fields.Char()
     active = fields.Boolean('Active', default=True, track_visibility=True)
 
@@ -40,12 +40,12 @@ class CreacionRuta(Model):
                 raise UserError(_('Tiene que ingresas el Odometro'))
             for o in self.ordenes:
                 o.write({'ruta_id': self.id, 'chofer': self.chofer.id})
-            odometroAnterior=self.env['registro.odometro'].search([['rel_vehiculo','=',self.vehiculo.id]],order='id desc',limit=1)
-            odometroAnt=odometroAnterior.odometro if(odometroAnterior.id) else 0
+            odometroAnterior = self.env['fleet.vehicle.odometer'].search([['vehicle_id','=',self.vehiculo.id]], order='id desc',limit=1)
+            odometroAnt = odometroAnterior.value if(odometroAnterior.id) else 0
             if(odometroAnt>=self.odometro and self.tipo.lower()=="local"):
                 raise UserError(_('Registro de odometro invalido debe ser mayor al anterior. Favor de revisar'))    
             if(self.odometro>odometroAnt): 
-                self.env['registro.odometro'].sudo().create({'rel_vehiculo':self.vehiculo.id,'odometro':self.odometro,'nivel_tanque':self.nivel_tanque,'chofer':self.chofer.id})
+                self.env['fleet.vehicle.odometer'].sudo().create({'vehicle_id': self.vehiculo.id, 'value': self.odometro, 'nivel_tanque': self.nivel_tanque,'driver_id': self.chofer.id})
         else:
             raise UserError(_('No se ha selaccionado ninguna orden'))
 
