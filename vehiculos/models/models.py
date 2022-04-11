@@ -60,3 +60,9 @@ class Fleet(models.Model):
     _inherit = 'fleet.vehicle'
     nivel_tanque=fields.Selection([["reserva","Reserva"],[".25","1/4"],[".5","1/2"],[".75","3/4"],["1","Lleno"]])
 
+
+class FleetOdometro(models.Model):
+    _inherit = 'fleet.vehicle.odometer'
+    nivel_tanque=fields.Selection([["reserva","Reserva"],[".25","1/4"],[".5","1/2"],[".75","3/4"],["1","Lleno"]])
+
+
