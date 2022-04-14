@@ -5,7 +5,7 @@ from odoo import models, fields, api
 
 class account_payment_proper(models.TransientModel):
     _inherit = 'account.payment.register'
-    partner_bank_ref = fields.Many2one('res.partner.bank')
+    partner_bank_ref = fields.Many2one('res.partner.bank', string='Cuenta Bancaria Cliente')
 
     @api.onchange('partner_id')
     def deoman_banks(self):
