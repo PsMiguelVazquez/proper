@@ -69,13 +69,13 @@ class FleetOdometro(models.Model):
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
-    def button_validate(self):
-        code = self.picking_type_id.code
-        r = super(StockPicking, self).button_validate()
-        if code == 'outgoing':
-            if 'context' in r:
-                r['context']['default_code'] = True
-        return r
+    # def button_validate(self):
+    #     code = self.picking_type_id.code
+    #     r = super(StockPicking, self).button_validate()
+    #     if code == 'outgoing':
+    #         if 'context' in r:
+    #             r['context']['default_code'] = True
+    #     return r
 
 
 class StockPicking(models.TransientModel):
