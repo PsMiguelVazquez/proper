@@ -66,3 +66,24 @@ class FleetOdometro(models.Model):
     nivel_tanque=fields.Selection([["reserva","Reserva"],[".25","1/4"],[".5","1/2"],[".75","3/4"],["1","Lleno"]])
 
 
+class StockPicking(models.Model):
+    _inherit = 'stock.picking'
+
+    def button_validate(self):
+        code = self.picking_type_id.code
+        r = super(StockPicking, self).button_validate()
+        if code == 'outgoing':
+            if 'res_id' in r:
+                self.env['stock.immediate.transfer'].browse(r['res_id']).write({'code': True})
+        return r
+
+
+class StockPicking(models.TransientModel):
+    _inherit = 'stock.immediate.transfer'
+    evidencia = fields.Binary('Evidencia')
+    code = fields.Boolean(default=False)
+
+    def process(self):
+        r = super(StockPicking, self).process()
+        return r
+
