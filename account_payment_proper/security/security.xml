@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="group_credito_c" model="res.groups">
+            <field name="name">Credito</field>
+        </record>
+        <record id="group_sale_manager" model="res.groups">
+            <field name="name">Ventas</field>
+        </record>
+        <record id="group_purchase_maneger" model="res.groups">
+            <field name="name">Compras</field>
+        </record>
+    </data>
+</odoo>
