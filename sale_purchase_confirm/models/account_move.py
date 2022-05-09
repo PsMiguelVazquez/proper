@@ -10,7 +10,7 @@ class AccountMove(models.Model):
 
 
 class Requirement(models.Model):
-    _inherit = 'x_client_requirement'
+    _name = 'x_client_requirement'
 
     @api.model
     def create(self, val):
@@ -19,7 +19,7 @@ class Requirement(models.Model):
 
 
 class Proposal(models.Model):
-    _inherit = 'x_proposal_purchase'
+    _name = 'x_proposal_purchase'
 
     @api.model
     def create(self, vals_list):
