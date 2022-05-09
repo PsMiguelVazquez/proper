@@ -7,7 +7,7 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
     def conf_credito(self):
-        self.write({'x_aprovacion_compras': True, 'x_bloque': False})
+        self.write({'x_aprovacion_compras': True, 'x_bloqueo': False})
         self.action_confirm()
 
 
