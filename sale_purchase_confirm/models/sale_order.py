@@ -11,9 +11,9 @@ class SaleOrder(models.Model):
     def set_amount_text(self):
         for record in self:
             if record.amount_total:
-                record.total_in_text = extensions.text_converter(record.amount_total)
+                record.total_in_text = extensions.text_converter.number_to_text_es(record.amount_total)
             else:
-                record.total_in_text = extensions.text_converter(0)
+                record.total_in_text = extensions.text_converter.number_to_text_es(0)
 
     def conf_credito(self):
         self.write({'x_aprovacion_compras': True, 'x_bloqueo': False})
