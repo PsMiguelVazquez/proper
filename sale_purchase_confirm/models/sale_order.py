@@ -3,6 +3,7 @@ from odoo import models, fields, api
 from datetime import datetime
 from .. import extensions
 
+
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
     total_in_text = fields.Char(compute='set_amount_text', string='Total en letra')
