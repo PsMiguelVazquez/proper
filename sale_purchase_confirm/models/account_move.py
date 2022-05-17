@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
+from .. import extensions
 
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
-    def action_post(self):
-        return super(AccountMove).action_post()
+    #def action_post(self):
+    #    return super(AccountMove).action_post()
 
 
 class Requirement(models.Model):

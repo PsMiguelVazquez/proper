@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from datetime import datetime
-
+from .. import extensions
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
+    total_in_text = fields.Char(compute='set_amount_text', string='Total en letra')
+
+    @api.depends('amount_total')
+    def set_amount_text(self):
+        for record in self:
+            if record.amount_total:
+                record.total_in_text = extensions.text_converter(record.amount_total)
+            else:
+                record.total_in_text = extensions.text_converter(0)
 
     def conf_credito(self):
         self.write({'x_aprovacion_compras': True, 'x_bloqueo': False})
