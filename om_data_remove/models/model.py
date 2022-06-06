@@ -177,25 +177,25 @@ class ResConfigSettings(models.TransientModel):
             'account.move',
         ]
         res = self.remove_data(to_removes, [])
-        domain = [
-            ('company_id', '=', self.env.company.id),
-            '|', ('code', '=ilike', 'account.%'),
-            '|', ('prefix', '=ilike', 'BNK1/%'),
-            '|', ('prefix', '=ilike', 'CSH1/%'),
-            '|', ('prefix', '=ilike', 'INV/%'),
-            '|', ('prefix', '=ilike', 'EXCH/%'),
-            '|', ('prefix', '=ilike', 'MISC/%'),
-            '|', ('prefix', '=ilike', '账单/%'),
-            ('prefix', '=ilike', '杂项/%')
-        ]
-        try:
-            seqs = self.env['ir.sequence'].search(domain)
-            if seqs.exists():
-                seqs.write({
-                    'number_next': 1,
-                })
-        except Exception as e:
-            _logger.error('reset sequence data error: %s,%s', domain, e)
+        # domain = [
+        #     ('company_id', '=', self.env.company.id),
+        #     '|', ('code', '=ilike', 'account.%'),
+        #     '|', ('prefix', '=ilike', 'BNK1/%'),
+        #     '|', ('prefix', '=ilike', 'CSH1/%'),
+        #     '|', ('prefix', '=ilike', 'INV/%'),
+        #     '|', ('prefix', '=ilike', 'EXCH/%'),
+        #     '|', ('prefix', '=ilike', 'MISC/%'),
+        #     '|', ('prefix', '=ilike', '账单/%'),
+        #     ('prefix', '=ilike', '杂项/%')
+        # ]
+        # try:
+        #     seqs = self.env['ir.sequence'].search(domain)
+        #     if seqs.exists():
+        #         seqs.write({
+        #             'number_next': 1,
+        #         })
+        # except Exception as e:
+        #     _logger.error('reset sequence data error: %s,%s', domain, e)
         return res
 
     def remove_account_chart(self):

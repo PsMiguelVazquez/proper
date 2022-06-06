@@ -2,6 +2,7 @@
 from odoo import models, fields, api
 from datetime import datetime
 from .. import extensions
+from odoo.exceptions import UserError
 
 
 class SaleOrder(models.Model):
@@ -108,3 +109,15 @@ class SaleOrder(models.Model):
                         template = self.env['mail.template'].browse(53)
                         template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
                         template.send_mail(self.id)
+
+
+class SaleOrderLine(models.Model):
+    _inherit = 'sale.order.line'
+
+    @api.onchange('price_unit')
+    def limit_price(self):
+        for record in self:
+            if record.product_id:
+                if record.x_nuevo_precio>record.price_unit:
+                    raise UserError('No puede modificar el precio de venta')
+
