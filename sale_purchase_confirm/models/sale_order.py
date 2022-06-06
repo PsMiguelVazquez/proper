@@ -119,6 +119,7 @@ class SaleOrderLine(models.Model):
         for record in self:
             if record.product_id:
                 if record.price_unit!=0:
-                    if record.x_nuevo_precio>record.price_unit:
-                        raise UserError('No puede modificar el precio de venta')
+                    if record.x_nuevo_precio!=0:
+                        if record.x_nuevo_precio>record.price_unit:
+                            raise UserError('No puede modificar el precio de venta')
 
