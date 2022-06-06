@@ -126,8 +126,10 @@ class SaleOrderLine(models.Model):
                 else:
                     margen = 20
                     valor = record.product_id.x_studio_ultimo_costo / ((100 - margen) / 100)
-                if valor > record.price_unit:
-                    raise UserError('No puede modificar el precio de venta')
+                if valor!=0:
+                    if record.price_unit!=0:
+                        if valor > record.price_unit:
+                            raise UserError('No puede modificar el precio de venta')
             record['x_nuevo_precio'] = valor + .5
             record.product_id.write({'list_price': valor})
 
