@@ -118,6 +118,7 @@ class SaleOrderLine(models.Model):
     def limit_price(self):
         for record in self:
             if record.product_id:
-                if record.x_nuevo_precio>record.price_unit:
-                    raise UserError('No puede modificar el precio de venta')
+                if record.price_unit!=0:
+                    if record.x_nuevo_precio>record.price_unit:
+                        raise UserError('No puede modificar el precio de venta')
 
