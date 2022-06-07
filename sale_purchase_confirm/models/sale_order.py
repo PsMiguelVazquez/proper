@@ -119,9 +119,8 @@ class SaleOrderLine(models.Model):
         for record in self:
             valor = 0
             if record.product_id:
-                if record.x_studio_nivel:
-                    margen = record.product_id.x_fabricante[
-                        'x_studio_margen_' + str(record.x_studio_nivel)] if record.product_id.x_fabricante else 20
+                if record.order_id.x_studio_nivel:
+                    margen = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 20
                     valor = record.product_id.x_studio_ultimo_costo / ((100 - margen) / 100)
                 else:
                     margen = 20
