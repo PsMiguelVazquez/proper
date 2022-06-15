@@ -9,6 +9,12 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
     total_in_text = fields.Char(compute='set_amount_text', string='Total en letra')
 
+    @api.model
+    def create(self, vals):
+        if 'user_id' in vals:
+            vals['user_id'] = self.env.user_id.id
+        return super(SaleOrder, self).create(vals)
+
     @api.depends('amount_total')
     def set_amount_text(self):
         for record in self:
