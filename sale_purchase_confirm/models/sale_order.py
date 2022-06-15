@@ -12,7 +12,7 @@ class SaleOrder(models.Model):
     @api.model
     def create(self, vals):
         if 'user_id' in vals:
-            vals['user_id'] = self.env.user_id.id
+            vals['user_id'] = self.env.user.id
         return super(SaleOrder, self).create(vals)
 
     @api.depends('amount_total')
