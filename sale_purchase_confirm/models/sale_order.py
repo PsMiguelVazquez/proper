@@ -116,6 +116,9 @@ class SaleOrder(models.Model):
                         template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
                         template.send_mail(self.id)
 
+    def action_view_invoice(self):
+        self.invoice_ids.write({'sale_id': self.id})
+        return super(SaleOrder, self).action_view_invoice()
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'

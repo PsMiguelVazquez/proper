@@ -5,6 +5,7 @@ from .. import extensions
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+    sale_id = fields.Many2one('sale.order')
 
     #def action_post(self):
     #    return super(AccountMove).action_post()
