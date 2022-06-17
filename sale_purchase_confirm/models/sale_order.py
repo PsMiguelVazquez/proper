@@ -119,18 +119,20 @@ class SaleOrder(models.Model):
     def action_view_invoice(self):
         self.invoice_ids.write({'sale_id': self.id})
         return super(SaleOrder, self).action_view_invoice()
-    #
-    # @api.onchange('partner_id')
-    # def get_partner(self):
-    #     for record in self:
-    #         res = {}
-    #         group = self.env.ref('sales_team.group_sale_salesman')
-    #         if self.env.user.id in group.users.ids:
-    #             partner = self.env['res.partner'].search([['user_id', '=', self.env.user.id]])
-    #         else:
-    #             partner = self.env['res.partner'].search([])
-    #         res = {'domain': {'partner_id': [['id', 'in', partner.ids]]}}
-    #         return res
+
+    @api.onchange('partner_id')
+    def get_partner(self):
+        for record in self:
+            res = {}
+            group = self.env.ref('sales_team.group_sale_salesman')
+            group_s = self.env.ref('sales_team.group_sale_salesman_all_leads')
+            grup_ss = self.env.ref('sales_team.group_sale_manager')
+            if self.env.user.id in group.users.ids and not self.env.user.id in group_s.users.ids and not self.env.user.id in grup_ss.users.ids:
+                partner = self.env['res.partner'].search([['user_id', '=', self.env.user.id]])
+            else:
+                partner = self.env['res.partner'].search([])
+            res = {'domain': {'partner_id': [['id', 'in', partner.ids]]}}
+            return res
 
 
 class SaleOrderLine(models.Model):
