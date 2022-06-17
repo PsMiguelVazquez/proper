@@ -120,6 +120,19 @@ class SaleOrder(models.Model):
         self.invoice_ids.write({'sale_id': self.id})
         return super(SaleOrder, self).action_view_invoice()
 
+    @api.onchange('partner_id')
+    def get_partner(self):
+        for record in self:
+            res = {}
+            group = self.env.ref('sales_team.group_sale_salesman')
+            if self.env.user.id in group.users.ids:
+                partner = self.env['res.partner'].search([['user_id', '=', self.env.user.id]])
+            else:
+                partner = self.env['res.partner'].search([])
+            res = {'domain': {'partner_id': [['id', 'in', partner.ids]]}}
+            return res
+
+
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
