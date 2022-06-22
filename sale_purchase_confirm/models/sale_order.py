@@ -104,7 +104,7 @@ class SaleOrder(models.Model):
                     grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
                     template = self.env['mail.template'].browse(53)
                     template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
-                    template.send_mail(self.id)
+                    #template.send_mail(self.id)
                 else:
                     if facturas == []:
                         if self.x_studio_rfc and check:
@@ -115,19 +115,19 @@ class SaleOrder(models.Model):
                             grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
                             template = self.env['mail.template'].browse(53)
                             template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
-                            template.send_mail(self.id)
+                            #template.send_mail(self.id)
                         if not self.x_studio_rfc:
                             self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '3'})
                             grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
                             template = self.env['mail.template'].browse(52)
                             template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
-                            template.send_mail(self.id)
+                            #template.send_mail(self.id)
                     else:
                         self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '4'})
                         grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
                         template = self.env['mail.template'].browse(53)
                         template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
-                        template.send_mail(self.id)
+                        #stemplate.send_mail(self.id)
 
     def action_view_invoice(self):
         self.invoice_ids.write({'sale_id': self.id})
