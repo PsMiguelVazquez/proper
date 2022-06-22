@@ -28,10 +28,19 @@ class SaleOrder(models.Model):
         self.write({'x_aprovacion_compras': True, 'x_bloqueo': False})
         self.action_confirm()
 
+    def conf_purchase(self):
+        check = self.partner_id.credit_limit >= total if self.payment_term_id.id != 1 else True
+        cliente = self.partner_id.x_studio_triple_a
+        if cliente and check:
+            self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+            self.action_confirm()
+        else:
+            self.write({'state': 'credito_conf'})
+
     def conf_ventas(self):
         registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
         if registro != []:
-            self.write({'x_aprovar': True})
+            self.write({'x_aprovar': True, 'state': 'purchase_conf'})
         if registro == []:
             total = self.partner_id.credit + self.amount_total
             check = self.partner_id.credit_limit >= total if self.payment_term_id.id != 1 else True
@@ -41,6 +50,7 @@ class SaleOrder(models.Model):
                 self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
                 self.action_confirm()
             else:
+                self.write({'state': 'credito_conf'})
                 if self.payment_term_id.id == 1 or not self.payment_term_id:
                     self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '1'})
                     grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
@@ -75,7 +85,7 @@ class SaleOrder(models.Model):
     def action_confirm_sale(self):
         registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
         if registro != []:
-            self.write({'x_aprovar': True})
+            self.write({'x_aprovar': True, 'state': 'sale_conf'})
         if registro == []:
             self.write({'x_aprovar': False})
             total = self.partner_id.credit + self.amount_total
@@ -87,6 +97,7 @@ class SaleOrder(models.Model):
                 self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
                 return self.action_confirm()
             else:
+                self.write({'state':'credito_conf'})
                 if self.payment_term_id.id == 1 or not self.payment_term_id:
                     self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '1'})
                     grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
