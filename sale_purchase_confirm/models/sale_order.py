@@ -29,6 +29,7 @@ class SaleOrder(models.Model):
         self.action_confirm()
 
     def conf_purchase(self):
+        total = self.partner_id.credit + self.amount_total
         check = self.partner_id.credit_limit >= total if self.payment_term_id.id != 1 else True
         cliente = self.partner_id.x_studio_triple_a
         if cliente and check:
