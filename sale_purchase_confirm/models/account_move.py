@@ -6,6 +6,24 @@ from .. import extensions
 class AccountMove(models.Model):
     _inherit = 'account.move'
     sale_id = fields.Many2one('sale.order')
+    serie = fields.Char('Serie', compute="set_folio")
+    folio = fields.Char('Folio', compute="set_folio")
+
+    @api.depends('name')
+    def set_folio(self):
+        for record in self:
+            tmp = record.name.split('/') if record.name else ""
+            serie = ""
+            folio = ""
+            for i in range(len(tmp)):
+                if i == (len(tmp) - 1):
+                    folio = str(int(tmp[i]))
+                else:
+                    serie = serie + (tmp[i] + '/')
+            record.serie = serie
+            record.folio = folio
+
+
 
     #def action_post(self):
     #    return super(AccountMove).action_post()
