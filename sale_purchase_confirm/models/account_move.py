@@ -14,7 +14,7 @@ class AccountMove(models.Model):
         for record in self:
             serie = ""
             folio = ""
-            if record.name:
+            if record.name and len(record.name)>1:
                 tmp = record.name.split('/') if record.name else ""
                 for i in range(len(tmp)):
                     if i == (len(tmp) - 1):
