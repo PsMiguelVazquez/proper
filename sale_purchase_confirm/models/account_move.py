@@ -12,14 +12,15 @@ class AccountMove(models.Model):
     @api.depends('name')
     def set_folio(self):
         for record in self:
-            tmp = record.name.split('/') if record.name else ""
             serie = ""
             folio = ""
-            for i in range(len(tmp)):
-                if i == (len(tmp) - 1):
-                    folio = str(int(tmp[i]))
-                else:
-                    serie = serie + (tmp[i] + '/')
+            if record.name:
+                tmp = record.name.split('/') if record.name else ""
+                for i in range(len(tmp)):
+                    if i == (len(tmp) - 1):
+                        folio = str(int(tmp[i]))
+                    else:
+                        serie = serie + (tmp[i] + '/')
             record.serie = serie
             record.folio = folio
 
