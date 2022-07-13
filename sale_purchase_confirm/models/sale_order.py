@@ -170,4 +170,13 @@ class SaleOrderLine(models.Model):
             record.product_id.write({'list_price': round(valor + .5)})
 
 
+class AccountMoveReversal(models.TransientModel):
+    _inherit = 'account.move.reversal'
+
+    def reverse_moves(self):
+        r = super(AccountMoveReversal, self).reverse_moves()
+        move = self.env['account.move'].browse(r['res_id'])
+        move.write({'reason': self.reason})
+        return r
+
 

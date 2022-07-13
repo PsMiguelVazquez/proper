@@ -8,6 +8,7 @@ class AccountMove(models.Model):
     sale_id = fields.Many2one('sale.order')
     serie = fields.Char('Serie', compute="set_folio")
     folio = fields.Char('Folio', compute="set_folio")
+    reason = fields.Char("Motivo")
 
     @api.depends('name')
     def set_folio(self):
