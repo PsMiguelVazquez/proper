@@ -180,3 +180,16 @@ class AccountMoveReversal(models.TransientModel):
         return r
 
 
+class SaleAdvancePaymentInv(models.TransientModel):
+    _inherit = "sale.advance.payment.inv"
+
+    def create_invoices(self):
+        sale_orders = self.env['sale.order'].browse(self._context.get('active_ids', []))
+        validacion = False
+        for line in sale_orders.order_line:
+            if line.product_id.virtual_available > 0:
+                validacion = True
+        if validacion:
+            super(SaleAdvancePaymentInv, self).create_invoices()
+        else:
+            raise UserError('No hay stock')
