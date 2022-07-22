@@ -146,7 +146,7 @@ class SaleOrder(models.Model):
             group_s = self.env.ref('sales_team.group_sale_salesman_all_leads')
             grup_ss = self.env.ref('sales_team.group_sale_manager')
             if self.env.user.id in group.users.ids and not self.env.user.id in group_s.users.ids and not self.env.user.id in grup_ss.users.ids:
-                partner = self.env['res.partner'].search([['user_id', '=', self.env.user.id]])
+                partner = self.env['res.partner'].search([['x_nombre_agente_venta', '=', self.env.user.name]])
             else:
                 partner = self.env['res.partner'].search([])
             res = {'domain': {'partner_id': [['id', 'in', partner.ids]]}}
