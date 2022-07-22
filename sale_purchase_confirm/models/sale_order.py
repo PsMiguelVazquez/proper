@@ -149,7 +149,7 @@ class SaleOrder(models.Model):
                 partner = self.env['res.partner'].search([['x_nombre_agente_venta', '=', self.env.user.name]])
             else:
                 partner = self.env['res.partner'].search([])
-            res = {'domain': {'partner_id': [['id', 'in', partner.ids]]}}
+            res = {'domain': {'partner_id': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]]}}
             return res
 
 
