@@ -11,6 +11,10 @@ class SaleOrder(models.Model):
     state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('purchase_conf', 'Validación compras'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
     purchase_ids = fields.Many2many('purchase.order', string='OC', readonly=True)
 
+    def update_stock(self):
+        for rec in self.order_line:
+            rec.get_stock()
+
     @api.model
     def create(self, vals):
         if 'user_id' in vals:
@@ -151,6 +155,7 @@ class SaleOrder(models.Model):
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
+    existencia = fields.Char('Cantidades', compute='get_stock')
 
     @api.onchange('price_unit', 'product_id')
     def limit_price(self):
@@ -169,6 +174,19 @@ class SaleOrderLine(models.Model):
                             raise UserError('No puede modificar el precio de venta')
             record['x_nuevo_precio'] = round(valor + .5)
             record.product_id.write({'list_price': round(valor + .5)})
+
+    @api.depends('product_id')
+    def get_stock(self):
+        for record in self:
+            existencia = ""
+            if record.product_id:
+                zero = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 187).mapped('available_quantity'))
+                zero1 = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 187).mapped('reserved_quantity'))
+                # one=sum(record.product_id.stock_quant_ids.filtered(lambda x:x.location_id.id==18).mapped('available_quantity'))
+                market = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 80).mapped('available_quantity'))
+                market1 = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 80).mapped('reserved_quantity'))
+                existencia = "<table><thead><tr><th>A-0</th><th>A14</th></tr><tr><th>D/R</th><th>D/R</th></tr></thead><tbody><tr><td>" + str(zero) + "/" + str(zero1) + "</td><td>" + str(market) + "/" + str(market1) + "</td></tr></tbody>"
+            record.existencia = existencia
 
 
 class AccountMoveReversal(models.TransientModel):
