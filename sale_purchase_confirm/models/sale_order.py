@@ -105,7 +105,7 @@ class SaleOrder(models.Model):
             self.write({'x_aprovar': True, 'state': 'sale_conf'})
         if registro == []:
             self.write({'x_aprovar': False})
-            total = self.partner_id.credit + self.amount_total
+            total = -(self.partner_id.credit) + self.amount_total
             check = self.partner_id.credit_limit >= total if self.payment_term_id.id != 1 else True
             cliente = self.partner_id.x_studio_triple_a
             facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(
