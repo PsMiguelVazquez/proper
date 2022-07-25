@@ -20,6 +20,7 @@ class SaleOrder(models.Model):
                     record.partner_id = record.partner_child.parent_id
                 else:
                     record.partner_id = record.partner_child
+                record.x_studio_cliente_de_marketplace = record.partner_child.name
 
     def update_stock(self):
         for rec in self.order_line:
