@@ -10,6 +10,16 @@ class SaleOrder(models.Model):
     total_in_text = fields.Char(compute='set_amount_text', string='Total en letra')
     state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('purchase_conf', 'Validación compras'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
     purchase_ids = fields.Many2many('purchase.order', string='OC', readonly=True)
+    partner_child = fields.Many2one('res.partner', 'Solicitante')
+
+    @api.onchange('partner_child')
+    def set_partner_id(self):
+        for record in self:
+            if record.partner_child:
+                if record.partner_child.parent_id:
+                    record.partner_id = record.partner_child.parent_id
+                else:
+                    record.partner_id = record.partner_child
 
     def update_stock(self):
         for rec in self.order_line:
