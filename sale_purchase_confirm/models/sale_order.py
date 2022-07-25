@@ -148,7 +148,7 @@ class SaleOrder(models.Model):
         self.invoice_ids.write({'sale_id': self.id})
         return super(SaleOrder, self).action_view_invoice()
 
-    @api.onchange('partner_id')
+    @api.onchange('partner_id', 'partner_child')
     def get_partner(self):
         for record in self:
             res = {}
@@ -159,7 +159,7 @@ class SaleOrder(models.Model):
                 partner = self.env['res.partner'].search([['x_nombre_agente_venta', '=', self.env.user.name]])
             else:
                 partner = self.env['res.partner'].search([])
-            res = {'domain': {'partner_id': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]]}}
+            res = {'domain': {'partner_id': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]], 'partner_child': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]]}}
             return res
 
 
