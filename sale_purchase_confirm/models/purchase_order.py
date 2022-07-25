@@ -6,6 +6,7 @@ from .. import extensions
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
     total_in_text = fields.Char(compute='set_amount_text', string='Total en letra')
+    sale_ids = fields.Many2many('sale.order', string="SO")
 
     @api.depends('amount_total')
     def set_amount_text(self):
