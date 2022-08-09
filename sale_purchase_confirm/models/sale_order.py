@@ -9,6 +9,22 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
     total_in_text = fields.Char(compute='set_amount_text', string='Total en letra')
     state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('purchase_conf', 'Validación compras'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
+    purchase_ids = fields.Many2many('purchase.order', string='OC', readonly=True)
+    partner_child = fields.Many2one('res.partner', 'Solicitante')
+
+    @api.onchange('partner_child')
+    def set_partner_id(self):
+        for record in self:
+            if record.partner_child:
+                if record.partner_child.parent_id:
+                    record.partner_id = record.partner_child.parent_id
+                else:
+                    record.partner_id = record.partner_child
+                record.x_studio_cliente_de_marketplace = record.partner_child.name
+
+    def update_stock(self):
+        for rec in self.order_line:
+            rec.get_stock()
 
     @api.model
     def create(self, vals):
@@ -89,7 +105,7 @@ class SaleOrder(models.Model):
             self.write({'x_aprovar': True, 'state': 'sale_conf'})
         if registro == []:
             self.write({'x_aprovar': False})
-            total = self.partner_id.credit + self.amount_total
+            total = -(self.partner_id.credit) + self.amount_total
             check = self.partner_id.credit_limit >= total if self.payment_term_id.id != 1 else True
             cliente = self.partner_id.x_studio_triple_a
             facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(
@@ -133,7 +149,7 @@ class SaleOrder(models.Model):
         self.invoice_ids.write({'sale_id': self.id})
         return super(SaleOrder, self).action_view_invoice()
 
-    @api.onchange('partner_id')
+    @api.onchange('partner_id', 'partner_child')
     def get_partner(self):
         for record in self:
             res = {}
@@ -141,15 +157,16 @@ class SaleOrder(models.Model):
             group_s = self.env.ref('sales_team.group_sale_salesman_all_leads')
             grup_ss = self.env.ref('sales_team.group_sale_manager')
             if self.env.user.id in group.users.ids and not self.env.user.id in group_s.users.ids and not self.env.user.id in grup_ss.users.ids:
-                partner = self.env['res.partner'].search([['user_id', '=', self.env.user.id]])
+                partner = self.env['res.partner'].search([['x_nombre_agente_venta', '=', self.env.user.name]])
             else:
                 partner = self.env['res.partner'].search([])
-            res = {'domain': {'partner_id': [['id', 'in', partner.ids]]}}
+            res = {'domain': {'partner_id': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]], 'partner_child': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]]}}
             return res
 
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
+    existencia = fields.Char('Cantidades', compute='get_stock')
 
     @api.onchange('price_unit', 'product_id')
     def limit_price(self):
@@ -168,6 +185,19 @@ class SaleOrderLine(models.Model):
                             raise UserError('No puede modificar el precio de venta')
             record['x_nuevo_precio'] = round(valor + .5)
             record.product_id.write({'list_price': round(valor + .5)})
+
+    @api.depends('product_id')
+    def get_stock(self):
+        for record in self:
+            existencia = ""
+            if record.product_id:
+                zero = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 187).mapped('available_quantity'))
+                zero1 = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 187).mapped('reserved_quantity'))
+                # one=sum(record.product_id.stock_quant_ids.filtered(lambda x:x.location_id.id==18).mapped('available_quantity'))
+                market = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 80).mapped('available_quantity'))
+                market1 = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 80).mapped('reserved_quantity'))
+                existencia = "<table><thead><tr><th>A-0</th><th>A14</th></tr><tr><th>D/R</th><th>D/R</th></tr></thead><tbody><tr><td>" + str(int(zero)) + "/" + str(int(zero1)) + "</td><td>" + str(int(market)) + "/" + str(int(market1)) + "</td></tr></tbody>"
+            record.existencia = existencia
 
 
 class AccountMoveReversal(models.TransientModel):
