@@ -22,6 +22,13 @@ class SaleOrder(models.Model):
                     record.partner_id = record.partner_child
                 record.x_studio_cliente_de_marketplace = record.partner_child.name
                 record.user_id = self.env.user.id
+                
+    @api.onchange('partner_id')
+    def onchange_partner_id(self):
+        r = super(SaleOrder, self).onchange_partner_id()
+        self.update({'user_id': self.env.user.id})
+        return r
+
     def update_stock(self):
         for rec in self.order_line:
             rec.get_stock()
