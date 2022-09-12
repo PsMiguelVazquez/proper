@@ -180,7 +180,7 @@ class SaleOrder(models.Model):
         if registro:
             raise UserError("No hay stock")
         else:
-            r = super(SaleOrder, self).action_quotation_send()
+            return super(SaleOrder, self).action_quotation_send()
 
 
 class SaleOrderLine(models.Model):
