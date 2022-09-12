@@ -74,7 +74,12 @@ class SaleOrder(models.Model):
                 self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
                 self.action_confirm()
             else:
-                self.write({'state': 'credito_conf'})
+                if not facturas:
+                    if self.x_studio_rfc and check:
+                                self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+                                self.action_confirm()
+                else:
+                    self.write({'state': 'credito_conf'})
                 # if self.payment_term_id.id == 1 or not self.payment_term_id:
                 #     self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '1'})
                 #     grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
@@ -169,6 +174,13 @@ class SaleOrder(models.Model):
                 partner = self.env['res.partner'].search([])
             res = {'domain': {'partner_id': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]], 'partner_child': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]]}}
             return res
+
+    def action_quotation_send(self):
+        registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
+        if registro:
+            raise UserError("No hay stock")
+        else:
+            r = super(SaleOrder, self).action_quotation_send()
 
 
 class SaleOrderLine(models.Model):
