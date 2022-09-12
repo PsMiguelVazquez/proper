@@ -75,36 +75,36 @@ class SaleOrder(models.Model):
                 self.action_confirm()
             else:
                 self.write({'state': 'credito_conf'})
-                if self.payment_term_id.id == 1 or not self.payment_term_id:
-                    self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '1'})
-                    grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                    template = self.env['mail.template'].browse(53)
-                    template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
-                    #template.send_mail(self.id)
-                else:
-                    if facturas == []:
-                        if self.x_studio_rfc and check:
-                            self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-                            self.action_confirm()
-                        if not check and self.x_studio_rfc:
-                            self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '2'})
-                            grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                            template = self.env['mail.template'].browse(53)
-                            template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
-                            #template.send_mail(self.id)
-                        if not self.x_studio_rfc:
-                            self.write({'x_bloqueo': False, 'x_studio_estado_de_validacin': '3'})
-                            grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                            template = self.env['mail.template'].browse(52)
-                            template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
-                            #template.send_mail(self.id)
-                    else:
-                        self.write({'x_bloqueo': False, 'x_studio_estado_de_validacin': '4'})
-                        grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                        template = self.env['mail.template'].browse(53)
-                        template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
+                # if self.payment_term_id.id == 1 or not self.payment_term_id:
+                #     self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '1'})
+                #     grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
+                #     template = self.env['mail.template'].browse(53)
+                #     template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
+                #     #template.send_mail(self.id)
+                # else:
+                #     if facturas == []:
+                #         if self.x_studio_rfc and check:
+                #             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+                #             self.action_confirm()
+                #         if not check and self.x_studio_rfc:
+                #             self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '2'})
+                #             grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
+                #             template = self.env['mail.template'].browse(53)
+                #             template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
+                #             #template.send_mail(self.id)
+                #         if not self.x_studio_rfc:
+                #             self.write({'x_bloqueo': False, 'x_studio_estado_de_validacin': '3'})
+                #             grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
+                #             template = self.env['mail.template'].browse(52)
+                #             template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
+                #             #template.send_mail(self.id)
+                #     else:
+                #         self.write({'x_bloqueo': False, 'x_studio_estado_de_validacin': '4'})
+                #         grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
+                #         template = self.env['mail.template'].browse(53)
+                #         template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
                         #template.send_mail(self.id)
-            self.write({'x_aprovar': False})
+            #self.write({'x_aprovar': False})
             
     def action_confirm_sale(self):
         registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
@@ -122,35 +122,35 @@ class SaleOrder(models.Model):
                 return self.action_confirm()
             else:
                 self.write({'state':'credito_conf'})
-                if self.payment_term_id.id == 1 or not self.payment_term_id:
-                    self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '1'})
-                    grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                    template = self.env['mail.template'].browse(53)
-                    template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
-                    #template.send_mail(self.id)
-                else:
-                    if facturas == []:
-                        if self.x_studio_rfc and check:
-                            self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-                            return self.action_confirm()
-                        if not check and self.x_studio_rfc:
-                            self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '2'})
-                            grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                            template = self.env['mail.template'].browse(53)
-                            template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
-                            #template.send_mail(self.id)
-                        if not self.x_studio_rfc:
-                            self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '3'})
-                            grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                            template = self.env['mail.template'].browse(52)
-                            template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
-                            #template.send_mail(self.id)
-                    else:
-                        self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '4'})
-                        grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                        template = self.env['mail.template'].browse(53)
-                        template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
-                        #stemplate.send_mail(self.id)
+                # if self.payment_term_id.id == 1 or not self.payment_term_id:
+                #     self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '1'})
+                #     grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
+                #     template = self.env['mail.template'].browse(53)
+                #     template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
+                #     #template.send_mail(self.id)
+                # else:
+                #     if facturas == []:
+                #         if self.x_studio_rfc and check:
+                #             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+                #             return self.action_confirm()
+                #         if not check and self.x_studio_rfc:
+                #             self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '2'})
+                #             grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
+                #             template = self.env['mail.template'].browse(53)
+                #             template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
+                #             #template.send_mail(self.id)
+                #         if not self.x_studio_rfc:
+                #             self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '3'})
+                #             grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
+                #             template = self.env['mail.template'].browse(52)
+                #             template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
+                #             #template.send_mail(self.id)
+                #     else:
+                #         self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '4'})
+                #         grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
+                #         template = self.env['mail.template'].browse(53)
+                #         template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
+                #         #stemplate.send_mail(self.id)
 
     def action_view_invoice(self):
         self.invoice_ids.write({'sale_id': self.id})
