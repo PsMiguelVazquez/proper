@@ -11,6 +11,7 @@ class SaleOrder(models.Model):
     state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('purchase_conf', 'Validación compras'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
     purchase_ids = fields.Many2many('purchase.order', string='OC', readonly=True)
     partner_child = fields.Many2one('res.partner', 'Solicitante')
+    check_solicitudes = fields.Boolean(default=False, compute='solicitud_reduccion')
 
     @api.onchange('partner_child')
     def set_partner_id(self):
@@ -182,38 +183,18 @@ class SaleOrder(models.Model):
         else:
             return super(SaleOrder, self).action_quotation_send()
 
-    @api.model
-    def create(self, vals):
-        r = super(SaleOrder, self).create(vals)
-        lines = r.order_line.filtered(lambda x: x.check_price_reduce)
-        mensaje = 'Se solicitara una reduccion de precio de los siguientes productos:\n'
+    def solicitud_reduccion(self):
+        lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
         if lines:
-            view = self.env.ref('sale_purchase_confirm.sale_order_alerta_view')
-            for row in lines:
-                mensaje = mensaje +'Producto: '+ str(row.product_id.name)+' Precio solicitado:'+str(row.price_reduce)+'\n'
-            wiz = self.env['sale.order.alerta'].create({'sale_id': r.id, 'mensaje': mensaje})
-            return {
-                'name': _('Alerta'),
-                'type': 'ir.actions.act_window',
-                'view_mode': 'form',
-                'res_model': 'sale.order.alerta',
-                'views': [(view.id, 'form')],
-                'view_id': view.id,
-                'target': 'new',
-                'res_id': wiz.id,
-                'context': self.env.context,
-            }
-        else:
-            return r
+            self.check_solicitudes = True
 
-    def write(self, values):
-        r = super(SaleOrder, self).write(values)
+    def solicitud_reduccion_send(self):
         lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
         mensaje = 'Se solicitara una reduccion de precio de los siguientes productos:\n'
         if lines:
             view = self.env.ref('sale_purchase_confirm.sale_order_alerta_view')
             for row in lines:
-                mensaje = mensaje +'Producto: '+ str(row.product_id.name)+' Precio solicitado:'+str(row.price_reduce)+'\n'
+                mensaje = mensaje +'Producto: '+ str(row.product_id.name)+' Precio solicitado:'+str(row.price_reduce_v)+'\n'
             wiz = self.env['sale.order.alerta'].create({'sale_id': self.id, 'mensaje': mensaje})
             return {
                 'name': _('Alerta'),
@@ -226,15 +207,13 @@ class SaleOrder(models.Model):
                 'res_id': wiz.id,
                 'context': self.env.context,
             }
-        else:
-            return r
 
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
     existencia = fields.Char('Cantidades', compute='get_stock')
     check_price_reduce = fields.Boolean('Solicitud', default=False)
-    price_reduce = fields.Float('Precio solicitado')
+    price_reduce_v = fields.Float('Precio solicitado')
     price_reduce_solicit = fields.Boolean('Solicitud', default=False)
 
     @api.onchange('price_unit', 'product_id')
@@ -251,10 +230,11 @@ class SaleOrderLine(models.Model):
                 if valor != 0:
                     if record.price_unit != 0:
                         if valor > record.price_unit:
-                            record.check_price_reduce = True
-                            record.price_reduce = record.price_unit
-                            record.price_unit = round(valor + .5)
-                        else:
+                            #record. = True
+                            self.update({'price_unit': round(valor + .5), 'price_reduce_v': record.price_unit, 'check_price_reduce': True})
+                            #record.price_reduce_solicit = record.price_unit
+                            #record.price_unit =
+                        if record.price_reduce_solicit == 0 and not record.check_price_reduce:
                             record.check_price_reduce = False
             record['x_nuevo_precio'] = round(valor + .5)
             record.product_id.write({'list_price': round(valor + .5)})
