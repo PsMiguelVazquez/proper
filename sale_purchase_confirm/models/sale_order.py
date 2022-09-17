@@ -206,6 +206,29 @@ class SaleOrder(models.Model):
         else:
             return r
 
+    def write(self, values):
+        r = super(SaleOrder, self).write(values)
+        lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
+        mensaje = 'Se solicitara una reduccion de precio de los siguientes productos:\n'
+        if lines:
+            view = self.env.ref('sale_purchase_confirm.sale_order_alerta_view')
+            for row in lines:
+                mensaje = mensaje +'Producto: '+ str(row.product_id.name)+' Precio solicitado:'+str(row.price_reduce)+'\n'
+            wiz = self.env['sale.order.alerta'].create({'sale_id': self.id, 'mensaje': mensaje})
+            return {
+                'name': _('Alerta'),
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'res_model': 'sale.order.alerta',
+                'views': [(view.id, 'form')],
+                'view_id': view.id,
+                'target': 'new',
+                'res_id': wiz.id,
+                'context': self.env.context,
+            }
+        else:
+            return r
+
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
