@@ -184,9 +184,13 @@ class SaleOrder(models.Model):
             return super(SaleOrder, self).action_quotation_send()
 
     def solicitud_reduccion(self):
-        lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
-        if lines:
-            self.check_solicitudes = True
+        for record in self:
+            lines = record.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
+            if lines:
+                self.check_solicitudes = True
+            else:
+                record.check_solicitudes = False
+
 
     def solicitud_reduccion_send(self):
         lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
