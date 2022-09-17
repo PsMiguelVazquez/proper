@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from datetime import datetime
 from .. import extensions
 from odoo.exceptions import UserError
@@ -182,10 +182,37 @@ class SaleOrder(models.Model):
         else:
             return super(SaleOrder, self).action_quotation_send()
 
+    @api.model
+    def create(self, vals):
+        r = super(SaleOrder, self).create(vals)
+        lines = r.order_line.filtered(lambda x: x.check_price_reduce)
+        mensaje = 'Se solicitara una reduccion de precio de los siguientes productos:\n'
+        if lines:
+            view = self.env.ref('sale_purchase_confirm.sale_order_alerta_view')
+            for row in lines:
+                mensaje = mensaje +'Producto: '+ str(row.product_id.name)+' Precio solicitado:'+str(row.price_reduce)+'\n'
+            wiz = self.env['sale.order.alerta'].create({'sale_id': r.id, 'mensaje': mensaje})
+            return {
+                'name': _('Alerta'),
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'res_model': 'sale.order.alerta',
+                'views': [(view.id, 'form')],
+                'view_id': view.id,
+                'target': 'new',
+                'res_id': wiz.id,
+                'context': self.env.context,
+            }
+        else:
+            return r
+
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
     existencia = fields.Char('Cantidades', compute='get_stock')
+    check_price_reduce = fields.Boolean('Solicitud', default=False)
+    price_reduce = fields.Float('Precio solicitado')
+    price_reduce_solicit = fields.Boolean('Solicitud', default=False)
 
     @api.onchange('price_unit', 'product_id')
     def limit_price(self):
@@ -198,10 +225,14 @@ class SaleOrderLine(models.Model):
                 else:
                     margen = 20
                     valor = record.product_id.standard_price / ((100 - margen) / 100)
-                if valor!=0:
-                    if record.price_unit!=0:
+                if valor != 0:
+                    if record.price_unit != 0:
                         if valor > record.price_unit:
-                            raise UserError('No puede modificar el precio de venta')
+                            record.check_price_reduce = True
+                            record.price_reduce = record.price_unit
+                            record.price_unit = round(valor + .5)
+                        else:
+                            record.check_price_reduce = False
             record['x_nuevo_precio'] = round(valor + .5)
             record.product_id.write({'list_price': round(valor + .5)})
 
@@ -242,3 +273,14 @@ class SaleAdvancePaymentInv(models.TransientModel):
             super(SaleAdvancePaymentInv, self).create_invoices()
         else:
             raise UserError('No hay stock')
+
+
+class Alerta_limite_de_credito(models.TransientModel):
+    _name = 'sale.order.alerta'
+    _description = 'Alerta para reduccion de precio'
+
+    sale_id = fields.Many2one('sale.order', 'Pedido de venta relacionado')
+    mensaje = fields.Text('Mensaje')
+
+    def confirmar_sale(self):
+        self.sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})

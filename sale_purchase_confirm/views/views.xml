@@ -1,60 +1,16 @@
 <odoo>
-  <data>
-    <!-- explicit list view definition -->
-<!--
-    <record model="ir.ui.view" id="sale_purchase_confirm.list">
-      <field name="name">sale_purchase_confirm list</field>
-      <field name="model">sale_purchase_confirm.sale_purchase_confirm</field>
-      <field name="arch" type="xml">
-        <tree>
-          <field name="name"/>
-          <field name="value"/>
-          <field name="value2"/>
-        </tree>
-      </field>
-    </record>
--->
-
-    <!-- actions opening views on models -->
-<!--
-    <record model="ir.actions.act_window" id="sale_purchase_confirm.action_window">
-      <field name="name">sale_purchase_confirm window</field>
-      <field name="res_model">sale_purchase_confirm.sale_purchase_confirm</field>
-      <field name="view_mode">tree,form</field>
-    </record>
--->
-
-    <!-- server action to the one above -->
-<!--
-    <record model="ir.actions.server" id="sale_purchase_confirm.action_server">
-      <field name="name">sale_purchase_confirm server</field>
-      <field name="model_id" ref="model_sale_purchase_confirm_sale_purchase_confirm"/>
-      <field name="state">code</field>
-      <field name="code">
-        action = {
-          "type": "ir.actions.act_window",
-          "view_mode": "tree,form",
-          "res_model": model._name,
-        }
-      </field>
-    </record>
--->
-
-    <!-- Top menu item -->
-<!--
-    <menuitem name="sale_purchase_confirm" id="sale_purchase_confirm.menu_root"/>
--->
-    <!-- menu categories -->
-<!--
-    <menuitem name="Menu 1" id="sale_purchase_confirm.menu_1" parent="sale_purchase_confirm.menu_root"/>
-    <menuitem name="Menu 2" id="sale_purchase_confirm.menu_2" parent="sale_purchase_confirm.menu_root"/>
--->
-    <!-- actions -->
-<!--
-    <menuitem name="List" id="sale_purchase_confirm.menu_1_list" parent="sale_purchase_confirm.menu_1"
-              action="sale_purchase_confirm.action_window"/>
-    <menuitem name="Server to list" id="sale_purchase_confirm" parent="sale_purchase_confirm.menu_2"
-              action="sale_purchase_confirm.action_server"/>
--->
+    <data>
+        <record id="sale_order_alerta_view" model="ir.ui.view">
+        <field name="model">sale.order.alerta</field>
+        <field name="arch" type="xml">
+            <form string="Alerta">
+                <field name="mensaje" readonly='1'/>
+                <footer>
+                    <button string="Confirmar" name="confirmar_sale" type="object" class="btn-primary" />
+                    <button special="cancel" string="Cerrar"  class="btn-secondary" />
+                </footer>
+            </form>
+        </field>
+        </record>
   </data>
 </odoo>
