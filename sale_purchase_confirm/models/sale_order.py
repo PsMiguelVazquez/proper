@@ -234,7 +234,7 @@ class SaleOrderLine(models.Model):
                             self.update({'price_unit': round(valor + .5), 'price_reduce_v': record.price_unit, 'check_price_reduce': True})
                             #record.price_reduce_solicit = record.price_unit
                             #record.price_unit =
-                        if record.price_reduce_solicit == 0 and not record.check_price_reduce:
+                        else:
                             record.check_price_reduce = False
             record['x_nuevo_precio'] = round(valor + .5)
             record.product_id.write({'list_price': round(valor + .5)})
