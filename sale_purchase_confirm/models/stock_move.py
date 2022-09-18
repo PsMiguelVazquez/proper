@@ -14,4 +14,4 @@ class StockMoveLine(models.Model):
             sale = self.env['sale.order'].search([['name', '=', self.origin]])
             user = self.env.user
             message = "El usuario "+str(user.name)+"\n"+"Requiere el producto "+str(self.product_id.name)
-            sale.message_post(body=message, partner_ids=sale.user_id.ids)
+            sale.message_post(body=message, partner_ids=sale.user_id.partner_id.ids)
