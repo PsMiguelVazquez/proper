@@ -12,6 +12,6 @@ class StockMoveLine(models.Model):
     def solict_reserved(self):
         if self.origin:
             sale = self.env['sale.order'].search([['name', '=', self.origin]])
-            user = self.env.user.ids
+            user = self.env.user
             message = "El usuario "+str(user.name)+"\n"+"Requiere el producto "+str(self.product_id.name)
             sale.message_post(body=message, partner_ids=sale.user_id.ids)
