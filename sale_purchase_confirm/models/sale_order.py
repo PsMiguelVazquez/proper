@@ -216,7 +216,7 @@ class SaleOrder(models.Model):
     def action_confirm(self):
         r = super(SaleOrder, self).action_confirm()
         self.picking_ids.write({'sale': self.id})
-        self.write({'albaran': self.picking_ids.filtered(lambda x:x.picking_type_id.code == 'outgoing').id })
+        self.write({'albaran': self.picking_ids.filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done')).id})
         return r
 
 
