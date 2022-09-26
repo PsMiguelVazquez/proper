@@ -12,6 +12,7 @@ class SaleOrder(models.Model):
     purchase_ids = fields.Many2many('purchase.order', string='OC', readonly=True)
     partner_child = fields.Many2one('res.partner', 'Solicitante')
     check_solicitudes = fields.Boolean(default=False, compute='solicitud_reduccion')
+    albaran = fields.Many2one('stock.picking', 'Albaran')
 
     @api.onchange('partner_child')
     def set_partner_id(self):
@@ -215,6 +216,7 @@ class SaleOrder(models.Model):
     def action_confirm(self):
         r = super(SaleOrder, self).action_confirm()
         self.picking_ids.write({'sale': self.id})
+        self.write({'albaran': self.picking_ids.filtered(lambda x:x.picking_type_id.code == 'outgoing').id })
         return r
 
 
@@ -308,7 +310,7 @@ class SaleInvoice(models.TransientModel):
     @api.depends('order_lines')
     def set_orders(self):
         for record in self:
-            ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids'))
+            ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
             record.sale_ids = [(6, 0, ordenes.ids)]
             record.order_lines = [(6, 0, ordenes.mapped('order_line').ids)]
 
