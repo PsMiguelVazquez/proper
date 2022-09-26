@@ -305,6 +305,7 @@ class SaleInvoice(models.TransientModel):
     sale_ids = fields.Many2many('sale.order', compute='set_orders')
     order_lines = fields.Many2many('sale.order.line')
 
+    @api.depends('order_lines')
     def set_orders(self):
         for record in self:
             ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids'))
