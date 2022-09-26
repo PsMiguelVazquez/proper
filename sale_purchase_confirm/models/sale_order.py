@@ -212,6 +212,11 @@ class SaleOrder(models.Model):
                 'context': self.env.context,
             }
 
+    def action_confirm(self):
+        r = super(SaleOrder, self).action_confirm()
+        self.picking_ids.write({'sale': self.id})
+        return r
+
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
@@ -219,6 +224,7 @@ class SaleOrderLine(models.Model):
     check_price_reduce = fields.Boolean('Solicitud', default=False)
     price_reduce_v = fields.Float('Precio solicitado')
     price_reduce_solicit = fields.Boolean('Solicitud', default=False)
+    invoice = fields.Boolean('Facturar', default=False)
 
     @api.onchange('price_unit', 'product_id')
     def limit_price(self):
@@ -291,3 +297,19 @@ class Alerta_limite_de_credito(models.TransientModel):
 
     def confirmar_sale(self):
         self.sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})
+
+
+class SaleInvoice(models.TransientModel):
+    _name = 'sale.orders.invoice'
+    _description = 'Wizard de facturacion'
+    sale_ids = fields.Many2many('sale.order', compute='set_orders')
+    order_lines = fields.Many2many('sale.order.line')
+
+    def set_orders(self):
+        for record in self:
+            ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids'))
+            record.sale_ids = [(6, 0, ordenes.ids)]
+            record.order_lines = [(6, 0, ordenes.mapped('order_line').ids)]
+
+    def confir(self):
+        return True

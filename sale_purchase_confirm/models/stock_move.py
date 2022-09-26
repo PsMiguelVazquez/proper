@@ -15,3 +15,8 @@ class StockMoveLine(models.Model):
             user = self.env.user
             message = "El usuario "+str(user.name)+"\n"+"Requiere el producto "+str(self.product_id.name)
             sale.message_post(body=message, partner_ids=sale.user_id.partner_id.ids)
+
+
+class StockPicking(models.Model):
+    _inherit = 'stock.picking'
+    sale = fields.Many2one('sale.order')
