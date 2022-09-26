@@ -15,7 +15,7 @@ class StockMoveLine(models.Model):
             user = self.env.user
             message = "El usuario "+str(user.name)+"\n"+"Requiere el producto "+str(self.product_id.name)
             data = {
-                'res_id': self.id,
+                'res_id': sale.id,
                 'res_model_id': self.env['ir.model'].search([('model', '=', 'stock.move.line')]).id,
                 'user_id': sale.user_id.id,
                 'summary': message,
