@@ -14,7 +14,16 @@ class StockMoveLine(models.Model):
             sale = self.env['sale.order'].search([['name', '=', self.origin]])
             user = self.env.user
             message = "El usuario "+str(user.name)+"\n"+"Requiere el producto "+str(self.product_id.name)
-            sale.message_post(body=message, partner_ids=sale.user_id.partner_id.ids)
+            data = {
+                'res_id': self.id,
+                'res_model_id': self.env['ir.model'].search([('model', '=', 'stock.move.line')]).id,
+                'user_id': sale.user_id.id,
+                'summary': message,
+                'activity_type_id': self.env.ref('custom.activity_applicant').id,
+                'date_deadline': fields.Date.today()
+            }
+            self.env['mail.activity'].create(data)
+            #sale.message_post(body=message, partner_ids=sale.user_id.partner_id.ids)
 
 
 class StockPicking(models.Model):
