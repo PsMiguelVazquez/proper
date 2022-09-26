@@ -37,7 +37,6 @@
     <record id="action_facturar" model="ir.actions.act_window">
         <field name="name">Facturar</field>
         <field name="res_model">sale.orders.invoice</field>
-        <field name="view_type">form</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
         <field name="context">{}</field>
