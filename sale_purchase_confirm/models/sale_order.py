@@ -311,6 +311,7 @@ class SaleInvoice(models.TransientModel):
     def set_orders(self):
         for record in self:
             ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
+            ordenes.order_line.write({'invoice': False})
             record.sale_ids = [(6, 0, ordenes.ids)]
             record.order_lines = [(6, 0, ordenes.mapped('order_line').ids)]
 
