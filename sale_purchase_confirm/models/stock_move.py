@@ -19,7 +19,7 @@ class StockMoveLine(models.Model):
                 'res_model_id': self.env['ir.model'].search([('model', '=', 'stock.move.line')]).id,
                 'user_id': sale.user_id.id,
                 'summary': message,
-                'activity_type_id': self.env.ref('custom.activity_applicant').id,
+                'activity_type_id': self.env.ref('mail.mail_activity_data_meeting').id,
                 'date_deadline': fields.Date.today()
             }
             self.env['mail.activity'].create(data)
