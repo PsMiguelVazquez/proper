@@ -9,6 +9,7 @@ class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'
     origin = fields.Char(related='move_id.origin', string='Source', store=True)
 
+
     def solict_reserved(self):
         if self.origin:
             sale = self.env['sale.order'].search([['name', '=', self.origin]])
