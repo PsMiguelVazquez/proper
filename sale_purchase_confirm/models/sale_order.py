@@ -311,9 +311,30 @@ class SaleInvoice(models.TransientModel):
     def set_orders(self):
         for record in self:
             ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
-            ordenes.order_line.write({'invoice': False})
+            #ordenes.order_line.write({'invoice': False})
             record.sale_ids = [(6, 0, ordenes.ids)]
-            record.order_lines = [(6, 0, ordenes.mapped('order_line').ids)]
+            record.order_lines = [(6, 0, ordenes.mapped('order_line').filtered(lambda x: x.qty_delivered != 0).ids)]
 
     def confir(self):
+        valor = self.sale_ids.mapped('order_line').filtered(lambda x: x.invoice == True)
+        self.sale_ids.mapped('order_line')._compute_qty_delivered()
+        if len(self.sale_ids.mapped('partner_id')) > 1:
+            raise UserError("No se puede crear la factura con diferentes clientes")
+        else:
+            if valor:
+                invoice_vals = self.sale_ids[0]._prepare_invoice() if len(self.sale_ids)>1 else self.sale_ids._prepare_invoice()
+                invoice_line_vals = []
+                invoice_vals['invoice_line_ids'] += [
+                    (0, 0, line._prepare_invoice_line())
+                    for line in valor
+                ]
+                moves = self.env['account.move'].sudo().with_context(default_move_type='out_invoice').create(invoice_vals)
+                for move in moves:
+                    move.message_post_with_view('mail.message_origin_link',
+                                                values={'self': move,
+                                                        'origin': move.line_ids.mapped('sale_line_ids.order_id')},
+                                                subtype_id=self.env.ref('mail.mt_note').id
+                                                )
+                if moves:
+                    return self.sale_ids[0].action_view_invoice()
         return True
