@@ -314,7 +314,7 @@ class SaleInvoice(models.TransientModel):
             ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
             #ordenes.order_line.write({'invoice': False})
             record.sale_ids = [(6, 0, ordenes.ids)]
-            record.order_lines = [(6, 0, ordenes.mapped('order_line'))]
+            record.order_lines = [(6, 0, ordenes.mapped('order_line').ids)]
 
     def confir(self):
         valor = self.sale_ids.mapped('order_line')
