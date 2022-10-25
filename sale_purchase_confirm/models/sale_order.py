@@ -314,10 +314,10 @@ class SaleInvoice(models.TransientModel):
             ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
             #ordenes.order_line.write({'invoice': False})
             record.sale_ids = [(6, 0, ordenes.ids)]
-            record.order_lines = [(6, 0, ordenes.mapped('order_line').filtered(lambda x: x.qty_delivered != 0).ids)]
+            record.order_lines = [(6, 0, ordenes.mapped('order_line'))]
 
     def confir(self):
-        valor = self.sale_ids.mapped('order_line').filtered(lambda x: x.invoice == True)
+        valor = self.sale_ids.mapped('order_line')
         self.sale_ids.mapped('order_line')._compute_qty_delivered()
         if len(self.sale_ids.mapped('partner_id')) > 1:
             raise UserError("No se puede crear la factura con diferentes clientes")
