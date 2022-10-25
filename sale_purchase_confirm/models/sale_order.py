@@ -160,7 +160,8 @@ class SaleOrder(models.Model):
                 #         #stemplate.send_mail(self.id)
 
     def action_view_invoice(self):
-        self.invoice_ids.write({'sale_id': self.id})
+        if len(self)==1:
+            self.invoice_ids.write({'sale_id': self.id})
         return super(SaleOrder, self).action_view_invoice()
 
     @api.onchange('partner_id', 'partner_child')
