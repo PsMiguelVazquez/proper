@@ -34,6 +34,21 @@
         </field>
         </record>
 
+        <record id="purchase_order_invoice_conf_view" model="ir.ui.view">
+        <field name="model">purchase.wizard.conf</field>
+        <field name="arch" type="xml">
+            <form string="Alerta">
+                <h2>Se validarán las ordenes seleccionadas.</h2>
+                <footer>
+                    <button string="Confirmar" name="confirm" type="object" class="btn-primary" />
+                    <button special="cancel" string="Cerrar"  class="btn-secondary" />
+                </footer>
+            </form>
+        </field>
+        </record>
+
+
+
     <record id="action_facturar" model="ir.actions.act_window">
         <field name="name">Facturar</field>
         <field name="res_model">sale.orders.invoice</field>
