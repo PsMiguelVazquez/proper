@@ -19,7 +19,7 @@ class PurchaseOrder(models.Model):
 
     def action_mass_confirm(self):
         purchases = self
-        if len(purchases.mapped('partner_id') > 1):
+        if len(purchases.mapped('partner_id')) > 1:
             raise odoo.exceptions.UserError("No se puede validar con diferentes proveedores")
         else:
             return purchases.button_confirm()
