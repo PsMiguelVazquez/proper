@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import odoo.exceptions
 from odoo import models, fields, api
 from .. import extensions
 
@@ -16,3 +17,17 @@ class PurchaseOrder(models.Model):
             else:
                 record.total_in_text = extensions.text_converter.number_to_text_es(0)
 
+    def action_mass_confirm(self):
+        purchases = self
+        if len(purchases.mapped('partner_id') > 1):
+            raise odoo.exceptions.UserError("No se puede validar con diferentes proveedores")
+        else:
+            return purchases.button_confirm()
+
+
+class PurchaseWizard(models.TransientModel):
+    _name = 'purchase.wizard.conf'
+
+    def confirm(self):
+        purchases = self.env['purchase.order'].browse(self._context.get('active_ids', []))
+        return purchases.action_mass_confirm()
