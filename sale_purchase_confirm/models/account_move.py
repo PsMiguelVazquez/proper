@@ -59,7 +59,7 @@ class Proposal(models.Model):
         return r
 
 
-class AccountMoveRevers(models.Model):
+class AccountMoveRevers(models.TransientModel):
     _inherit = 'account.move.reversal'
 
     def _prepare_default_reversal(self, move):
