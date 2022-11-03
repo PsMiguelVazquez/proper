@@ -57,3 +57,12 @@ class Proposal(models.Model):
             channel = self.env['mail.channel'].with_context(mail_create_nosubscribe=True).sudo().create({'channel_partner_ids': users_to_send_message, 'public': 'private', 'channel_type': 'chat', 'email_send': False, 'name': f'Alerta de leads'})
         send = channel.sudo().message_post(body=mesagge, author_id=odoobot_id, message_type="comment", subtype_xmlid="mail.mt_comment")
         return r
+
+
+class AccountMoveRevers(models.Model):
+    _inherit = 'account.move.reversal'
+
+    def _prepare_default_reversal(self, move):
+        r = super(AccountMoveRevers, self)._prepare_default_reversal(move)
+        r['invoice_payment_term_id'] = move.invoice_payment_term_id.id
+        return r
