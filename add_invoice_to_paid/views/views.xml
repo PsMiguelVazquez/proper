@@ -8,7 +8,7 @@
         <form>
           <sheet>
             <field name="payment" invisible="1"/>
-            <field name="invoices_ids" widget="many2many">
+            <field name="invoices_ids" widget="many2many" domain="[('partner_id', '=', partner_id),('move_type', '=', 'out_invoice'), ('payment_state', 'in', ('not_paid', 'partial')), ('state', '=', 'posted')]">
               <tree editable="bottom">
                 <field name="name" readonly="1"/>
                 <field name="partner_id" readonly="1"/>
@@ -33,7 +33,7 @@
           <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
               <field name="invoice_line_ids" invisible="1"/>
-              <button name="asign_invoices" type="object" string="Asignar Facturas %" attrs="{'invisible': ['&', ('state', '!=', 'posted'), ('reconciled_invoices_count', '!=', 0)]}"/>
+              <button name="asign_invoices" type="object" string="Asignar Facturas %" attrs="{'invisible': [('state', '!=', 'posted'), ('reconciled_invoices_count', '!=', 0)]}"/>
             </xpath>
           </field>
         </record>
