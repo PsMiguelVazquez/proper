@@ -1,0 +1,43 @@
+<odoo>
+  <data>
+
+    <record model="ir.ui.view" id="add_invoice_to_paid_list">
+      <field name="name">add_invoice_to_paid list</field>
+      <field name="model">account.payment.wizard.ex</field>
+      <field name="arch" type="xml">
+        <form>
+          <sheet>
+            <field name="payment" invisible="1"/>
+            <field name="invoices_ids" widget="many2many">
+              <tree editable="bottom">
+                <field name="name" readonly="1"/>
+                <field name="partner_id" readonly="1"/>
+                <field name="ref" readonly="1"/>
+                <field name="amount_residual_signed" readonly="1"/>
+                <field name="amount_total" readonly="1"/>
+                <field name="porcent_assign"/>
+              </tree>
+            </field>
+          </sheet>
+          <footer>
+            <button name="done" type="object" string="Confirmar"/>
+          </footer>
+        </form>
+      </field>
+    </record>
+
+        <record model="ir.ui.view" id="add_invoice_to_paid_inherit">
+          <field name="name">add_invoice_to_paid_inherit</field>
+          <field name="model">account.payment</field>
+          <field name="inherit_id" ref="account.view_account_payment_form"/>
+          <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+              <field name="invoice_line_ids" invisible="1"/>
+              <button name="asign_invoices" type="object" string="Asignar Facturas %" attrs="{'invisible': ['&', ('state', '!=', 'posted'), ('reconciled_invoices_count', '!=', 0)]}"/>
+            </xpath>
+          </field>
+        </record>
+
+
+  </data>
+</odoo>
