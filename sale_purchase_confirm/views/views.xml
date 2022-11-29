@@ -18,12 +18,13 @@
         <field name="arch" type="xml">
             <form string="Alerta">
                 <field name="sale_ids" invisible="1"/>
-                <field name="order_lines" >
+                <field name="order_lines_ids" >
                     <tree editable="bottom" create="false" delete="false">
+                        <field name="order_id"/>
                         <field name="product_id" readonly="1"/>
-                        <field name="product_uom_qty" readonly="1"/>
-                        <field name="price_subtotal" readonly="1"/>
-                        <field name="invoice" />
+                        <field name="qty" readonly="1"/>
+                        <field name="qty_invoice" readonly="1"/>
+                        <field name="check" />
                     </tree>
                 </field>
                 <footer>

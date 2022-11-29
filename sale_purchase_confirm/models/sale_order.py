@@ -306,29 +306,32 @@ class SaleInvoice(models.TransientModel):
     _name = 'sale.orders.invoice'
     _description = 'Wizard de facturacion'
     sale_ids = fields.Many2many('sale.order', compute='set_orders')
-    order_lines = fields.Many2many('sale.order.line')
+    #order_lines = fields.Many2many('sale.order.line')
+    order_lines_ids = fields.One2many('sale.line.wizar', 'rel_id')
 
     @api.depends('order_lines')
     def set_orders(self):
         for record in self:
             ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
-            #ordenes.order_line.write({'invoice': False})
             record.sale_ids = [(6, 0, ordenes.ids)]
-            record.order_lines = [(6, 0, ordenes.mapped('order_line').ids)]
+            for sale_line in ordenes.mapped('order_line'):
+                record.order_lines_ids = [(0,0 ,{'sale_line_id': sale_line.id})]
+
 
     def confir(self):
-        valor = self.sale_ids.mapped('order_line').filtered(lambda x: x.invoice == True)
-        self.sale_ids.mapped('order_line')._compute_qty_delivered()
+        valor = self.order_lines_ids.filtered(lambda x: x.check == True)
+        #self.sale_ids.mapped('order_line')._compute_qty_delivered()
         if len(self.sale_ids.mapped('partner_id')) > 1:
             raise UserError("No se puede crear la factura con diferentes clientes")
         else:
             if valor:
-                invoice_vals = self.sale_ids[0]._prepare_invoice() if len(self.sale_ids)>1 else self.sale_ids._prepare_invoice()
+                ordenes = valor.mapped('sale_line_id.order_id')
+                invoice_vals = ordenes[0]._prepare_invoice() if len(ordenes)>1 else ordenes._prepare_invoice()
                 invoice_line_vals = []
-                invoice_vals['invoice_line_ids'] += [
-                    (0, 0, line._prepare_invoice_line())
-                    for line in valor
-                ]
+                for line in valor:
+                    data = line.sale_line_id._prepare_invoice_line()
+                    data['quantity'] = line.qty_invoice
+                    invoice_vals['invoice_line_ids'] += [(0, 0, data)]
                 moves = self.env['account.move'].sudo().with_context(default_move_type='out_invoice').create(invoice_vals)
                 for move in moves:
                     move.message_post_with_view('mail.message_origin_link',
@@ -339,3 +342,15 @@ class SaleInvoice(models.TransientModel):
                 if moves:
                     return self.sale_ids[0].action_view_invoice()
         return True
+
+class SaleInvoiceWizard(models.TransientModel):
+    _name = 'sale.line.wizar'
+    sale_line_id = fields.Many2one('sale.order.line')
+    order_id = fields.Many2one(related='sale_line_id.order_id')
+    product_id = fields.Many2one(related='sale_line_id.product_id')
+    qty = fields.Float(related='sale_line_id.product_uom_qty', string='Cantidad Solicitada')
+    qty_invoice = fields.Float('Cantidad a Facturar')
+    rel_id = fields.Many2one('sale.orders.invoice')
+    check = fields.Boolean('Facturar', default=False)
+
+
