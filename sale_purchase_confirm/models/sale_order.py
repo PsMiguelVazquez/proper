@@ -309,7 +309,7 @@ class SaleInvoice(models.TransientModel):
         for record in self:
             ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
             return ordenes
-    sale_ids = fields.Many2many('sale.order', default=get_order())
+    sale_ids = fields.Many2many('sale.order', default=get_order)
     order_lines_ids = fields.One2many('sale.line.wizar', 'rel_id')
 
     @api.depends('sale_ids')
