@@ -331,8 +331,7 @@ class SaleInvoice(models.TransientModel):
             raise UserError("No se puede crear la factura con diferentes clientes")
         else:
             if valor:
-                ordenes = valor.mapped('sale_line_id.order_id')
-                invoice_vals = ordenes[0]._prepare_invoice() if len(ordenes)>1 else ordenes._prepare_invoice()
+                invoice_vals = self.sale_ids[0]._prepare_invoice() if len(self.sale_ids)>1 else self.sale_ids._prepare_invoice()
                 invoice_line_vals = []
                 for line in valor:
                     data = line.sale_line_id._prepare_invoice_line()
