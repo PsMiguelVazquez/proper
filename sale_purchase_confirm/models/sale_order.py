@@ -315,7 +315,7 @@ class SaleInvoice(models.TransientModel):
             if not record.order_lines_ids:
                 record.sale_ids = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
             else:
-                record.sale_ids = record.order_lines_ids
+                record.sale_ids = record.sale_ids
 
     @api.onchange('sale_ids')
     def set_orders(self):
