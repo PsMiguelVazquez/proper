@@ -305,14 +305,19 @@ class Alerta_limite_de_credito(models.TransientModel):
 class SaleInvoice(models.TransientModel):
     _name = 'sale.orders.invoice'
     _description = 'Wizard de facturacion'
-    def get_order(self):
-        for record in self:
-            ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
-            return ordenes
-    sale_ids = fields.Many2many('sale.order', default=get_order)
+    name = fields.Char()
+    sale_ids = fields.Many2many('sale.order', compute='get_order')
     order_lines_ids = fields.One2many('sale.line.wizar', 'rel_id')
 
-    @api.depends('sale_ids')
+    @api.depends('name')
+    def get_order(self):
+        for record in self:
+            if not record.order_lines_ids:
+                record.order_lines_ids = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
+            else:
+                record.order_lines_ids = record.order_lines_ids
+
+    @api.onchange('sale_ids')
     def set_orders(self):
         for record in self:
             for sale_line in record.sale_ids.mapped('order_line'):
