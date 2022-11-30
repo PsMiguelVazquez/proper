@@ -18,8 +18,8 @@
         <field name="arch" type="xml">
             <form string="Alerta">
                 <field name="name" invisible="1"/>
-                <field name="sale_ids" invisible="1"/>
-                <field name="order_lines_ids" >
+                <field name="sale_ids" invisible="1" force_save="1"/>
+                <field name="order_lines_ids" force_save="1">
                     <tree editable="bottom" create="false" delete="false">
                         <field name="order_id"/>
                         <field name="product_id" readonly="1"/>
@@ -51,13 +51,13 @@
 
 
 
-    <record id="action_facturar" model="ir.actions.act_window">
+    <record id="action_facturar" model="ir.actions.server">
         <field name="name">Facturar</field>
-        <field name="res_model">sale.orders.invoice</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="context">{}</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="sale_purchase_confirm.model_sale_orders_invoice"/>
         <field name="binding_model_id" ref="sale.model_sale_order" />
+        <field name="code">action=model.get_filtered_record()</field>
+        <field name="state">code</field>
     </record>
 
         <record id="action_purchase_valid" model="ir.actions.act_window">

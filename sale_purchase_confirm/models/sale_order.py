@@ -306,28 +306,31 @@ class SaleInvoice(models.TransientModel):
     _name = 'sale.orders.invoice'
     _description = 'Wizard de facturacion'
     name = fields.Char()
-    sale_ids = fields.Many2many('sale.order', compute='get_order')
+    sale_ids = fields.Many2many('sale.order', store=True)
     order_lines_ids = fields.One2many('sale.line.wizar', 'rel_id')
 
-    @api.depends('name')
-    def get_order(self):
-        for record in self:
-            if not record.order_lines_ids:
-                record.sale_ids = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
-            else:
-                record.sale_ids = record.sale_ids
-
-    @api.onchange('sale_ids')
-    def set_orders(self):
-        for record in self:
-            for sale_line in record.sale_ids.mapped('order_line'):
-                record.order_lines_ids = [(0,0 ,{'sale_line_id': sale_line.id})]
-
+    def get_filtered_record(self):
+        ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
+        reg = self.create({'sale_ids': [(6,0,ordenes.ids)]})
+        for sale_line in ordenes.mapped('order_line'):
+            self.env['sale.line.wizar'].create({'rel_id': reg.id, 'sale_line_id': sale_line.id})
+        view = self.env.ref('sale_purchase_confirm.sale_order_invoice_conf_view')
+        return {
+            "name": _("Facturar"),
+            "type": "ir.actions.act_window",
+            "view_mode": "form",
+            "res_model": "sale.orders.invoice",
+            "views": [(view.id, "form")],
+            "view_id": view.id,
+            "target": "new",
+            "res_id": reg.id,
+            "context": self.env.context,
+        }
 
     def confir(self):
         valor = self.order_lines_ids.filtered(lambda x: x.check == True)
-        #self.sale_ids.mapped('order_line')._compute_qty_delivered()
-        if len(self.sale_ids.mapped('partner_id')) > 1:
+        ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
+        if len(ordenes.mapped('partner_id')) > 1:
             raise UserError("No se puede crear la factura con diferentes clientes")
         else:
             if valor:
@@ -347,6 +350,7 @@ class SaleInvoice(models.TransientModel):
                 if moves:
                     return self.sale_ids[0].action_view_invoice()
         return True
+
 
 class SaleInvoiceWizard(models.TransientModel):
     _name = 'sale.line.wizar'
