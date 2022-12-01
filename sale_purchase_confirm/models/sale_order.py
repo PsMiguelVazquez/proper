@@ -313,7 +313,8 @@ class SaleInvoice(models.TransientModel):
         ordenes = self.env['sale.order'].browse(self.env.context.get('active_ids')).filtered(lambda x: x.state in ('sale', 'done'))
         reg = self.create({'sale_ids': [(6,0,ordenes.ids)]})
         for sale_line in ordenes.mapped('order_line'):
-            self.env['sale.line.wizar'].create({'rel_id': reg.id, 'sale_line_id': sale_line.id})
+            if sale_line.qty_invoiced != sale_line.product_uom_qty:
+                self.env['sale.line.wizar'].create({'rel_id': reg.id, 'sale_line_id': sale_line.id})
         view = self.env.ref('sale_purchase_confirm.sale_order_invoice_conf_view')
         return {
             "name": _("Facturar"),
@@ -358,6 +359,7 @@ class SaleInvoiceWizard(models.TransientModel):
     order_id = fields.Many2one(related='sale_line_id.order_id')
     product_id = fields.Many2one(related='sale_line_id.product_id')
     qty = fields.Float(related='sale_line_id.product_uom_qty', string='Cantidad Solicitada')
+    qty_sale_invoice = fields.Float(related='sale_line_id.qty_invoiced', string='Cantidad Facturada')
     qty_invoice = fields.Float('Cantidad a Facturar')
     rel_id = fields.Many2one('sale.orders.invoice')
     check = fields.Boolean('Facturar', default=False)
