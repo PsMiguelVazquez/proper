@@ -9,7 +9,6 @@ class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'
     origin = fields.Char(related='move_id.origin', string='Source', store=True)
 
-
     def solict_reserved(self):
         if self.origin:
             sale = self.env['sale.order'].search([['name', '=', self.origin]])
@@ -23,7 +22,7 @@ class StockMoveLine(models.Model):
                 'activity_type_id': self.env.ref('mail.mail_activity_data_meeting').id,
                 'date_deadline': fields.Date.today()
             }
-            self.env['mail.activity'].create(data)
+            self.env['mail.activity'].sudo().create(data)
             #sale.message_post(body=message, partner_ids=sale.user_id.partner_id.ids)
 
 
