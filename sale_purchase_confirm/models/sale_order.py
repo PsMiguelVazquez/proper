@@ -228,7 +228,7 @@ class SaleOrderLine(models.Model):
     price_reduce_v = fields.Float('Precio solicitado')
     price_reduce_solicit = fields.Boolean('Solicitud', default=False)
     invoice = fields.Boolean('Facturar', default=False)
-
+    price_unit = fields.Float(copy=True)
     @api.onchange('price_unit', 'product_id')
     def limit_price(self):
         for record in self:
