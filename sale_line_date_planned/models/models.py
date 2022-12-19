@@ -84,7 +84,7 @@ class StockMove(models.Model):
                         fecha = moves.picking_id.partner_id
                         fecha2 = moves.picking_id.scheduled_date
                         if fecha != moves.sale_line_id.date_planned_line or fecha2 != moves.sale_line_id.date_planned_l:
-                            fecha_new = fields.datetime(moves.sale_line_id.date_planned_l.year, moves.sale_line_id.date_planned_l.month, moves.sale_line_id.date_planned_l.day) + timedelta(hours=12)
+                            fecha_new = fields.datetime(moves.sale_line_id.date_planned_l.year, moves.sale_line_id.date_planned_l.month, moves.sale_line_id.date_planned_l.day) + timedelta(hours=18)
                             picking = self.env['stock.picking'].search([['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')],['scheduled_date', '=', fecha_new ], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]]) if moves.sale_line_id.date_planned_l else self.env['stock.picking'].search([['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]])
                             if picking:
                                 moves.write({'date': fecha_new, 'date_deadline': fecha_new})
