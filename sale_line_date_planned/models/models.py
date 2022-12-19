@@ -74,7 +74,7 @@ class StockMove(models.Model):
             direcciones = order_id.mapped('order_line.date_planned_line')
             fechas = order_id.mapped('order_line.date_planned_l')
             i = 0
-            if len(direcciones)>1 or fechas>1:
+            if len(direcciones)>1 or len(fechas)>1:
                 for moves in self:
                     if moves.sale_line_id.date_planned_line or moves.sale_line_id.date_planned_l:
                         if i == 0:
