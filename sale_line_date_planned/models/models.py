@@ -84,17 +84,20 @@ class StockMove(models.Model):
                         fecha = moves.picking_id.partner_id
                         fecha2 = moves.picking_id.scheduled_date
                         if fecha != moves.sale_line_id.date_planned_line or fecha2 != moves.sale_line_id.date_planned_l:
-                            picking = self.env['stock.picking'].search([['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')],['scheduled_date', '=', datetime(moves.sale_line_id.date_planned_l.year, moves.sale_line_id.date_planned_l.month, moves.sale_line_id.date_planned_l.day)], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]]) if moves.sale_line_id.date_planned_l else self.env['stock.picking'].search([['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]])
+                            fecha_new = fields.datetime(moves.sale_line_id.date_planned_l.year,
+                                            moves.sale_line_id.date_planned_l.month,
+                                            moves.sale_line_id.date_planned_l.day)
+                            picking = self.env['stock.picking'].search([['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')],['scheduled_date', '=', fecha_new ], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]]) if moves.sale_line_id.date_planned_l else self.env['stock.picking'].search([['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]])
                             if picking:
-                                moves.write({'date': moves.sale_line_id.date_planned_l})
+                                moves.write({'date': fecha_new})
                                 moves.write({'picking_id': picking.id})
                                 moves._assign_picking_post_process(new=new_picking)
                             else:
-                                moves.write({'date': moves.sale_line_id.date_planned_l})
+                                moves.write({'date': fecha_new})
                                 rr = moves._get_new_picking_values()
                                 rr['partner_id'] = moves.sale_line_id.date_planned_line.id
                                 picking = Picking.create(rr)
-                                picking.write({'scheduled_date':moves.sale_line_id.date_planned_l})
+                                picking.write({'scheduled_date':fecha_new, 'date_deadline': fecha_new})
                                 moves.write({'picking_id': picking.id})
                                 moves._assign_picking_post_process(new=new_picking)
                         i = i+1
