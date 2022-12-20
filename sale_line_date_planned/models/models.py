@@ -88,7 +88,7 @@ class StockMove(models.Model):
                             picking = self.env['stock.picking'].search([['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')],['scheduled_date', '=', fecha_new ], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]]) if moves.sale_line_id.date_planned_l else self.env['stock.picking'].search([['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]])
                             if picking:
                                 moves.write({'date': fecha_new, 'date_deadline': fecha_new})
-                                moves.write({'picking_id': picking.id})
+                                moves.write({'picking_id': picking[0].id if len(picking)>1 else picking.id})
                                 moves._assign_picking_post_process(new=new_picking)
                             else:
                                 moves.write({'date': fecha_new , 'date_deadline': fecha_new})
