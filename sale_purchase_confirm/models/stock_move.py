@@ -29,3 +29,9 @@ class StockMoveLine(models.Model):
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
     sale = fields.Many2one('sale.order')
+
+class StockMove(models.Model):
+    _inherit = 'stock.move'
+
+    def _action_confirm(self, merge=True, merge_into=False):
+        return super(StockMove, self)._action_confirm(merge=False, merge_into)
