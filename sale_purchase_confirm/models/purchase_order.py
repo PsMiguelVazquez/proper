@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import odoo.exceptions
-from odoo import models, fields, api
+from odoo import models, fields, api,_
 from .. import extensions
 
 
@@ -28,3 +28,25 @@ class PurchaseWizard(models.TransientModel):
     def confirm(self):
         purchases = self.env['purchase.order'].browse(self._context.get('active_ids', []))
         return purchases.action_mass_confirm()
+
+
+class PurchaseWizardMerge(models.TransientModel):
+    _name = 'purchase.wizard.merge'
+
+    def confirm(self):
+        purchases = self.env['purchase.order'].browse(self._context.get('active_ids', [])).filtered(lambda x: x.state == 'draft')
+        partners = purchases.mapped('partner_id')
+        for pa in partners:
+            pl = purchases.filtered(lambda x: x.partners.id == pa.id)
+            pl_lines = pl.mapped('order_line')
+            orden = self.env['purchase.order'].create({'partner_id': pa.id})
+            pl_lines.write({'order_id': orden.id})
+            pl.unlink()
+        return {
+            'name':_("Ordens"),
+            'view_mode': 'tree',
+            'view_id': False,
+            'view_type': 'tree',
+            'res_model': 'purchase.order',
+            'type': 'ir.actions.act_window',
+        }
