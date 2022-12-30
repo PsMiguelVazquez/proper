@@ -8,6 +8,7 @@ class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
     total_in_text = fields.Char(compute='set_amount_text', string='Total en letra')
     sale_ids = fields.Many2many('sale.order', string="SO")
+    active = fields.Boolean(default=True)
 
     @api.depends('amount_total')
     def set_amount_text(self):
@@ -37,11 +38,11 @@ class PurchaseWizardMerge(models.TransientModel):
         purchases = self.env['purchase.order'].browse(self._context.get('active_ids', [])).filtered(lambda x: x.state == 'draft')
         partners = purchases.mapped('partner_id')
         for pa in partners:
-            pl = purchases.filtered(lambda x: x.partners.id == pa.id)
+            pl = purchases.filtered(lambda x: x.partner_id.id == pa.id)
             pl_lines = pl.mapped('order_line')
             orden = self.env['purchase.order'].create({'partner_id': pa.id})
             pl_lines.write({'order_id': orden.id})
-            pl.unlink()
+            pl.write({'active':False})
         return {
             'name':_("Ordens"),
             'view_mode': 'tree',

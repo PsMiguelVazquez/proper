@@ -7,7 +7,7 @@ class AccountPayment(models.Model):
     _inherit = 'account.payment'
 
     def asign_invoices(self):
-        w = self.env['account.payment.wizard.ex'].create({'payment': self.id})
+        w = self.env['account.payment.wizard.ex'].create({'payment': self.id, 'partner_id': self.partner_id.id})
         view = self.env.ref('add_invoice_to_paid.add_invoice_to_paid_list')
         return {
                 'name': _('Asignar Facturas'),
