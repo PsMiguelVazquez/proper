@@ -30,6 +30,7 @@ class AccountPaymentWidget(models.TransientModel):
     _name = 'account.payment.wizard.ex'
     payment = fields.Many2one('account.payment')
     invoices_ids = fields.Many2many('account.move')
+    partner_id = fields.Many2one('res.partner')
 
     def done(self):
         check_sum = sum(self.invoices_ids.mapped('porcent_assign'))
