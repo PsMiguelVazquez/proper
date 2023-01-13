@@ -72,7 +72,7 @@ class StockPicking(models.Model):
     def write(self, vals):
         if 'carrier_tracking_ref' in vals:
             if self.sale_id:
-                self.sale_id.write({'carrier_tracking_ref': vals['carrier_tracking_ref']})
+                self.sale_id.update({'carrier_tracking_ref': vals['carrier_tracking_ref']})
         return super(StockPicking, self).write(vals)
     # def button_validate(self):
     #     code = self.picking_type_id.code
