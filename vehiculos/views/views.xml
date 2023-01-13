@@ -149,7 +149,7 @@
                       <field name="name" invisible="1"/>
                       <field name="origin" readonly="1" string="Orden"/>
                       <field name="carrier_tracking_ref" />
-                      <field name="evidencia" />
+                      <field name="evidencia" force_save="1" />
                       <field name="evidencia"  attrs="{'readonly': [('evidencia', '!=', False )],'invisible': [('evidencia', '=', False )] }"/>
                       <!--<button name="comentario" type="object" string="Comentario y/o evidencia" attrs="{'invisible': ['|',['state','=','done'],['ruta_id','=',False]]}" ></button>-->
                       <!--<button name="guia" type="object" string="Guia" attrs="{'invisible': ['|','|',['state','=','done'],['carrier_tracking_ref','!=',False],['ruta_id','=',False]]}"/>
