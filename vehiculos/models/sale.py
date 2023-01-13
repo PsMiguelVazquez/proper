@@ -9,6 +9,8 @@ class Sale(models.Model):
     carrier_tracking_ref = fields.Char('No de Guia')
 
     def write(self, values):
-        if 'carrier_tracking_ref' in values and not self.picking_ids.mapped('carrier_tracking_ref'):
-            self.picking_ids.write({'carrier_tracking_ref': values['carrier_tracking_ref']})
+        if 'carrier_tracking_ref' in values:
+            for pi in self.picking_ids:
+                if not pi.carrier_tracking_ref:
+                    pi.write({'carrier_tracking_ref': values['carrier_tracking_ref']})
         return super(Sale, self).write(values)
