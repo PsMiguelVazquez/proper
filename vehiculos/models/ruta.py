@@ -73,4 +73,4 @@ class StockPicking(Model):
     estado = fields.Selection([('recepcion','Recepción'),('draft', 'Draft'),('almacen', 'Almacen'),('compras', 'Solicitud de Compra'),('waiting', 'Esperando otra operación'),('confirmed', 'Sin Stock'),('assigned', 'Por Validar'),('done', 'Validado'),('distribucion', 'Distribución'),('cancel', 'Cancelled'),('aDistribucion', 'A Distribución'),('Xenrutar', 'Por en Rutar'),('ruta', 'En Ruta'),('entregado', 'Entregado')],store=True)
     chofer = fields.Many2one('res.users')
     ajusta = fields.Boolean('Ajusta',store=True)
-
+    evidencia = fields.Binary('Evidencia', attachment=True)
