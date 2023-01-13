@@ -83,12 +83,12 @@ class StockPicking(models.Model):
     #     return r
 
 
-class StockPicking(models.TransientModel):
+class StockPickingLL(models.TransientModel):
     _inherit = 'stock.immediate.transfer'
     evidencia = fields.Binary('Evidencia')
     code = fields.Boolean(default=False)
 
     def process(self):
-        r = super(StockPicking, self).process()
+        r = super(StockPickingLL, self).process()
         return r
 
