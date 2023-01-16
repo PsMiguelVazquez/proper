@@ -68,17 +68,24 @@ class FleetOdometro(models.Model):
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
-    carrier_tracking_ref = fields.Char(string='Tracking Reference', copy=False, compute='_compute_address', inverse='_inverse_street')
-    def _compute_address(self):
-        for record in self:
-            #if record.sale_id:
-            record.update({'carrier_tracking_ref': record.sale_id.carrier_tracking_ref})
-            #else:
-             #   record.update({'carrier_tracking_ref': False})
+    carrier_tracking_ref = fields.Char(string='Tracking Reference')
+    guia = fields.Char(string='No de Guia')
+    # def _compute_address(self):
+    #     for record in self:
+    #         #if record.sale_id:
+    #         record.update({'carrier_tracking_ref': record.sale_id.carrier_tracking_ref})
+    #         #else:
+    #          #   record.update({'carrier_tracking_ref': False})
+    #
+    # def _inverse_street(self):
+    #     for company in self:
+    #         company.sale_id.carrier_tracking_ref = company.carrier_tracking_ref
 
-    def _inverse_street(self):
-        for company in self:
-            company.sale_id.carrier_tracking_ref = company.carrier_tracking_ref
+    def write(self, vals):
+        if 'carrier_tracking_ref' in vals:
+            if self.sale_id:
+                self.sale_id.write({'carrier_tracking_ref': vals['carrier_tracking_ref']})
+        return super(StockPickingLL, self).write(vals)
 
 
 
