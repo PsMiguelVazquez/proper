@@ -85,7 +85,7 @@ class StockPicking(models.Model):
         if 'carrier_tracking_ref' in vals:
             if self.sale_id:
                 self.sale_id.write({'carrier_tracking_ref': vals['carrier_tracking_ref']})
-        return super(StockPickingLL, self).write(vals)
+        return super(StockPicking, self).write(vals)
 
 
 
