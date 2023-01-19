@@ -229,7 +229,13 @@ class SaleOrderLine(models.Model):
     price_reduce_solicit = fields.Boolean('Solicitud', default=False)
     invoice = fields.Boolean('Facturar', default=False)
     price_unit = fields.Float(copy=True)
-    @api.onchange('price_unit', 'product_id')
+    @api.onchange('product_id')
+    def product_id_change(self):
+        r = super(SaleOrderLine, self).product_id_change()
+        self.limit_price()
+        return r
+
+    @api.onchange('price_unit')
     def limit_price(self):
         for record in self:
             valor = 0
@@ -243,14 +249,14 @@ class SaleOrderLine(models.Model):
                 if valor != 0:
                     if record.price_unit != 0:
                         if valor > record.price_unit:
-                            #record. = True
+                            #record.check_price_reduce = True
                             self.update({'price_unit': round(valor + .5), 'price_reduce_v': record.price_unit, 'check_price_reduce': True})
                             #record.price_reduce_solicit = record.price_unit
                             #record.price_unit =
                         else:
                             record.check_price_reduce = False
             record['x_nuevo_precio'] = round(valor + .5)
-            record.product_id.write({'list_price': round(valor + .5)})
+            #record.product_id.write({'list_price': round(valor + .5)})
 
     @api.depends('product_id')
     def get_stock(self):
