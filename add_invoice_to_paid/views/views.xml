@@ -7,6 +7,7 @@
       <field name="arch" type="xml">
         <form>
           <sheet>
+            <group>
             <field name="payment" invisible="1"/>
             <field name="partner_id" invisible="1"/>
             <field name="amount_rest"/>
@@ -20,6 +21,7 @@
                 <field name="porcent_assign"/>
               </tree>
             </field>
+            </group>
           </sheet>
           <footer>
             <button name="done" type="object" string="Confirmar"/>
@@ -35,7 +37,8 @@
           <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
               <field name="invoice_line_ids" invisible="1"/>
-              <button name="asign_invoices" type="object" string="Asignar Facturas %" attrs="{'invisible': ['|', ('state', '!=', 'posted'), ('reconciled_invoices_count', '!=', 0)]}"/>
+              <field name="amount_rest" invisible="1"/>
+              <button name="asign_invoices" type="object" string="Asignar Facturas" attrs="{'invisible': ['|', ('state', '!=', 'posted'), ('amount_rest', '=', 0)]}"/>
             </xpath>
           </field>
         </record>
