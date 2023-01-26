@@ -381,6 +381,11 @@ class SaleInvoiceWizard(models.TransientModel):
 
 class ProposalState(models.Model):
     _name = 'proposal.state'
-    name = fields.Char()
+    name = fields.Selection([("draft","BORRADOR"),
+                            ("done","PROPUESTA ACEPTADA"),
+                            ("cancel","CANCELADO"),
+                            ("validar","RE-VALIDAR"),
+                            ("atendido","ATENDIDO"),
+                            ("confirmado","COMPRA AUTORIZADA")])
 
 
