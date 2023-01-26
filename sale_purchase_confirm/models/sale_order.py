@@ -13,6 +13,14 @@ class SaleOrder(models.Model):
     partner_child = fields.Many2one('res.partner', 'Solicitante')
     check_solicitudes = fields.Boolean(default=False, compute='solicitud_reduccion')
     albaran = fields.Many2one('stock.picking', 'Albaran')
+    states_proposals = fields.Many2many('proposal.state', string='Estados de propuestas', compute='set_states_proposal')
+
+    @api.depends('x_lines_proposa')
+    def set_states_proposal(self):
+        for record in self:
+            record.states_proposals = [(5,0,0)]
+            for li in record.x_lines_proposa:
+                record.states_proposals = [(0, 0, {'name': li.x_state })]
 
     @api.onchange('partner_child')
     def set_partner_id(self):
@@ -221,6 +229,7 @@ class SaleOrder(models.Model):
         return r
 
 
+
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
     existencia = fields.Char('Cantidades', compute='get_stock')
@@ -369,5 +378,9 @@ class SaleInvoiceWizard(models.TransientModel):
     qty_invoice = fields.Float('Cantidad a Facturar')
     rel_id = fields.Many2one('sale.orders.invoice')
     check = fields.Boolean('Facturar', default=False)
+
+class ProposalState(models.Model):
+    _name = 'proposal.state'
+    name = fields.Char()
 
 
