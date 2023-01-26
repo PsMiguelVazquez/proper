@@ -178,12 +178,12 @@ class SaleOrder(models.Model):
             res = {'domain': {'partner_id': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]], 'partner_child': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]]}}
             return res
 
-    def action_quotation_send(self):
-        registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
-        if registro:
-            raise UserError("No hay stock")
-        else:
-            return super(SaleOrder, self).action_quotation_send()
+    # def action_quotation_send(self):
+    #     registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
+    #     if registro:
+    #         raise UserError("No hay stock")
+    #     else:
+    #         return super(SaleOrder, self).action_quotation_send()
 
     def solicitud_reduccion(self):
         for record in self:
