@@ -98,5 +98,7 @@ class StockMove(models.Model):
                                 picking.write({'scheduled_date':fecha_new, 'date_deadline': fecha_new})
                                 moves.write({'picking_id': picking.id})
                                 moves._assign_picking_post_process(new=new_picking)
+                            if i==0:
+                                order_id.write({'albaran': picking.id})
                         i = i+1
         return r

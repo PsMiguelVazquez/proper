@@ -62,8 +62,8 @@ class SaleOrder(models.Model):
         self.action_confirm()
 
     def conf_purchase(self):
-        total = self.partner_id.credit + self.amount_total
-        check = self.partner_id.credit_limit >= total if self.payment_term_id.id != 1 else True
+        total = self.partner_id.credit_rest - self.amount_total
+        check = total >= 0 if self.payment_term_id.id != 1 else False
         cliente = self.partner_id.x_studio_triple_a
         if cliente and check:
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
@@ -76,20 +76,27 @@ class SaleOrder(models.Model):
         if registro != []:
             self.write({'x_aprovar': True, 'state': 'purchase_conf'})
         if registro == []:
-            total = self.partner_id.credit + self.amount_total
-            check = self.partner_id.credit_limit >= total if self.payment_term_id.id != 1 else True
+            total = self.partner_id.credit_rest - self.amount_total
+            check = total >= 0 if self.payment_term_id.id != 1 else False
             cliente = self.partner_id.x_studio_triple_a
-            facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in ('not_paid', 'partial')).mapped('id')
-            if cliente and check:
+            #facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in ('not_paid', 'partial')).mapped('id')
+            if check and cliente:
                 self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-                self.action_confirwm()
+                return self.action_confirwm()
             else:
-                if not facturas:
-                    if self.x_studio_rfc and check:
-                                self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-                                self.action_confirm()
-                else:
-                    self.write({'state': 'credito_conf'})
+                self.write({'state': 'credito_conf'})
+
+
+            # if cliente and check:
+            #     self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+            #     self.action_confirwm()
+            # else:
+            #     if not facturas:
+            #         if self.x_studio_rfc and check:
+            #                     self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+            #                     self.action_confirm()
+            #     else:
+            #         self.write({'state': 'credito_conf'})
                 # if self.payment_term_id.id == 1 or not self.payment_term_id:
                 #     self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '1'})
                 #     grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
@@ -127,8 +134,8 @@ class SaleOrder(models.Model):
             self.write({'x_aprovar': True, 'state': 'sale_conf'})
         if registro == []:
             self.write({'x_aprovar': False})
-            total = -(self.partner_id.credit) + self.amount_total
-            check = self.partner_id.credit_limit >= total if self.payment_term_id.id != 1 else True
+            total = self.partner_id.credit_rest - self.amount_total
+            check = total >= 0 if self.payment_term_id.id != 1 else False
             cliente = self.partner_id.x_studio_triple_a
             facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(
                 lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in ('not_paid', 'partial')).mapped('id')
@@ -225,7 +232,7 @@ class SaleOrder(models.Model):
     def action_confirm(self):
         r = super(SaleOrder, self).action_confirm()
         self.picking_ids.write({'sale': self.id})
-        self.write({'albaran': self.picking_ids[0].filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done')).id})
+        self.write({'albaran': self.picking_ids.filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done'))[0].id})
         return r
 
 
