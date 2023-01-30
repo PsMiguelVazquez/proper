@@ -20,7 +20,7 @@ class SaleOrder(models.Model):
         for record in self:
             record.states_proposals = [(5,0,0)]
             for li in record.x_lines_proposa:
-                record.states_proposals = [(0, 0, {'name': li.x_state })]
+                record.states_proposals = [(0, 0, {'name': li.x_name+":"+li.x_state })]
 
     @api.onchange('partner_child')
     def set_partner_id(self):
@@ -388,11 +388,6 @@ class SaleInvoiceWizard(models.TransientModel):
 
 class ProposalState(models.Model):
     _name = 'proposal.state'
-    name = fields.Selection([("draft","BORRADOR"),
-                            ("done","PROPUESTA ACEPTADA"),
-                            ("cancel","CANCELADO"),
-                            ("validar","RE-VALIDAR"),
-                            ("atendido","ATENDIDO"),
-                            ("confirmado","COMPRA AUTORIZADA")])
+    name = fields.Char()
 
 
