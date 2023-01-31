@@ -264,13 +264,13 @@ class SaleOrderLine(models.Model):
                     valor = record.product_id.standard_price / ((100 - margen) / 100)
                 if valor != 0:
                     if record.price_unit != 0:
-                        if valor >= record.price_unit:
+                        if valor > record.price_unit:
                             #record.check_price_reduce = True
                             record.update({'price_unit': round(valor + .5), 'price_reduce_v': record.price_unit, 'check_price_reduce': True})
                             #record.price_reduce_solicit = record.price_unit
                             #record.price_unit =
                         else:
-                            record.check_price_reduce = False
+                            record.update({'price_unit': round(valor + .5),'check_price_reduce': False})
             record['x_nuevo_precio'] = round(valor + .5)
             #record.product_id.write({'list_price': round(valor + .5)})
 
