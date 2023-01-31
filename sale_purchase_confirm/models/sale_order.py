@@ -20,7 +20,7 @@ class SaleOrder(models.Model):
         for record in self:
             record.states_proposals = [(5,0,0)]
             for li in record.x_lines_proposa:
-                record.states_proposals = [(0, 0, {'name': li.x_name+":"+li.x_state })]
+                record.states_proposals = [(0, 0, {'name': li.x_name+":"+str(dict(li._fields['x_state'].selection).get(li.x_state)) })]
 
     @api.onchange('partner_child')
     def set_partner_id(self):
