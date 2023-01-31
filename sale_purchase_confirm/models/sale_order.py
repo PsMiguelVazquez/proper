@@ -266,7 +266,7 @@ class SaleOrderLine(models.Model):
                     if record.price_unit != 0:
                         if valor > record.price_unit:
                             #record.check_price_reduce = True
-                            self.update({'price_unit': round(valor + .5), 'price_reduce_v': record.price_unit, 'check_price_reduce': True})
+                            record.update({'price_unit': round(valor + .5), 'price_reduce_v': record.price_unit, 'check_price_reduce': True})
                             #record.price_reduce_solicit = record.price_unit
                             #record.price_unit =
                         else:
