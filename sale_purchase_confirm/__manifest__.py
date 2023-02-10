@@ -20,13 +20,14 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'sale', 'purchase', 'stock'],
+    'depends': ['base', 'sale', 'purchase', 'stock', 'web_studio'],
 
     # always loaded
     'data': [
         'security/ir.model.access.csv',
         'views/views.xml',
         'views/templates.xml',
+        'views/views_requi.xml'
     ],
     # only loaded in demonstration mode
     'demo': [

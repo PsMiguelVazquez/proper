@@ -14,12 +14,18 @@ class SaleOrder(models.Model):
     check_solicitudes = fields.Boolean(default=False, compute='solicitud_reduccion')
     albaran = fields.Many2one('stock.picking', 'Albaran')
     states_proposals = fields.Many2many('proposal.state', string='Estados de propuestas', compute='set_states_proposal')
+    requirements_line_ids = fields.One2many('requiriment.client', 'x_order_id', 'Requerimientos')
+    proposal_line_ids = fields.Many2many('proposal.purchases', compute='get_proposals')
+    @api.depends('requirements_line_ids')
+    def get_proposals(self):
+        for record in self:
+            record.proposal_line_ids = [(6, 0, record.requirements_line_ids.mapped('x_lines_proposal.id'))]
 
-    @api.depends('x_lines_proposa')
+    @api.depends('proposal_line_ids')
     def set_states_proposal(self):
         for record in self:
             record.states_proposals = [(5,0,0)]
-            for li in record.x_lines_proposa:
+            for li in record.proposal_line_ids:
                 record.states_proposals = [(0, 0, {'name': li.x_name+":"+str(dict(li._fields['x_state'].selection).get(li.x_state)) })]
 
     @api.onchange('partner_child')
