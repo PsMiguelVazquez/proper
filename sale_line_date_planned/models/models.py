@@ -5,11 +5,11 @@ from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT, float_compare, float_is_z
 from datetime import datetime, timedelta
 
 
-class SaleOrder(models.Model):
-    _inherit = 'sale.order'
-
-    def action_confirm(self):
-        super(SaleOrder, self).action_confirm()
+# class SaleOrder(models.Model):
+#     _inherit = 'sale.order'
+#
+#     def action_confirm(self):
+#         super(SaleOrder, self).action_confirm()
 
 
 class SaleOrderLine(models.Model):
