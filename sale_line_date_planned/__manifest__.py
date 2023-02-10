@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "account_payment_proper",
+    'name': "sale_line_date_planned",
 
     'summary': """
         Short (1 phrase/line) summary of the module's purpose, used as
@@ -20,11 +20,10 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'account'],
+    'depends': ['base', 'sale', 'sale_stock', 'stock'],
 
     # always loaded
     'data': [
-        'security/security.xml',
         'views/views.xml',
     ],
 }

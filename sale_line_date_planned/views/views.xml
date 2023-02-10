@@ -1,0 +1,17 @@
+<odoo>
+  <data>
+      <record model="ir.ui.view" id="sale_order_form_view_date_planed_line">
+      <field name="name">sale.order.form.date.planed.line</field>
+      <field name="model">sale.order</field>
+      <field name="inherit_id" ref="sale.view_order_form"/>
+      <field name="arch" type="xml">
+          <xpath expr="//field[@name='order_line']/tree/field[@name='product_uom']" position="after">
+            <field name='date_planned_line'/>
+          </xpath>
+          <xpath expr="//field[@name='order_line']" position="attributes">
+              <attribute name="context">{'default_date_planned_line':partner_shipping_id}</attribute>
+          </xpath>
+      </field>
+      </record>
+  </data>
+</odoo>
