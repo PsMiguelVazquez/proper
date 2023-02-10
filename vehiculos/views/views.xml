@@ -112,7 +112,7 @@
               <field name="vehiculo"/>
               <field name="zona"/>
               <field name="create_uid"/>
-              <field name="estadoPais"/>
+              <field name="EstadoPais"/>
           </tree>
       </field>
     </record>

@@ -5,11 +5,11 @@ from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT, float_compare, float_is_z
 from datetime import datetime, timedelta
 
 
-# class SaleOrder(models.Model):
-#     _inherit = 'sale.order'
-#
-#     def action_confirm(self):
-#         super(SaleOrder, self).action_confirm()
+class SaleOrder(models.Model):
+    _inherit = 'sale.order'
+    
+    def action_confirm(self):
+        super(SaleOrder, self).action_confirm()
 
 
 class SaleOrderLine(models.Model):
@@ -17,8 +17,8 @@ class SaleOrderLine(models.Model):
     date_planned_line = fields.Many2one('res.partner', 'Dirección')
     date_planned_l = fields.Date('Fecha Entrega')
 
-# class ProcurementRule(models.Model):
-#     _inherit = 'procurement.group'
+class ProcurementRule(models.Model):
+    _inherit = 'procurement.group'
 
     # @api.model
     # def run(self, procurements):
