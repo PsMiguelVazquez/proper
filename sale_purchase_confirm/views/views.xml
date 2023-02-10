@@ -1,0 +1,141 @@
+<odoo>
+    <data>
+        <record id="sale_order_alerta_view" model="ir.ui.view">
+        <field name="model">sale.order.alerta</field>
+        <field name="arch" type="xml">
+            <form string="Alerta">
+                <field name="mensaje" readonly='1'/>
+                <footer>
+                    <button string="Confirmar" name="confirmar_sale" type="object" class="btn-primary" />
+                    <button special="cancel" string="Cerrar"  class="btn-secondary" />
+                </footer>
+            </form>
+        </field>
+        </record>
+
+        <record id="sale_order_invoice_conf_view" model="ir.ui.view">
+        <field name="model">sale.orders.invoice</field>
+        <field name="arch" type="xml">
+            <form string="Alerta">
+                <field name="name" invisible="1"/>
+                <field name="sale_ids" invisible="1" force_save="1"/>
+                <field name="order_lines_ids" force_save="1">
+                    <tree editable="bottom" create="false" delete="false">
+                        <field name="order_id"/>
+                        <field name="product_id" readonly="1"/>
+                        <field name="qty" readonly="1"/>
+                        <field name="qty_sale_invoice" readonly="1"/>
+                        <field name="qty_invoice"/>
+                        <field name="check" />
+                    </tree>
+                </field>
+                <footer>
+                    <button string="Confirmar" name="confir" type="object" class="btn-primary" />
+                    <button special="cancel" string="Cerrar"  class="btn-secondary" />
+                </footer>
+            </form>
+        </field>
+        </record>
+
+        <record id="purchase_order_invoice_conf_view" model="ir.ui.view">
+        <field name="model">purchase.wizard.conf</field>
+        <field name="arch" type="xml">
+            <form string="Alerta">
+                <h2>Se validarán las ordenes seleccionadas.</h2>
+                <footer>
+                    <button string="Confirmar" name="confirm" type="object" class="btn-primary" />
+                    <button special="cancel" string="Cerrar"  class="btn-secondary" />
+                </footer>
+            </form>
+        </field>
+        </record>
+
+        <record id="purchase_order_merge_conf_view" model="ir.ui.view">
+        <field name="model">purchase.wizard.merge</field>
+        <field name="arch" type="xml">
+            <form string="Alerta">
+                <h2>Se mezclaran la ordenes seleccionadas</h2>
+                <footer>
+                    <button string="Confirmar" name="confirm" type="object" class="btn-primary" />
+                    <button special="cancel" string="Cerrar"  class="btn-secondary" />
+                </footer>
+            </form>
+        </field>
+        </record>
+                <record id="sale_orde_proposal_requirement" model="ir.ui.view">
+                    <field name="model">sale.order</field>
+                    <field name="inherit_id" ref="sale.view_order_form"/>
+                    <field name="arch" type="xml">
+                    <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
+                        <page string="Requerimientos" name="studio_page_0ru5U">
+                            <field name="requirements_line_ids">
+                                <tree string="Solicitud de requerimiento del cliente" editable="bottom">
+                                    <field name="x_name" force_save="True" attrs="{}" readonly="1" string="Nom. Requerimiento"/>
+                                    <field name="x_descripcion" optional="show" required="1"/>
+                                    <field name="x_marca" optional="show"/>
+                                    <field name="x_modelo" optional="show"/>
+                                    <field name="x_cantidad" optional="show" string="Cantidad"/>
+                                    <field name="x_precio_uni" optional="show"/>
+                                    <field name="x_presupuesto" optional="show" string="Presupuesto"/>
+                                    <field name="x_proveedor" optional="show" string="Proveedor"/>
+                                    <field name="x_link_sitio" optional="hide"/>
+                                    <field name="x_comprar" optional="show"/>
+                                    <field name="x_count" optional="show" attrs="{}" invisible="1"/>
+                                    <field name="x_studio_estado" string="estado" attrs="{}" invisible="1"/>
+                                    <button name="cancel" string="Cancelar" type="object" class="btn-primary" attrs="{'invisible': [['x_studio_estado','=','cancel']]}"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Propuestas" name="studio_page_qwbde">
+                            <field name="proposal_line_ids">
+                                <tree string="Propuesta de Compras" decoration-success="x_state == 'done'" decoration-warning="x_state == 'confirmado'">
+                                    <field name="x_name" modifiers="{}" string="Propuesta"/>
+                                    <field name="x_product_id" optional="show"/>
+                                    <field name="x_cantidad" optional="show" string="Cantidad"/>
+                                    <field name="x_costo" optional="show" string="Costo"/>
+                                    <field optional="show" name="x_studio_proveedor" string="Proveedor" attrs="{}"/>
+                                    <field name="x_state" optional="show" attrs="{}" invisible="1" string="Estado"/>
+                                    <field name="x_proveedor" optional="show"  />
+                                    <field name="x_note" optional="hide"></field>
+                                    <field name="x_new_prod_prop" default="True" invisible="1"/>
+                                    <button name="confirm" string="Confirmar" type="object" class="btn-primary" attrs="{'invisible': [('x_state', 'not in', ['draft','atendido'])]}"/>
+                                    <button name="cancel" string="Cancelar" type="object" class="btn-primary" />
+                                    <button name="validar" string="Re-validar" type="object" class="btn-primary"/>
+                                    <button name="autoriz" string="Compra autorizada" type="object" class="btn-primary"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </xpath>
+        </field>
+                </record>
+
+
+
+    <record id="action_facturar" model="ir.actions.server">
+        <field name="name">Facturar</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="sale_purchase_confirm.model_sale_orders_invoice"/>
+        <field name="binding_model_id" ref="sale.model_sale_order" />
+        <field name="code">action=model.get_filtered_record()</field>
+        <field name="state">code</field>
+    </record>
+
+        <record id="action_purchase_valid" model="ir.actions.act_window">
+        <field name="name">Validación</field>
+        <field name="res_model">purchase.wizard.conf</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{}</field>
+        <field name="binding_model_id" ref="purchase.model_purchase_order" />
+    </record>
+
+        <record id="action_purchase_merge" model="ir.actions.act_window">
+        <field name="name">Mezcla</field>
+        <field name="res_model">purchase.wizard.merge</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{}</field>
+        <field name="binding_model_id" ref="purchase.model_purchase_order" />
+    </record>
+  </data>
+</odoo>

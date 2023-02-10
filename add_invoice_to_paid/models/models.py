@@ -1,0 +1,65 @@
+# -*- coding: utf-8 -*-
+import odoo.exceptions
+from odoo import models, fields, api, _
+import json
+
+class AccountPayment(models.Model):
+    _inherit = 'account.payment'
+    amount_rest = fields.Float(compute='get_invoices')
+
+    def get_invoices(self):
+        for record in self:
+            totals = 0
+            for move in record.reconciled_invoice_ids:
+                data = json.loads(move.invoice_payments_widget)
+                if data:
+                    for payment in data['content']:
+                        payments = self.env['account.payment'].browse(payment['account_payment_id'])
+                        if payments:
+                            if payments.id == record.id:
+                                totals += payment['amount']
+            record.amount_rest = record.amount - totals
+
+
+    def asign_invoices(self):
+        w = self.env['account.payment.wizard.ex'].create({'payment': self.id, 'partner_id': self.partner_id.id})
+        view = self.env.ref('add_invoice_to_paid.add_invoice_to_paid_list')
+        return {
+                'name': _('Asignar Facturas'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.payment.wizard.ex',
+                'view_mode': 'form',
+                'res_id': w.id,
+                'views': [(view.id, 'form')],
+                'view_id': view.id,
+                'target': 'new'
+            }
+
+
+class AccountMove(models.Model):
+    _inherit = 'account.move'
+    porcent_assign = fields.Float('Monto')
+
+
+class AccountPaymentWidget(models.TransientModel):
+    _name = 'account.payment.wizard.ex'
+    payment = fields.Many2one('account.payment')
+    invoices_ids = fields.Many2many('account.move')
+    partner_id = fields.Many2one('res.partner')
+    amount_rest = fields.Float(related='payment.amount_rest')
+
+    def done(self):
+        check_sum = sum(self.invoices_ids.mapped('porcent_assign'))
+        move_line = self.env['account.move.line'].search([('payment_id', '=', self.payment.id), ('balance', '<', 0)])
+        if check_sum > self.amount_rest:
+            return odoo.exceptions.UserError("No se puede asignar mas del monto: "+str(self.amount_rest))
+        else:
+            if move_line:
+                for move in self.invoices_ids:
+                    amount = move.porcent_assign
+                    r = move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
+            else:
+                return odoo.exceptions.UserError("No hay asiento disponible para el movimiento")
+        return True
+
+

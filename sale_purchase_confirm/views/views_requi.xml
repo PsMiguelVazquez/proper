@@ -1,0 +1,261 @@
+<odoo>
+    <data>
+        <record model="ir.ui.view" id="requirement_form_view">
+            <field name="name">Vista Forma</field>
+            <field name="model">requiriment.client</field>
+            <field name="arch" type="xml">
+                <form>
+                <sheet string="Solicitud de requerimiento del cliente">
+                    <group col="4">
+                        <field name="x_studio_related_field_ap2ah" modifiers="{&quot;readonly&quot;: true}"/>
+                        <field name="x_studio_related_field_DGJgC" modifiers="{&quot;readonly&quot;: true}"/>
+                        <field name="x_studio_related_field_1eaGE" modifiers="{&quot;readonly&quot;: true}"/>
+                        <field name="x_presupuesto" modifiers="{}"/>
+                        <field name="x_name" modifiers="{}" readonly="1" attrs="{'invisible': [('x_name', '=', False)]}"/>
+                        <field name="x_cantidad" modifiers="{}"/>
+                        <field name="x_descripcion" modifiers="{}"/>
+                        <field name="x_marca" modifiers="{}"/>
+                        <field name="x_modelo" modifiers="{}"/>
+                        <field name="x_order_id" on_change="1" can_create="true" can_write="true" modifiers="{}"/>
+                        <field name="x_proveedor" modifiers="{}"/>
+                        <field name="x_count" modifiers="{&quot;readonly&quot;: true}"/>
+                        <newline/>
+                        <field name="x_lines_proposal" colspan="4" on_change="1" modifiers="{}"/>
+                        <newline/>
+                        <field name="x_studio_estado" modifiers="{}"/>
+                        <separator/>
+                    </group>
+                </sheet>
+            </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="requirement_tree_view">
+        <field name="name">Vista Tree</field>
+        <field name="model">requiriment.client</field>
+        <field name="arch" type="xml">
+            <tree string="Solicitud de requerimiento del cliente">
+                <field name="x_order_id"/>
+                <field name="x_name" modifiers="{}" attrs="{'invisible': [('x_name', '=', False)]}"/>
+                    <field name="x_descripcion"/>
+                    <field name="x_marca"/>
+                    <field name="x_modelo"/>
+                    <field name="x_presupuesto"/>
+                    <field name="x_studio_related_field_1eaGE" string="Cliente"/>
+                    <field name="x_proveedor"/>
+                    <field name="x_cantidad"/>
+                    <field name="x_studio_related_field_ap2ah" string="Vendedor"/>
+                    <field name="x_studio_estado"/>
+                    <field name="create_date" string="Fecha de solicitud"/>
+                    <field name="x_count" attrs="{}" invisible="1"/>
+                    <button name="create_proposal" string="Create Propuesta" type="object" class="btn-primary"/>
+                    <button name="view_proposal" string="Ver Propuestas" type="object" class="btn-primary" attrs="{'invisible': [['x_count','=',0]]}"/>
+            </tree>
+        </field>
+        </record>
+
+        <record model="ir.ui.view" id="wizard_proposal_form_view">
+        <field name="name">Form Tree</field>
+        <field name="model">wizard.proposal</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                  <field name="x_detalle" readony="1" widget="html"/>
+                  <field name="x_rel_id" invisible="1"/>
+                </group>
+              <group>
+                <group>
+                  <field name="x_marca"/>
+                  <field name="x_grup_id"/>
+                  <field name="x_categoria_id" required="1"/>
+                  <field name="x_familia_id"/>
+                  <field name="x_linea_id"/>
+                  <field name="x_modelo"/>
+                  <field name="x_cantidad"></field>
+                    <field name="x_costo" string="Costo Unitario"/>
+                     <field name="x_iva" required="True" string="Incluye IVA" invisible="1" />
+                </group>
+                <group>
+                  <field name="x_descripcion" string="Producto" required="1"/>
+                  <field name="x_tiempo_entrega" />
+                    <field name="x_vigencia" />
+                  <field name="x_archivo" widget="image" string="Imagen del producto"/>
+                 <!-- <field name="x_archivo_2" string="Archivo"/>-->
+
+                    <field name="x_note" string="Notas"/>
+                  <field name="x_proveedor_char"/>
+                  <field name="create_uid" string="Agente de compra"/>
+                </group>
+              </group>
+              <group>
+                <group>
+                  <field name="x_caracteristicas" widget="text" />
+                </group>
+                <group>
+                  <field name="x_garantias"  widget="text"  />
+                  <field name="x_documento" string="Documento" widget="pdf_viewer"/>
+                </group>
+              </group>
+                <footer>
+                    <button string="Aceptar" name="confirm" type="object" class="send_and_print btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+        </record>
+
+        <record model="ir.ui.view" id="proposal_purcahse_form_view">
+        <field name="name">Form Tree</field>
+        <field name="model">proposal.purchases</field>
+        <field name="arch" type="xml">
+            <form>
+            <header>
+                <field name="x_state" modifiers="{}" widget="statusbar"/>
+            </header>
+            <sheet string="Propuesta de Compras">
+                <group>
+                    <field name="x_detalle" readony="1" widget="html"/>
+                    <field name="rel_id" invisible="1"/>
+                </group>
+                <group>
+                    <group>
+                        <field name="x_studio_related_field_gKx5P" modifiers="{&quot;readonly&quot;: true}" readonly="1"/>
+                        <field name="x_name" modifiers="{}" attrs="{'invisible': [('x_name', '=', False)]}" readonly="1"/>
+                        <field name="x_studio_estado_de_cotizacin" modifiers="{&quot;readonly&quot;: true}" readonly="1"/>
+                        <field name="x_marca"/>
+                        <field name="x_grup_id"/>
+                        <field name="x_categoria_id"/>
+                        <field name="x_familia_id"/>
+                        <field name="x_linea_id"/>
+                        <field name="x_modelo"/>
+                        <field name="x_cantidad" modifiers="{}"/>
+                        <field name="x_costo" modifiers="{}" string="Costo Unitario"/>
+                        <field name="x_iva" modifiers="{}" string="Incluye IVA" invisible="1"/>
+                        <field name="x_proveedor" can_create="true" can_write="true" modifiers="{}" readonly="1" invisible="1"/>
+                        <field name="rel_id" on_change="1" can_create="true" can_write="true" modifiers="{}" readonly="1" invisible="1"/>
+                        <separator/>
+                    </group>
+                    <group>
+                        <field name="x_descripcion" string="Producto" required="1"/>
+                        <field name="x_tiempo_entrega" />
+                        <field name="x_vigencia" />
+                        <field name="x_studio_proveedor" modifiers="{}"/>
+                        <field name="x_archivo"/>
+                        <field name="x_note" string="Notas"/>
+                        <field name="create_uid" string="Agente de compra"/>
+
+                    </group>
+                </group>
+                <group>
+                    <group>
+                        <field name="x_caracteristicas" widget="text" />
+                    </group>
+                    <group>
+                        <field name="x_garantias"  widget="text"  />
+                        <field name="x_terminado" string="Regresar Propuesta" invisible="1"/>
+                       <!-- <field name="x_pro_aten" string="Propuesta Atendida" attrs="{'invisible': [('x_state','!=','validar')]}"/>-->
+
+                        <field name="x_pro_aten" string="Propuesta Atendida" attrs="{'invisible': [('x_state','!=','validar')]}"/>
+                       <!-- <field name="x_terminado" string="Regresar Propuesta" attrs="{'invisible': [('x_state','!=','validar')],[('x_state','!=','atendido')]}"/> -->
+
+                        <field name="x_documento" string="Documento" widget="pdf_viewer"/>
+                    </group>
+                </group>
+            </sheet>
+        </form>
+        </field>
+        </record>
+        <record model="ir.ui.view" id="proposal_purcahse_tree_view">
+        <field name="name">Form Tree</field>
+        <field name="model">proposal.purchases</field>
+        <field name="arch" type="xml">
+            <tree string="Propuesta de Compras">
+                <field name="create_date" string="Fecha de creación"/>
+                <field name="write_date" string="Fecha de modificación"/>
+                <field name="x_studio_related_field_gKx5P" string="Orden de venta" readonly="1"/>
+                <field name="rel_id" readonly="1" string="Requerimiento"/>
+                <field name="x_name" modifiers="{}" readonly="1" string="Propuesta"/>
+                    <field name="x_marca"/>
+                    <field name="x_modelo"/>
+                    <field name="x_product_id" attrs="{}" invisible="1"/>
+                    <field name="x_studio_proveedor"/>
+                    <field name="x_proveedor" string="Proveedor" invisible="1"/>
+                    <field name="x_costo" string="Costo"/>
+                    <field name="x_cantidad" string="Cantidad"/>
+                    <field name="x_motivo_cancelacion" readonly="1"/>
+                    <field name="x_state" string="Estado" readonly="1"/>
+                    <field name="x_studio_estado_de_cotizacin" string="Estado de Cotización" readonly="1"/>
+                    <field name="x_studio_aprovacin_de_compras" string="Aprovación de Compras"/>
+            </tree>
+        </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_proposal_purchase">
+            <field name="name">Propuestas de Compra</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">proposal.purchases</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_requiremt_client">
+            <field name="name">Requerimientos</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">requiriment.client</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.ui.view" id="wizard_cancel_form_view">
+        <field name="name">Form Tree</field>
+        <field name="model">wizard.cancel</field>
+        <field name="arch" type="xml">
+                        <form>
+              <sheet>
+                <field name="check" invisible="1"/>
+                <field name="description"/>
+              </sheet>
+              <footer>
+                    <button string="Aceptar" name="confirm" type="object" class="send_and_print btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+                </record>
+
+                <record model="ir.ui.view" id="wizard_revalid_form_view">
+        <field name="name">Form Tree</field>
+        <field name="model">wizard.revali</field>
+        <field name="arch" type="xml">
+                        <form>
+              <sheet>
+                <field name="description"/>
+              </sheet>
+              <footer>
+                    <button string="Aceptar" name="confirm" type="object" class="send_and_print btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+                </record>
+        <menuitem id="menu_proposal" name="Propuestas de Compras" action="action_proposal_purchase" parent="purchase.menu_purchase_root" sequence="16"/>
+        <menuitem id="menu_requirement" name="Requerimientos" action="action_requiremt_client" parent="purchase.menu_purchase_root" sequence="15"/>
+    </data>
+        <data noupdate="1">
+
+        <!-- Sequences for sale.order -->
+        <record id="seq_require_order" model="ir.sequence">
+            <field name="name">requirementr</field>
+            <field name="code">requiriment.seq</field>
+            <field name="prefix">REQ-</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+            <record id="seq_proposal_purcahse" model="ir.sequence">
+            <field name="name">proposal</field>
+            <field name="code">proposal.seq</field>
+            <field name="prefix">PROP-</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+    </data>
+</odoo>

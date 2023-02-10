@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sale_purchase_confirm_sale_purchase_confirm,sale_purchase_confirm.sale_purchase_confirm,model_sale_order_alerta,base.group_user,1,1,1,1
+access_sale_orders_invoice,sale_purchase_confirm.sale_orders_invoice,model_sale_orders_invoice,base.group_user,1,1,1,1
+access_purchase_order_invoice,sale_purchase_confirm.purchase_invoice,model_purchase_wizard_conf,base.group_user,1,1,1,1
+access_sale_line_wizd,sale_purchase_confirm.sale.line.wiza,model_sale_line_wizar,base.group_user,1,1,1,1
+access_purchase_order_merge,sale_purchase_confirm.purchase_invoice_merge,model_purchase_wizard_merge,base.group_user,1,1,1,1
+access_proposal_state,sale_proposal_state,model_proposal_state,base.group_user,1,1,1,1
+access_proposal_purchase,saleproposal_purchase,model_proposal_purchases,base.group_user,1,1,1,1
+access_requirement_client,salerequirement_client,model_requiriment_client,base.group_user,1,1,1,1
+access_wizard_proposal,salewizard_proposal,model_wizard_proposal,base.group_user,1,1,1,1
+access_wizard_cancel,salewizard_cancel_proposal,model_wizard_cancel,base.group_user,1,1,1,1
+access_wizard_revali,salewizard_revalid_proposal,model_wizard_revali,base.group_user,1,1,1,1
