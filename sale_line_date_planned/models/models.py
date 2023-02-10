@@ -17,8 +17,8 @@ class SaleOrderLine(models.Model):
     date_planned_line = fields.Many2one('res.partner', 'Dirección')
     date_planned_l = fields.Date('Fecha Entrega')
 
-class ProcurementRule(models.Model):
-    _inherit = 'procurement.group'
+# class ProcurementRule(models.Model):
+#     _inherit = 'procurement.group'
 
     # @api.model
     # def run(self, procurements):
