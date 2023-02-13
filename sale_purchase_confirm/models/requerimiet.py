@@ -155,7 +155,7 @@ class ProposalPurchase(models.Model):
 
     def validar(self):
         self.x_state = 'validar'
-        view = self.env.ref()
+        view = self.env.ref('sale_purchase_confirm.wizard_revalid_form_view')
         wiz = self.env['wizard.revali'].create({'proposal_id': self.id})
         action = {
             'name': 'Revalidar propuesta',
