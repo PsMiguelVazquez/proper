@@ -257,6 +257,12 @@ class SaleOrderLine(models.Model):
         self.limit_price()
         return r
 
+    @api.onchange('product_uom', 'product_uom_qty')
+    def product_uom_change(self):
+        r = super(SaleOrderLine, self).product_uom_change()
+        self.limit_price()
+        return r
+
     @api.onchange('price_unit')
     def limit_price(self):
         for record in self:
