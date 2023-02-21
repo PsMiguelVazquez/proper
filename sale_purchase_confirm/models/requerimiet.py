@@ -67,7 +67,7 @@ class ProposalPurchase(models.Model):
     x_categoria_id = fields.Many2one("product.category", "Categoría")
     x_condiciones_de_pago = fields.Char("Condiciones de Pago")
     x_costo = fields.Float("costo")
-    x_descripcion = fields.Char("Descripción")
+    x_descripcion = fields.Char("Producto")
     x_detalle = fields.Char("Detalle", compute='get_detalle')
     x_documento = fields.Binary("Documento")
     x_garantias = fields.Text("Garantias")

@@ -90,7 +90,7 @@
                             <field name="proposal_line_ids">
                                 <tree string="Propuesta de Compras" decoration-success="x_state == 'done'" decoration-warning="x_state == 'confirmado'">
                                     <field name="x_name" modifiers="{}" string="Propuesta"/>
-                                    <field name="x_product_id" optional="show"/>
+                                    <field name="x_descripcion" optional="show"/>
                                     <field name="x_cantidad" optional="show" string="Cantidad"/>
                                     <field name="x_costo" optional="show" string="Costo"/>
                                     <field optional="show" name="x_studio_proveedor" string="Proveedor" attrs="{}"/>
