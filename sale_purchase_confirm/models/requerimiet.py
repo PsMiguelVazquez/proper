@@ -185,7 +185,7 @@ class WizarPropo(models.TransientModel):
     x_condiciones_de_pago = fields.Char("Condiciones de Pago")
     x_costo = fields.Float("Costo")
     x_descripcion = fields.Char("Descripción")
-    x_detalle = fields.Char("Detalle")
+    x_detalle = fields.Char("Detalle", compute='get_detalle')
     x_documento = fields.Binary("Documento")
     x_familia_id = fields.Many2one("x_familia", "Familia")
     x_garantias = fields.Text("Garantias")
