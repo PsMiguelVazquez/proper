@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<odoo>
+        <record id="view_change_stock_quant_client_form" model="ir.ui.view">
+            <field name="name">change.client.wizard.form</field>
+            <field name="model">change.client.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Cambiar cliente">
+                    <group class="oe_title">
+<!--                        <field name="client_id" options="{'no_create_edit': True}" domain="[('x_nivel_cliente', '!=', None)]" />-->
+                        <field name="client_id" options="{'no_create_edit': True}"  />
+                    </group>
+                    <footer>
+                        <button name="change_report_client" string="Cambiar" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_change_stock_quant_client" model="ir.actions.act_window">
+            <field name="name">Cambiar cliente</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">change.client.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_change_stock_quant_client_form"/>
+            <field name="target">new</field>
+        </record>
+</odoo>

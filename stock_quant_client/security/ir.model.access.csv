@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_stock_quant_client,stock.quant.client,model_stock_quant,base.group_user,1,1,1,1
+access_change_client_wizard,change.client.wizard,model_change_client_wizard,base.group_user,1,1,1,1
+
