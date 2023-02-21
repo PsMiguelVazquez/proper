@@ -61,7 +61,7 @@
             <form>
                 <group>
                   <field name="x_detalle" readony="1" widget="html"/>
-                  <field name="x_rel_id" invisible="1"/>
+                  <field name="rel_id" invisible="1"/>
                 </group>
               <group>
                 <group>

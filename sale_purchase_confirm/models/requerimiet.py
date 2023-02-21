@@ -35,7 +35,7 @@ class RequerimientClient(models.Model):
 
     def create_proposal(self):
         view = self.env.ref('sale_purchase_confirm.wizard_proposal_form_view')
-        wiz = self.env['wizard.proposal'].create({'x_rel_id': self.id})
+        wiz = self.env['wizard.proposal'].create({'rel_id': self.id})
         return {
             'name': 'Propuesta',
             'type': 'ir.actions.act_window',
@@ -129,7 +129,7 @@ class ProposalPurchase(models.Model):
                  'x_studio_many2one_field_RWuq7': self.x_familia_id.id,
                  'x_studio_many2one_field_LZOP8': self.x_linea_id.id, 'image_1920': self.x_archivo,
                  'x_producto_propuesta': self.x_new_prod_prop})
-        self.x_rel_id.x_order_id.write({'order_line': [(0, 0, {'x_studio_nuevo_costo': self.x_costo,
+        self.rel_id.x_order_id.write({'order_line': [(0, 0, {'x_studio_nuevo_costo': self.x_costo,
                                                                  'product_id': self.x_product_id.id,
                                                                  'product_uom_qty': self.x_cantidad,
                                                                  'price_unit': self.x_costo / .8 if not self.x_iva else (
@@ -152,6 +152,7 @@ class ProposalPurchase(models.Model):
             'target': 'new',
             'res_id': wiz.id,
             'context': self.env.context}
+        return action
 
     def validar(self):
         self.x_state = 'validar'
@@ -167,6 +168,7 @@ class ProposalPurchase(models.Model):
             'target': 'new',
             'res_id': wiz.id,
             'context': self.env.context}
+        return action
 
     def autoriz(self):
         self.x_state = 'confirm'
@@ -205,7 +207,7 @@ class WizarPropo(models.TransientModel):
                                         ("ACTIVO FIJO","ACTIVO FIJO"),
                                         ("ADMON","ADMON"),
                                         ("PROMOCION","PROMOCION")], "Rama")
-    x_rel_id = fields.Many2one("requiriment.client", "Requerimiento")
+    rel_id = fields.Many2one("requiriment.client", "Requerimiento")
     x_tiempo_entrega = fields.Char("Tiempo de entrega")
     x_vigencia = fields.Char("Vigencia")
 
@@ -214,11 +216,25 @@ class WizarPropo(models.TransientModel):
             {'create_uid': self.create_uid.id, 'x_descripcion': self.x_descripcion, 'x_iva': self.x_iva,
              'x_condiciones_de_pago': self.x_condiciones_de_pago, 'x_garantias': self.x_garantias,
              'x_vigencia': self.x_vigencia, 'x_caracteristicas': self.x_caracteristicas,
-             'x_tiempo_entrega': self.x_tiempo_entrega, 'x_archivo': self.x_archivo, 'rel_id': self.x_rel_id.id,
+             'x_tiempo_entrega': self.x_tiempo_entrega, 'x_archivo': self.x_archivo, 'rel_id': self.rel_id.id,
              'x_marca': self.x_marca, 'x_grup_id': self.x_grup_id.id, 'x_categoria_id': self.x_categoria_id.id,
              'x_familia_id': self.x_familia_id.id, 'x_linea_id': self.x_linea_id.id, 'x_modelo': self.x_modelo,
              'x_cantidad': self.x_cantidad, 'x_costo': self.x_costo, 'x_studio_proveedor': self.x_proveedor_char,
              'x_documento': self.x_documento, 'x_note': self.x_note})
+    @api.depends('rel_id')
+    def get_detalle(self):
+        for record in self:
+            record.x_detalle = ''
+            if record.rel_id.id:
+                t = "<table class='table'><tr><td>Nombre</td><td>Descripción</td><td>Marca</td><td>Modelo</td><td>Cantidad</td><td>Presupuesto</td><td>Proveedor</td><td>linkproducto</td></tr>"
+                t = t + "<tr><td>" + str(record.rel_id.x_name) + "</td><td>" + str(
+                    record.rel_id.x_descripcion) + "</td><td>" + str(record.rel_id.x_marca) + "</td><td>" + str(
+                    record.rel_id.x_modelo) + "</td><td>" + str(record.rel_id.x_cantidad) + "</td><td>" + str(
+                    record.rel_id.x_presupuesto) + "</td><td>" + str(record.rel_id.x_proveedor) + "</td><td>" + str(
+                    record.rel_id.x_link_sitio) + "</td></tr></table>"
+                record.x_detalle = t
+
+
 
 class WizardCancel(models.TransientModel):
     _name = 'wizard.cancel'
