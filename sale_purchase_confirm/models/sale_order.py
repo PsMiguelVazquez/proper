@@ -18,8 +18,8 @@ class SaleOrder(models.Model):
     states_proposals = fields.Many2many('proposal.state', string='Estados de propuestas', compute='set_states_proposal')
     requirements_line_ids = fields.One2many('requiriment.client', 'x_order_id', 'Requerimientos')
     proposal_line_ids = fields.Many2many('proposal.purchases', compute='get_proposals')
-    partner_ids = fields.Many2many('res.partner', compute='get_partner')
-    partner_child = fields.Many2one('res.partner', 'Solicitante', domain=[('id', 'in', partner_ids)])
+    partner_loc_ids = fields.Many2many('res.partner', compute='get_partner')
+    partner_child = fields.Many2one('res.partner', 'Solicitante', domain=[('id', 'in', partner_loc_ids)])
     partner_id = fields.Many2one('res.partner', string='Customer', readonly=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
         required=True, change_default=True, index=True, tracking=1,
@@ -220,7 +220,7 @@ class SaleOrder(models.Model):
                 partner = self.env['res.partner'].search([['x_nombre_agente_venta', '=', self.env.user.name]])
             else:
                 partner = self.env['res.partner'].search([])
-            record.partner_ids = [(6,0, partner.ids+partner.mapped('child_ids').ids)]
+            record.partner_loc_ids = [(6,0, partner.ids+partner.mapped('child_ids').ids)]
 
     # def action_quotation_send(self):
     #     registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
