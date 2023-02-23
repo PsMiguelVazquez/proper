@@ -2,7 +2,7 @@ from odoo import models, fields,api, _
 
 
 class RequerimientClient(models.Model):
-    _inherit = ['mail.thread', 'mail.activity']
+    _inherit = 'mail.thread'
     _name = 'requiriment.client'
     x_cantidad = fields.Float("cantidad")
     x_comprar = fields.Boolean("Comprar")
@@ -58,7 +58,7 @@ class RequerimientClient(models.Model):
         self.x_studio_estado = 'cancel'
 
 class ProposalPurchase(models.Model):
-    _inherit = ['mail.thread', 'mail.activity']
+    _inherit = 'mail.thread'
     _name = 'proposal.purchases'
     rel_id = fields.Many2one('requiriment.client')
     x_agente_compra = fields.Char("Agente de compra")
