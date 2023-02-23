@@ -17,6 +17,16 @@ class SaleOrderLine(models.Model):
     date_planned_line = fields.Many2one('res.partner', 'Dirección')
     date_planned_l = fields.Date('Fecha Entrega')
 
+    @api.onchange('order_partner_id')
+    def set_domain_addres(self):
+        for record in self:
+            if record.order_partner_id:
+                childs = self.env['res.partner'].search([('partner_id', '=', record.order_partner_id.id)])
+                res = {'domain': {'date_planned_line': [['id', 'in', childs.ids + record.order_partner_id.ids]]}}
+                return res
+            else:
+                return {}
+
 class ProcurementRule(models.Model):
     _inherit = 'procurement.group'
 
