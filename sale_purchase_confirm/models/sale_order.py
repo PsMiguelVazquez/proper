@@ -19,7 +19,7 @@ class SaleOrder(models.Model):
     requirements_line_ids = fields.One2many('requiriment.client', 'x_order_id', 'Requerimientos')
     proposal_line_ids = fields.Many2many('proposal.purchases', compute='get_proposals')
     partner_loc_ids = fields.Many2many('res.partner', compute='get_partner')
-    partner_child = fields.Many2one('res.partner', 'Solicitante', domain=[('id', 'in', partner_loc_ids)])
+    partner_child = fields.Many2one('res.partner', 'Solicitante')
     partner_id = fields.Many2one('res.partner', string='Customer', readonly=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
         required=True, change_default=True, index=True, tracking=1,
