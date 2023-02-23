@@ -5,27 +5,40 @@
             <field name="model">requiriment.client</field>
             <field name="arch" type="xml">
                 <form>
+                    <header>
+                        <field name="x_studio_estado" modifiers="{}" widget="statusbar"/>
+                    </header>
                 <sheet string="Solicitud de requerimiento del cliente">
-                    <group col="4">
-                        <field name="x_studio_related_field_ap2ah" modifiers="{&quot;readonly&quot;: true}"/>
-                        <field name="x_studio_related_field_DGJgC" modifiers="{&quot;readonly&quot;: true}"/>
-                        <field name="x_studio_related_field_1eaGE" modifiers="{&quot;readonly&quot;: true}"/>
-                        <field name="x_presupuesto" modifiers="{}"/>
-                        <field name="x_name" modifiers="{}" readonly="1" attrs="{'invisible': [('x_name', '=', False)]}"/>
-                        <field name="x_cantidad" modifiers="{}"/>
-                        <field name="x_descripcion" modifiers="{}"/>
-                        <field name="x_marca" modifiers="{}"/>
-                        <field name="x_modelo" modifiers="{}"/>
-                        <field name="x_order_id" on_change="1" can_create="true" can_write="true" modifiers="{}"/>
-                        <field name="x_proveedor" modifiers="{}"/>
-                        <field name="x_count" modifiers="{&quot;readonly&quot;: true}"/>
+                    <group>
+                        <group>
+                            <field name="x_studio_related_field_ap2ah" modifiers="{&quot;readonly&quot;: true}"/>
+                            <field name="x_studio_related_field_DGJgC" modifiers="{&quot;readonly&quot;: true}"/>
+                            <field name="x_studio_related_field_1eaGE" modifiers="{&quot;readonly&quot;: true}"/>
+                            <field name="x_presupuesto" modifiers="{}"/>
+                            <field name="x_name" modifiers="{}" readonly="1" attrs="{'invisible': [('x_name', '=', False)]}"/>
+                            <field name="x_cantidad" modifiers="{}"/>
+                            <field name="x_descripcion" modifiers="{}"/>
+                            <field name="x_marca" modifiers="{}"/>
+                            <field name="x_modelo" modifiers="{}"/>
+                            <field name="x_order_id" on_change="1" can_create="true" can_write="true" modifiers="{}"/>
+                            <field name="x_proveedor" modifiers="{}"/>
+                            <field name="x_count" modifiers="{&quot;readonly&quot;: true}"/>
+                        </group>
+                        <group>
+
+                        </group>
                         <newline/>
-                        <field name="x_lines_proposal" colspan="4" on_change="1" modifiers="{}"/>
-                        <newline/>
-                        <field name="x_studio_estado" modifiers="{}"/>
                         <separator/>
+                        <group>
+                            <field name="x_lines_proposal" colspan="4" on_change="1" modifiers="{}"/>
+                        </group>
                     </group>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
             </field>
         </record>
@@ -162,6 +175,11 @@
                     </group>
                 </group>
             </sheet>
+            <div class="oe_chatter">
+                <field name="message_follower_ids"/>
+                <field name="activity_ids"/>
+                <field name="message_ids"/>
+            </div>
         </form>
         </field>
         </record>

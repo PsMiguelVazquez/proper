@@ -2,6 +2,7 @@ from odoo import models, fields,api, _
 
 
 class RequerimientClient(models.Model):
+    _inherit = ['mail.thread', 'mail.activity']
     _name = 'requiriment.client'
     x_cantidad = fields.Float("cantidad")
     x_comprar = fields.Boolean("Comprar")
@@ -57,7 +58,7 @@ class RequerimientClient(models.Model):
         self.x_studio_estado = 'cancel'
 
 class ProposalPurchase(models.Model):
-    _inherit = 'mail.thread'
+    _inherit = ['mail.thread', 'mail.activity']
     _name = 'proposal.purchases'
     rel_id = fields.Many2one('requiriment.client')
     x_agente_compra = fields.Char("Agente de compra")
@@ -132,12 +133,12 @@ class ProposalPurchase(models.Model):
         self.rel_id.x_order_id.write({'order_line': [(0, 0, {'x_studio_nuevo_costo': self.x_costo,
                                                                  'product_id': self.x_product_id.id,
                                                                  'product_uom_qty': self.x_cantidad,
-                                                                 'price_unit': self.x_costo / .8 if not self.x_iva else (
+                                                                 'price_unit': self.x_costo / .88 if not self.x_iva else (
                                                                                                                                         (
-                                                                                                                                            self.x_costo) * 1.16) / .8,
+                                                                                                                                            self.x_costo) * 1.16) / .88,
                                                                  'x_precio_propuesta': self.x_costo / .8 if not self.x_iva else (
                                                                                                                                                 (
-                                                                                                                                                    self.x_costo) * 1.16) / .8})]})
+                                                                                                                                                    self.x_costo) * 1.16) / .88})]})
     def cancel(self):
         self.x_state = 'cancel'
         view = self.env.ref('sale_purchase_confirm.wizard_cancel_form_view')
