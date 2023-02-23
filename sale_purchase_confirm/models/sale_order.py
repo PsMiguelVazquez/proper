@@ -13,12 +13,18 @@ class SaleOrder(models.Model):
     # state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('purchase_conf', 'Validación compras'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
     state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
     purchase_ids = fields.Many2many('purchase.order', string='OC', readonly=True)
-    partner_child = fields.Many2one('res.partner', 'Solicitante')
     check_solicitudes = fields.Boolean(default=False, compute='solicitud_reduccion')
     albaran = fields.Many2one('stock.picking', 'Albaran')
     states_proposals = fields.Many2many('proposal.state', string='Estados de propuestas', compute='set_states_proposal')
     requirements_line_ids = fields.One2many('requiriment.client', 'x_order_id', 'Requerimientos')
     proposal_line_ids = fields.Many2many('proposal.purchases', compute='get_proposals')
+    partner_ids = fields.Many2many('res.partner', compute='get_partner')
+    partner_child = fields.Many2one('res.partner', 'Solicitante', domain=[('id', 'in', partner_ids)])
+    partner_id = fields.Many2one('res.partner', string='Customer', readonly=True,
+        states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
+        required=True, change_default=True, index=True, tracking=1,
+        domain="[('type', '!=', 'private'), ('company_id', 'in', (False, company_id)), ('id', 'in', partner_ids)]",)
+
     @api.depends('requirements_line_ids')
     def get_proposals(self):
         for record in self:
@@ -203,7 +209,7 @@ class SaleOrder(models.Model):
             self.invoice_ids.write({'sale_id': self.id})
         return super(SaleOrder, self).action_view_invoice()
 
-    @api.onchange('partner_id', 'partner_child')
+    @api.depends('partner_id', 'partner_child')
     def get_partner(self):
         for record in self:
             res = {}
@@ -214,8 +220,7 @@ class SaleOrder(models.Model):
                 partner = self.env['res.partner'].search([['x_nombre_agente_venta', '=', self.env.user.name]])
             else:
                 partner = self.env['res.partner'].search([])
-            res = {'domain': {'partner_id': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]], 'partner_child': [['id', 'in', partner.ids+partner.mapped('child_ids').ids]]}}
-            return res
+            record.partner_ids = [(6,0, partner.ids+partner.mapped('child_ids').ids)]
 
     # def action_quotation_send(self):
     #     registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
