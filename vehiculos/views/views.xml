@@ -149,6 +149,7 @@
                       <field name="name" invisible="1"/>
                       <field name="origin" readonly="1" string="Orden"/>
                       <field name="carrier_tracking_ref" />
+                      <field name="guia" string="Guia de ventas" readonly="1"/>
                       <field name="evidencia" force_save="1" />
                       <!--<button name="comentario" type="object" string="Comentario y/o evidencia" attrs="{'invisible': ['|',['state','=','done'],['ruta_id','=',False]]}" ></button>-->
                       <!--<button name="guia" type="object" string="Guia" attrs="{'invisible': ['|','|',['state','=','done'],['carrier_tracking_ref','!=',False],['ruta_id','=',False]]}"/>
@@ -182,6 +183,16 @@
             </xpath>
         </field>
       </record>
+        <record id="sale_orde_proposal_requirement" model="ir.ui.view">
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+        <xpath expr="//field[@name='payment_term_id']" position="after">
+            <field name="guia" string="Guia de ventas"/>
+            <field name="carrier_tracking_ref" attrs="{'invisible': [('carrier_tracking_ref', '=', False)]}" readonly="1"/>
+        </xpath>
+        </field>
+        </record>
 
   </data>
 </odoo>
