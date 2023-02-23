@@ -23,7 +23,7 @@ class SaleOrder(models.Model):
     partner_id = fields.Many2one('res.partner', string='Customer', readonly=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
         required=True, change_default=True, index=True, tracking=1,
-        domain="[('type', '!=', 'private'), ('company_id', 'in', (False, company_id)), ('id', 'in', partner_ids)]",)
+        domain="[('type', '!=', 'private'), ('company_id', 'in', (False, company_id))]",)
 
     @api.depends('requirements_line_ids')
     def get_proposals(self):
