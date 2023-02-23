@@ -16,7 +16,7 @@ class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
     date_planned_l = fields.Date('Fecha Entrega')
     partner_ids = fields.Many2many('res.partner', compute='set_domain_addres')
-    date_planned_line = fields.Many2one('res.partner', 'Dirección', domain="[('id', 'in', partner_ids)]")
+    date_planned_line = fields.Many2one('res.partner', 'Dirección')
 
     @api.depends('order_partner_id')
     def set_domain_addres(self):
