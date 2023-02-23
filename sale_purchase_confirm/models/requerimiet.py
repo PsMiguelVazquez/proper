@@ -227,10 +227,10 @@ class WizarPropo(models.TransientModel):
         for record in self:
             record.x_detalle = ''
             if record.rel_id.id:
-                t = "<table class='table'><tr><td>Nombre</td><td>Descripción</td><td>Marca</td><td>Modelo</td><td>Cantidad</td><td>Presupuesto</td><td>Proveedor</td><td>linkproducto</td></tr>"
+                t = "<table class='table'><tr><td>Nombre</td><td>Descripción</td><td>Marca</td><td>Modelo</td><td>Cantidad</td><td>Precio Unitario</td><td>Presupuesto</td><td>Proveedor</td><td>linkproducto</td></tr>"
                 t = t + "<tr><td>" + str(record.rel_id.x_name) + "</td><td>" + str(
                     record.rel_id.x_descripcion) + "</td><td>" + str(record.rel_id.x_marca) + "</td><td>" + str(
-                    record.rel_id.x_modelo) + "</td><td>" + str(record.rel_id.x_cantidad) + "</td><td>" + str(
+                    record.rel_id.x_modelo) + "</td><td>" + str(record.rel_id.x_cantidad) + "</td><td>"+str(record.rel_id.x_precio_uni) + "</td><td>" + str(
                     record.rel_id.x_presupuesto) + "</td><td>" + str(record.rel_id.x_proveedor) + "</td><td>" + str(
                     record.rel_id.x_link_sitio) + "</td></tr></table>"
                 record.x_detalle = t
