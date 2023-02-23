@@ -82,8 +82,8 @@ class SaleOrder(models.Model):
 
     def conf_ventas(self):
         registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
-        # if registro != []:
-        #     self.write({'x_aprovar': True, 'state': 'purchase_conf'})
+        if registro != []:
+            self.write({'x_aprovar': True, 'state': 'credito_conf'})
         if registro == []:
             total = self.partner_id.credit_rest - self.amount_total
             check = total >= 0 if self.payment_term_id.id != 1 else False
