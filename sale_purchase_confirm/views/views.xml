@@ -68,7 +68,6 @@
                     <field name="arch" type="xml">
                         <xpath expr="//field[@name='payment_term_id']" position="after">
                             <field name="albaran" attrs="{'invisible': [('albaran', '=', False)]}"/>
-                            <field name=""
                         </xpath>
                     <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
                         <page string="Requerimientos" name="studio_page_0ru5U">
