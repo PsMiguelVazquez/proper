@@ -146,21 +146,80 @@ class SaleOrder(models.Model):
     def is_valid_order_sale(self):
         valid = True
         message = ''
-        if self.validity_date < dateutil.utils.today().date():
-            return False, 'La cotización no está vigente'
-        for line in self.order_line:
-            if line.qty_available_today <= 0.0:
-                message += '\n - No hay stock para el artículo: ' + line.name.replace('\n', ' ')
+        dic_nuevos_precios = {}
+        dic_cantidades_disponibles ={}
+
+        for i,line in enumerate(self.order_line,start=1):
+            margen = line.product_id.x_fabricante['x_studio_margen_' + str(line.order_id.x_studio_nivel)] if line.product_id.x_fabricante else 12
+            id_producto = line.product_id.id
+            '''
+                Se llena un diccionario para guardar los nuevos precios según el id del producto
+            '''
+            if line.x_studio_nuevo_costo > 0.0:
+                nuevo_precio_minimo = line.x_studio_nuevo_costo/(1 - (margen/100) )
+                if id_producto not in dic_nuevos_precios.keys():
+                    dic_nuevos_precios.update({id_producto:nuevo_precio_minimo})
+                else:
+                    if dic_nuevos_precios[id_producto] < nuevo_precio_minimo:
+                        dic_nuevos_precios[id_producto] = nuevo_precio_minimo
+
+
+            '''
+                Se llena un diccionario para guardar los cantidades según el id del producto
+            '''
+            if line.x_cantidad_disponible_compra > 0.0:
+                if id_producto not in dic_cantidades_disponibles.keys():
+                    dic_cantidades_disponibles.update({id_producto:line.x_cantidad_disponible_compra})
+                else:
+                    dic_cantidades_disponibles[id_producto] += line.x_cantidad_disponible_compra
+
+        '''
+            Validaciones
+        '''
+        for i,line in enumerate(self.order_line,start=1):
+            '''
+                Valida que se haya establecido el nuevo precio si se solicito validar datos
+            '''
+
+            if line.x_validacion_precio and line.x_studio_nuevo_costo == 0 :
                 valid = False
+                message += 'No se ha establecido el nuevo costo para el producto' + line.name.replace('\n','') + ' línea(' + str(i) + ')'
+
+            '''
+                Validación de cantidades.
+                Primero Valida cantidades del valor product.id.virtual_available
+                Despues de una validación de parte de compras toma ese valor ingresado por compras en cantidad disponible (Cant. Disponible)
+                como producto adicional para surtir productos
+            '''
+            if line.product_id.virtual_available <= 0.0:
+                if line.product_id.id in dic_cantidades_disponibles and dic_cantidades_disponibles[line.product_id.id] < line.product_uom_qty:
+                    message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n', ' ') + ' línea(' + str(i) + ')'
+                    valid = False
+                else:
+                    if line.product_id.id in dic_cantidades_disponibles.keys():
+                        dic_cantidades_disponibles[line.product_id.id]-=line.product_uom_qty
+                    else:
+                        message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n',' ') + ' línea(' + str(i) + ')'
+                        valid = False
+            else:
+                line.product_id.virtual_available-=line.product_uom_qty
+            '''
+                Validación de nuevo costo
+            '''
+
+            if line.product_id.id in dic_nuevos_precios.keys() and dic_nuevos_precios[line.product_id.id] > line.price_unit:
+                valid = False
+                message  += '\n -El precio unitario para producto' + line.name.replace('\n', ' ') + ' no cumple con la utilidad esperada según el nuevo costo.' + ' línea(' + str(i) + ')'
+
         return valid, message
             
     def action_confirm_sale(self):
         valid,message = self.is_valid_order_sale()
         if valid:
-            registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
-            if registro != []:
-                self.write({'x_aprovar': True, 'state': 'sale_conf'})
-            if registro == []:
+            # registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
+            # if registro != []:
+            #     self.write({'x_aprovar': True, 'state': 'sale_conf'})
+            # if registro == []:
                 self.write({'x_aprovar': False})
                 total = self.partner_id.credit_rest - self.amount_total
                 check = total >= 0 if self.payment_term_id.id != 1 else False
@@ -296,19 +355,24 @@ class SaleOrderLine(models.Model):
         for record in self:
             valor = 0
             if record.product_id:
-                if record.price_unit < record.x_studio_costo_promedio and not self.env.user.has_group('sales_team.group_sale_manager'):
-                    record.price_unit = record.x_studio_costo_promedio
                 if record.order_id.x_studio_nivel:
                     margen = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
-                    valor = record.price_unit / ((100 - margen) / 100)
+                    valor = record.product_id.standard_price / ((100 - margen) / 100)
                 else:
                     margen = 12
-                    valor = record.price_unit / ((100 - margen) / 100)
+                    valor = record.product_id.standard_price / ((100 - margen) / 100)
                 if valor != 0:
-                    if valor > record.price_unit:
-                        record.update({'price_unit': round(valor + .5), 'price_reduce_v': record.price_unit, 'check_price_reduce': True})
+                    if valor < record.price_unit:
+                        record.update({'price_unit': round(record.price_unit + .5), 'check_price_reduce': False})
                     else:
-                        record.update({'price_unit': round(valor + .5),'check_price_reduce': False})
+                        # record.update({'price_unit': round(valor + .5), 'price_reduce_v': record.price_unit, 'check_price_reduce': True})
+                        record.update({'price_unit': round(valor + .5),  'check_price_reduce': True})
+                        # record.order_id.solicitud_reduccion_send()
+                '''
+                Parche temporal para evitar que los productos cambien de precio al agregar
+                #valias lineas del mismo producto en la misma cotización
+                '''
+                record.product_id.update({'lst_price': 0})
             record['x_nuevo_precio'] = round(valor + .5)
 
     @api.depends('product_id')
