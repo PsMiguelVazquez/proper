@@ -102,52 +102,16 @@ class SaleOrder(models.Model):
                 self.write({'state': 'credito_conf'})
 
 
-            # if cliente and check:
-            #     self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-            #     self.action_confirwm()
-            # else:
-            #     if not facturas:
-            #         if self.x_studio_rfc and check:
-            #                     self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-            #                     self.action_confirm()
-            #     else:
-            #         self.write({'state': 'credito_conf'})
-                # if self.payment_term_id.id == 1 or not self.payment_term_id:
-                #     self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '1'})
-                #     grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                #     template = self.env['mail.template'].browse(53)
-                #     template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
-                #     #template.send_mail(self.id)
-                # else:
-                #     if facturas == []:
-                #         if self.x_studio_rfc and check:
-                #             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-                #             self.action_confirm()
-                #         if not check and self.x_studio_rfc:
-                #             self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '2'})
-                #             grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                #             template = self.env['mail.template'].browse(53)
-                #             template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
-                #             #template.send_mail(self.id)
-                #         if not self.x_studio_rfc:
-                #             self.write({'x_bloqueo': False, 'x_studio_estado_de_validacin': '3'})
-                #             grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                #             template = self.env['mail.template'].browse(52)
-                #             template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
-                #             #template.send_mail(self.id)
-                #     else:
-                #         self.write({'x_bloqueo': False, 'x_studio_estado_de_validacin': '4'})
-                #         grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                #         template = self.env['mail.template'].browse(53)
-                #         template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
-                        #template.send_mail(self.id)
-            #self.write({'x_aprovar': False})
-
     def is_valid_order_sale(self):
         valid = True
         message = ''
         dic_nuevos_precios = {}
         dic_cantidades_disponibles ={}
+        if len(self.order_line) <= 0:
+            valid = False
+            message = 'No hay productos en la cotización'
+            return valid, message
+
 
         for i,line in enumerate(self.order_line,start=1):
             margen = line.product_id.x_fabricante['x_studio_margen_' + str(line.order_id.x_studio_nivel)] if line.product_id.x_fabricante else 12
@@ -214,54 +178,22 @@ class SaleOrder(models.Model):
         return valid, message
             
     def action_confirm_sale(self):
-        valid,message = self.is_valid_order_sale()
-        if valid:
-            # registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
-            # if registro != []:
-            #     self.write({'x_aprovar': True, 'state': 'sale_conf'})
-            # if registro == []:
-                self.write({'x_aprovar': False})
-                total = self.partner_id.credit_rest - self.amount_total
-                check = total >= 0 if self.payment_term_id.id != 1 else False
-                cliente = self.partner_id.x_studio_triple_a
-                facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(
-                    lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in ('not_paid', 'partial')).mapped('id')
-                if cliente and check:
-                    self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-                    return self.action_confirm()
-                else:
-                    self.write({'state':'credito_conf'})
-                    # if self.payment_term_id.id == 1 or not self.payment_term_id:
-                    #     self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '1'})
-                    #     grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                    #     template = self.env['mail.template'].browse(53)
-                    #     template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
-                    #     #template.send_mail(self.id)
-                    # else:
-                    #     if facturas == []:
-                    #         if self.x_studio_rfc and check:
-                    #             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-                    #             return self.action_confirm()
-                    #         if not check and self.x_studio_rfc:
-                    #             self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '2'})
-                    #             grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                    #             template = self.env['mail.template'].browse(53)
-                    #             template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
-                    #             #template.send_mail(self.id)
-                    #         if not self.x_studio_rfc:
-                    #             self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '3'})
-                    #             grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                    #             template = self.env['mail.template'].browse(52)
-                    #             template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']', '').replace('\'', '')})
-                    #             #template.send_mail(self.id)
-                    #     else:
-                    #         self.write({'x_bloqueo': True, 'x_studio_estado_de_validacin': '4'})
-                    #         grupo = self.env['res.groups'].search([['name', '=', 'aprovacion credito']])
-                    #         template = self.env['mail.template'].browse(53)
-                    #         template.write({'email_to': str(grupo.mapped('users.email')).replace('[', '').replace(']','').replace('\'', '')})
-                    #         #stemplate.send_mail(self.id)
+        # registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
+        # if registro != []:
+        #     self.write({'x_aprovar': True, 'state': 'sale_conf'})
+        # if registro == []:
+        self.write({'x_aprovar': False})
+        total = self.partner_id.credit_rest - self.amount_total
+        check = total >= 0 if self.payment_term_id.id != 1 else False
+        cliente = self.partner_id.x_studio_triple_a
+        facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(
+            lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in (
+            'not_paid', 'partial')).mapped('id')
+        if cliente and check:
+            self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+            return self.action_confirm()
         else:
-            raise UserError(message)
+            self.write({'state': 'credito_conf'})
 
     def action_view_invoice(self):
         if len(self)==1:
@@ -299,7 +231,7 @@ class SaleOrder(models.Model):
 
     def solicitud_reduccion_send(self):
         lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
-        mensaje = 'Se solicitara una reduccion de precio de los siguientes productos:\n'
+        mensaje = 'Se solicitará una reduccion de precio de los siguientes productos:\n'
         if lines:
             view = self.env.ref('sale_purchase_confirm.sale_order_alerta_view')
             for row in lines:
@@ -318,25 +250,36 @@ class SaleOrder(models.Model):
             }
 
     def action_confirm(self):
-        r = super(SaleOrder, self).action_confirm()
-        self.picking_ids.write({'sale': self.id})
-        self.write({'albaran': self.picking_ids.filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done'))[0].id})
-        return r
-
+        valid, message = self.is_valid_order_sale()
+        if valid:
+            r = super(SaleOrder, self).action_confirm()
+            self.picking_ids.write({'sale': self.id})
+            self.write({'albaran': self.picking_ids.filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done'))[0].id})
+            return r
+        else:
+            raise UserError(message)
 
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
     existencia = fields.Char('Cantidades', compute='get_stock')
-    check_price_reduce = fields.Boolean('Solicitud', default=False)
+    check_price_reduce = fields.Boolean('Solicitud', default=False, store=True, compute='_compute_check_price_reduce')
     price_reduce_v = fields.Float('Precio solicitado')
     price_reduce_solicit = fields.Boolean('Solicitud', default=False)
     invoice = fields.Boolean('Facturar', default=False)
     price_unit = fields.Float(copy=True)
 
-
-
-
+    @api.depends('price_unit')
+    def _compute_check_price_reduce(self):
+        for record in self:
+            margen = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
+            valor = record.product_id.standard_price / ((100 - margen) / 100)
+            if valor <= record.price_unit:
+                record.check_price_reduce = False
+                record.price_reduce_v = 0.0
+            else:
+                record.price_reduce_v = record.price_unit
+                record.check_price_reduce = True
 
     @api.onchange('product_id')
     def product_id_change(self):
@@ -350,7 +293,16 @@ class SaleOrderLine(models.Model):
         self.limit_price()
         return r
 
-    @api.onchange('price_unit')
+    # @api.onchange('x_studio_nuevo_costo')
+    # def _on_change_nuevo_costo(self):
+    #     for record in self:
+    #         if record.product_id:
+    #             margen = record.product_id.x_fabricante[
+    #                 'x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
+    #             valor = record.x_studio_nuevo_costo / ((100 - margen) / 100)
+    #             record.price_unit = round(valor + .5)
+
+    #@api.onchange('price_unit')
     def limit_price(self):
         for record in self:
             valor = 0
@@ -365,9 +317,8 @@ class SaleOrderLine(models.Model):
                     if valor < record.price_unit:
                         record.update({'price_unit': round(record.price_unit + .5), 'check_price_reduce': False})
                     else:
-                        # record.update({'price_unit': round(valor + .5), 'price_reduce_v': record.price_unit, 'check_price_reduce': True})
-                        record.update({'price_unit': round(valor + .5),  'check_price_reduce': True})
-                        # record.order_id.solicitud_reduccion_send()
+                        # record.update({'price_unit': round(valor+ .5), 'price_reduce_v': record.price_unit, 'check_price_reduce': True})
+                        record.update({'price_unit': round(valor+ .5)})
                 '''
                 Parche temporal para evitar que los productos cambien de precio al agregar
                 #valias lineas del mismo producto en la misma cotización
