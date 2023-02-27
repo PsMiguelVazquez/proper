@@ -182,9 +182,9 @@ class SaleOrder(models.Model):
         # if registro != []:
         #     self.write({'x_aprovar': True, 'state': 'sale_conf'})
         # if registro == []:
-        lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
-        if lines != []:
-            raise UserError('No se ha enviado la peticion de reducción de precio')
+        # lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
+        # if lines != []:
+        #     raise UserError('No se ha enviado la peticion de reducción de precio')
         self.write({'x_aprovar': False})
         total = self.partner_id.credit_rest - self.amount_total
         check = total >= 0 if self.payment_term_id.id != 1 else False
