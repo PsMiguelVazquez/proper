@@ -47,7 +47,7 @@ class SaleOrder(models.Model):
                     record.partner_id = record.partner_child
                 record.x_studio_cliente_de_marketplace = record.partner_child.name
                 record.user_id = self.env.user.id
-                
+
     @api.onchange('partner_id')
     def onchange_partner_id(self):
         r = super(SaleOrder, self).onchange_partner_id()
@@ -97,7 +97,7 @@ class SaleOrder(models.Model):
             #facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in ('not_paid', 'partial')).mapped('id')
             if check and cliente:
                 self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-                return self.action_confirwm()
+                return self.action_confirm()
             else:
                 self.write({'state': 'credito_conf'})
 
@@ -171,17 +171,20 @@ class SaleOrder(models.Model):
                 Validación de nuevo costo
             '''
 
-            if line.product_id.id in dic_nuevos_precios.keys() and dic_nuevos_precios[line.product_id.id] > line.price_unit:
-                valid = False
-                message  += '\n -El precio unitario para producto' + line.name.replace('\n', ' ') + ' no cumple con la utilidad esperada según el nuevo costo.' + ' línea(' + str(i) + ')'
+            # if line.product_id.id in dic_nuevos_precios.keys() and dic_nuevos_precios[line.product_id.id] > line.price_unit:
+            #     valid = False
+            #     message  += '\n -El precio unitario para producto' + line.name.replace('\n', ' ') + ' no cumple con la utilidad esperada según el nuevo costo.' + ' línea(' + str(i) + ')'
 
         return valid, message
-            
+
     def action_confirm_sale(self):
         # registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
         # if registro != []:
         #     self.write({'x_aprovar': True, 'state': 'sale_conf'})
         # if registro == []:
+        lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
+        if lines != []:
+            raise UserError('No se ha enviado la peticion de reducción de precio')
         self.write({'x_aprovar': False})
         total = self.partner_id.credit_rest - self.amount_total
         check = total >= 0 if self.payment_term_id.id != 1 else False
@@ -268,6 +271,16 @@ class SaleOrderLine(models.Model):
     price_reduce_solicit = fields.Boolean('Solicitud', default=False)
     invoice = fields.Boolean('Facturar', default=False)
     price_unit = fields.Float(copy=True)
+
+    def get_valor_minimo(self):
+        for line in self:
+            margen = line.product_id.x_fabricante[
+                'x_studio_margen_' + str(line.order_id.x_studio_nivel)] if line.product_id.x_fabricante else 12
+            if line.x_studio_nuevo_costo > 0:
+                valor = line.x_studio_nuevo_costo / ((100 - margen) / 100)
+            else:
+                valor = line.product_id.standard_price / ((100 - margen) / 100)
+            return valor
 
     @api.depends('price_unit')
     def _compute_check_price_reduce(self):
@@ -374,6 +387,8 @@ class Alerta_limite_de_credito(models.TransientModel):
 
     def confirmar_sale(self):
         self.sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})
+        # self.env['sale.order'].browse(self.env.context.get('active_ids')).write({'state': 'sale_conf'})
+        self.sale_id.order_line.order_id.update({'state': 'sale_conf'})
 
 
 class SaleInvoice(models.TransientModel):
