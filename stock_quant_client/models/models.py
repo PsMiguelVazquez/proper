@@ -12,7 +12,7 @@ class stock_quant_client(models.Model):
 
     @api.depends('margen_cliente', 'product_id')
     def _compute_costo_cliente(self):
-        wizard_client_id = self.env['change.client.wizard'].search([],limit=1,order='id desc').client_id
+        wizard_client_id = self.env['change.client.wizard'].search([('create_uid', '=', self.env.user.id)],limit=1,order='id desc').client_id
         for record in self:
             nivel_cliente = wizard_client_id.x_nivel_cliente.x_name
             margen = record.product_id.x_fabricante['x_studio_margen_' + nivel_cliente] if nivel_cliente else 0
