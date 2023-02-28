@@ -25,6 +25,13 @@ class SaleOrder(models.Model):
         required=True, change_default=True, index=True, tracking=1,
         domain="[('type', '!=', 'private'), ('company_id', 'in', (False, company_id))]",)
 
+
+    def _prepare_invoice(self):
+        vals = super(SaleOrder,self)._prepare_invoice()
+        vals.update({'l10n_mx_edi_usage':self.partner_id.x_studio_uso_de_cfdi})
+        vals.update({'l10n_mx_edi_payment_method_id':self.partner_id.x_studio_mtodo_de_pago})
+        return vals
+
     @api.depends('requirements_line_ids')
     def get_proposals(self):
         for record in self:
