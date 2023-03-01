@@ -198,6 +198,21 @@
           <field name="model">stock.picking</field>
           <field name="arch" type="xml">
               <form>
+                    <field name="is_locked" invisible="1"/>
+                    <field name="show_mark_as_todo" invisible="1"/>
+                    <field name="show_check_availability" invisible="1"/>
+                    <field name="show_validate" invisible="1"/>
+                    <field name="show_lots_text" invisible="1"/>
+                    <field name="immediate_transfer" invisible="1"/>
+                    <field name="picking_type_code" invisible="1"/>
+                    <field name="hide_picking_type" invisible="1"/>
+                    <field name="show_operations" invisible="1" readonly="1"/>
+                    <field name="show_allocation" invisible="1"/>
+                    <field name="show_reserved" invisible="1" readonly="1"/>
+                    <field name="move_line_exist" invisible="1"/>
+                    <field name="has_packages" invisible="1"/>
+                    <field name="picking_type_entire_packs" invisible="1"/>
+                    <field name="use_create_lots" invisible="1"/>
                 <header>
                     <button name="action_confirm" attrs="{'invisible': [('show_mark_as_todo', '=', False)]}" string="Mark as Todo" type="object" class="oe_highlight" groups="base.group_user" data-hotkey="x"/>
                     <button name="action_assign" attrs="{'invisible': [('show_check_availability', '=', False)]}" string="Check Availability" type="object" class="oe_highlight" groups="base.group_user"/>
