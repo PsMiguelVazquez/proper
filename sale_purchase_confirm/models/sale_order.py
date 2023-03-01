@@ -94,6 +94,10 @@ class SaleOrder(models.Model):
             self.write({'state': 'credito_conf'})
 
     def conf_ventas(self):
+        order_lines = self.order_line
+        for ol in order_lines:
+            ol.check_price_reduce = False
+            ol.price_reduce_solicit = False
         registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
         if registro != []:
             self.write({'x_aprovar': True, 'state': 'credito_conf'})
@@ -192,6 +196,9 @@ class SaleOrder(models.Model):
         # lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
         # if lines != []:
         #     raise UserError('No se ha enviado la peticion de reducción de precio')
+        for order_line in self.order_line:
+            if order_line.check_price_reduce:
+                raise UserError('No ha solicitado la reducción de precio')
         self.write({'x_aprovar': False})
         total = self.partner_id.credit_rest - self.amount_total
         check = total >= 0 if self.payment_term_id.id != 1 else False
@@ -279,7 +286,10 @@ class SaleOrderLine(models.Model):
     invoice = fields.Boolean('Facturar', default=False)
     price_unit = fields.Float(copy=True)
 
+
+
     def get_valor_minimo(self):
+        valor = 0
         for line in self:
             margen = line.product_id.x_fabricante[
                 'x_studio_margen_' + str(line.order_id.x_studio_nivel)] if line.product_id.x_fabricante else 12
@@ -287,7 +297,7 @@ class SaleOrderLine(models.Model):
                 valor = line.x_studio_nuevo_costo / ((100 - margen) / 100)
             else:
                 valor = line.product_id.standard_price / ((100 - margen) / 100)
-            return valor
+        return valor
 
     @api.depends('price_unit')
     def _compute_check_price_reduce(self):
@@ -396,6 +406,11 @@ class Alerta_limite_de_credito(models.TransientModel):
         self.sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})
         # self.env['sale.order'].browse(self.env.context.get('active_ids')).write({'state': 'sale_conf'})
         self.sale_id.order_line.order_id.update({'state': 'sale_conf'})
+        mensaje = 'Se redujo el precio del producto '
+        for order_line in self.sale_id.order_line:
+            if order_line.price_reduce_v >0.0:
+                mensaje +=  order_line.product_id.name + ' de $' + str(round(order_line.get_valor_minimo()+.5)) + ' a $'  + str(round(order_line.price_unit +.5)) + '. '
+        self.sale_id.message_post(body=mensaje ,type="notification")
 
 
 class SaleInvoice(models.TransientModel):
