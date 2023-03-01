@@ -291,8 +291,10 @@ class SaleOrderLine(models.Model):
     def get_valor_minimo(self):
         valor = 0
         for line in self:
-            margen = line.product_id.x_fabricante[
-                'x_studio_margen_' + str(line.order_id.x_studio_nivel)] if line.product_id.x_fabricante else 12
+            if line.order_id.x_studio_nivel:
+                margen = line.product_id.x_fabricante['x_studio_margen_' + str(line.order_id.x_studio_nivel)] if line.product_id.x_fabricante else 12
+            else:
+                margen = 12
             if line.x_studio_nuevo_costo > 0:
                 valor = line.x_studio_nuevo_costo / ((100 - margen) / 100)
             else:
