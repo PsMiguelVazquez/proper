@@ -442,6 +442,12 @@
                     <field name="message_ids"/>
                 </div>
                 </form>
+              <xpath expr="//field[@name='use_create_lots']" position="after">
+                    <field name="has_kits" invisible="1"/>
+                </xpath>
+                <xpath expr="//field[@name='description_picking']" position="after">
+                    <field name="description_bom_line" optional="show" attrs="{'column_invisible': [('parent.has_kits', '=', False)]}"/>
+                </xpath>
           </field>
       </record>
       <record model="ir.actions.act_window" id="action_alm0_alm14">
