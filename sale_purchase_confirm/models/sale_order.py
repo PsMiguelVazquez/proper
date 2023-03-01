@@ -302,8 +302,12 @@ class SaleOrderLine(models.Model):
     @api.depends('price_unit')
     def _compute_check_price_reduce(self):
         for record in self:
-            margen = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
-            valor = record.product_id.standard_price / ((100 - margen) / 100)
+            if record.order_id.x_studio_nivel:
+                margen = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
+                valor = record.product_id.standard_price / ((100 - margen) / 100)
+            else:
+                margen = 12
+                valor = record.product_id.standard_price / ((100 - margen) / 100)
             if valor <= record.price_unit:
                 record.check_price_reduce = False
                 record.price_reduce_v = 0.0
