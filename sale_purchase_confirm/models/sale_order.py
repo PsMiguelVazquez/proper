@@ -206,7 +206,8 @@ class SaleOrder(models.Model):
         facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(
             lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in (
             'not_paid', 'partial')).mapped('id')
-        if cliente and check:
+        #Si es AAA o tiene crédito
+        if cliente or check:
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
             return self.action_confirm()
         else:
