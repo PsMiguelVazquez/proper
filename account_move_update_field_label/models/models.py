@@ -1,14 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models
+from odoo import models,fields
+
 
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+    usuario_timbrado = fields.Many2one('res.users','Timbrado por')
+    version_cfdi = fields.Char('Versión CFDI')
 
+    def action_post(self):
+        super(AccountMove, self).action_post()
+        for move in self:
+            move.usuario_timbrado = self.env.user
+            move.version_cfdi = move.edi_web_services_to_process
+        return True
 
-    def _compute_tax_totals_json(self):
-        res = super(AccountMove, self)._compute_tax_totals_json()
-        # self.tax_totals_json =  self.tax_totals_json.replace('Importe libre de impuestos', 'Subtotal')
-        return res
+    def button_draft(self):
+        super(AccountMove, self).button_draft()
+        for move in self:
+            move.usuario_timbrado = None
+            move.version_cfdi = None
+        return True
+
 
