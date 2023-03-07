@@ -8,6 +8,14 @@ class res_partner_fields(models.Model):
     sales_agent = fields.Many2one('res.users', string='Agente de ventas', store=True)
     codigo_uso_cfdi = fields.Char(string="Código Uso CFDi", compute='_compute_codigo_uso_cfdi', store=False)
 
+    @api.onchange('x_cat_com')
+    def _on_change_categoria(self):
+        for record in self:
+            team_id = self.env['crm.team'].search([('name', '=', record.x_cat_com.x_name)])
+            if team_id:
+                record.team_id = team_id
+
+
 
     def _compute_codigo_uso_cfdi(self):
         for record in self:
@@ -25,7 +33,8 @@ class res_partner_fields(models.Model):
     @api.onchange('x_nivel_cliente')
     def _compute_change_level(self):
         for record in self:
-            partner = record.commercial_partner_id
             if record.x_nivel_cliente:
-                message = "Se configuró el nivel de cliente " + record.x_nivel_cliente.x_name  +' para el usuario '+ record.name
-                partner[0].message_post(body=message, type="notification")
+                partner = record.commercial_partner_id
+                for par in partner:
+                    message = "Se configuró el nivel de cliente " + record.x_nivel_cliente.x_name + ' para el usuario ' + record.name
+                    par.message_post(body=message, type="notification", partner_ids=[record.create_uid.partner_id.id])
