@@ -26,6 +26,7 @@ class SaleOrder(models.Model):
         domain="[('type', '!=', 'private'), ('company_id', 'in', (False, company_id))]",)
     partner_id_uso_cfdi = fields.Selection('Uso CFDI', related='partner_id.x_studio_uso_de_cfdi')
     partner_id_payment_method = fields.Char('Forma de pago',related='partner_id.x_studio_mtodo_de_pago.name')
+    partner_id_payment_method_code = fields.Char(string='Código Forma de pago', related='partner_id.x_studio_mtodo_de_pago.code')
 
 
     def _prepare_invoice(self):

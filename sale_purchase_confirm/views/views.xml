@@ -70,9 +70,16 @@
                             <field name="albaran" attrs="{'invisible': [('albaran', '=', False)]}"/>
                             <field name="partner_loc_ids" invisible="1"/>
                         </xpath>
+                        <xpath expr="//field[@name='partner_shipping_id']" readonly="1" position="after">
+                            <label for="partner_id_payment_method"/>
+                            <div>
+                                <field name="partner_id_payment_method_code" class="oe_inline"/>
+                                -
+                                <field name="partner_id_payment_method" class="oe_inline"/>
+                            </div>
+                        </xpath>
                         <xpath expr="//field[@name='partner_shipping_id']" position="after">
-                            <field name="partner_id_uso_cfdi" readonly="1"/>
-                            <field name="partner_id_payment_method" readonly="1"/>
+                            <field name="partner_id_uso_cfdi" string="Uso de CFDI" readonly="1"/>
                         </xpath>
                     <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
                         <page string="Requerimientos" name="studio_page_0ru5U">
