@@ -9,9 +9,9 @@ class L10nMxEdiPayment(models.Model):
     def name_get(self):
         result = []
         for rec in self:
-            if self.env.context.get('show_code'):
-                name = str(rec.code) + '- ' +rec.name
-            else:
+            if self.env.context.get('hide_code'):
                 name = rec.name
-            result.append((rec.id,name))
+            else:
+                name = str(rec.code) + ' - ' + rec.name
+            result.append((rec.id, name))
         return result

@@ -311,7 +311,10 @@ class SaleOrderLine(models.Model):
         for record in self:
             if record.order_id.x_studio_nivel:
                 margen = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
-                valor = record.product_id.standard_price / ((100 - margen) / 100)
+                if record.x_studio_nuevo_costo > 0.0:
+                    valor = record.x_studio_nuevo_costo / ((100 - margen) / 100)
+                else:
+                    valor = record.product_id.standard_price / ((100 - margen) / 100)
             else:
                 # margen = 12
                 # valor = record.product_id.standard_price / ((100 - margen) / 100)
@@ -335,14 +338,14 @@ class SaleOrderLine(models.Model):
         self.limit_price()
         return r
 
-    # @api.onchange('x_studio_nuevo_costo')
-    # def _on_change_nuevo_costo(self):
-    #     for record in self:
-    #         if record.product_id:
-    #             margen = record.product_id.x_fabricante[
-    #                 'x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
-    #             valor = record.x_studio_nuevo_costo / ((100 - margen) / 100)
-    #             record.price_unit = round(valor + .5)
+    @api.onchange('x_studio_nuevo_costo')
+    def _on_change_nuevo_costo(self):
+        for record in self:
+            if record.product_id:
+                margen = record.product_id.x_fabricante[
+                    'x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
+                valor = record.x_studio_nuevo_costo / ((100 - margen) / 100)
+                record.price_unit = round(valor + .5)
 
     #@api.onchange('price_unit')
     def limit_price(self):
