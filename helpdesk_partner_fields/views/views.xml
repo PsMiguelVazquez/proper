@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+
+    <record model="ir.ui.view" id="helpdesk_ticket_form_hiherit">
+        <field name="name">helpdesk.ticket.form.hinterit</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_form_hinterit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='sale_order_id']" position="after">
+                <field name="invoices_ids" widget="many2many"/>
+            </xpath>
+        </field>
+    </record>
+
+
+
+    </data>
+
+</odoo>

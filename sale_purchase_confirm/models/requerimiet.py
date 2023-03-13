@@ -1,7 +1,9 @@
 from odoo import models, fields,api, _
+from datetime import datetime
 
 
 class RequerimientClient(models.Model):
+    _inherit = 'mail.thread'
     _name = 'requiriment.client'
     x_cantidad = fields.Float("cantidad")
     x_comprar = fields.Boolean("Comprar")
@@ -20,6 +22,8 @@ class RequerimientClient(models.Model):
     x_studio_related_field_1eaGE = fields.Char("Cliente", related='x_order_id.partner_id.name')
     x_studio_related_field_DGJgC = fields.Char("New Campo relacionado", related='x_order_id.company_id.display_name')
     x_studio_related_field_ap2ah = fields.Char("Vendedor", related='x_order_id.user_id.display_name')
+    cantidad = fields.Float("Cantidad")
+
 
     @api.model
     def create(self, vals):
@@ -35,7 +39,7 @@ class RequerimientClient(models.Model):
 
     def create_proposal(self):
         view = self.env.ref('sale_purchase_confirm.wizard_proposal_form_view')
-        wiz = self.env['wizard.proposal'].create({'x_rel_id': self.id})
+        wiz = self.env['wizard.proposal'].create({'rel_id': self.id})
         return {
             'name': 'Propuesta',
             'type': 'ir.actions.act_window',
@@ -67,7 +71,7 @@ class ProposalPurchase(models.Model):
     x_categoria_id = fields.Many2one("product.category", "Categoría")
     x_condiciones_de_pago = fields.Char("Condiciones de Pago")
     x_costo = fields.Float("costo")
-    x_descripcion = fields.Char("Descripción")
+    x_descripcion = fields.Char("Producto")
     x_detalle = fields.Char("Detalle", compute='get_detalle')
     x_documento = fields.Binary("Documento")
     x_garantias = fields.Text("Garantias")
@@ -98,16 +102,19 @@ class ProposalPurchase(models.Model):
     x_familia_id = fields.Many2one("x_familia", "Familia")
     x_linea_id = fields.Many2one("x_linea", "Línea")
     x_grup_id = fields.Many2one("x_grupo", "Grupo")
+    vigencia_date = fields.Date("Vigencia")
+    cantidad = fields.Float("Cantidad")
+    tiempo_entrega = fields.Integer("Tiempo de entrega")
 
     @api.depends('rel_id')
     def get_detalle(self):
         for record in self:
             record.x_detalle = ''
             if record.rel_id.id:
-                t = "<table class='table'><tr><td>Nombre</td><td>Descripción</td><td>Marca</td><td>Modelo</td><td>Cantidad</td><td>Presupuesto</td><td>Proveedor</td><td>linkproducto</td></tr>"
+                t = "<table class='table'><tr><td>Nombre</td><td>Descripción</td><td>Marca</td><td>Modelo</td><td>Cantidad</td><td>Precio Unitario</td><td>Presupuesto</td><td>Proveedor</td><td>linkproducto</td></tr>"
                 t = t + "<tr><td>" + str(record.rel_id.x_name) + "</td><td>" + str(
                     record.rel_id.x_descripcion) + "</td><td>" + str(record.rel_id.x_marca) + "</td><td>" + str(
-                    record.rel_id.x_modelo) + "</td><td>" + str(record.rel_id.x_cantidad) + "</td><td>" + str(
+                    record.rel_id.x_modelo) + "</td><td>" + str(record.rel_id.x_cantidad) + "</td><td>"+str(record.rel_id.x_precio_uni) + "</td><td>" + str(
                     record.rel_id.x_presupuesto) + "</td><td>" + str(record.rel_id.x_proveedor) + "</td><td>" + str(
                     record.rel_id.x_link_sitio) + "</td></tr></table>"
                 record.x_detalle = t
@@ -121,6 +128,7 @@ class ProposalPurchase(models.Model):
         if not self.x_product_id.id:
             # marca = env['x_fabricante'].search([['name','=', record.x_marca]])
             marca = False
+            marca = self.env['x_fabricante'].search([['x_name', '=', self.x_marca]])
             self.x_product_id = self.env['product.product'].create(
                 {'standard_price': self.x_costo, 'x_studio_ultimo_costo': self.x_costo,
                  'default_code': self.x_modelo, 'type': 'product', 'x_fabricante': marca.id if marca else False,
@@ -129,15 +137,18 @@ class ProposalPurchase(models.Model):
                  'x_studio_many2one_field_RWuq7': self.x_familia_id.id,
                  'x_studio_many2one_field_LZOP8': self.x_linea_id.id, 'image_1920': self.x_archivo,
                  'x_producto_propuesta': self.x_new_prod_prop})
-        self.x_rel_id.x_order_id.write({'order_line': [(0, 0, {'x_studio_nuevo_costo': self.x_costo,
+            margen = marca['x_studio_margen_' + str(self.rel_id.x_order_id.x_studio_nivel)] if marca else 12
+            costo = self.x_costo / ((100 - margen) / 100)
+        r = self.rel_id.x_order_id.write({'order_line': [(0, 0, {'x_studio_nuevo_costo': round(self.x_costo + .5),
                                                                  'product_id': self.x_product_id.id,
                                                                  'product_uom_qty': self.x_cantidad,
-                                                                 'price_unit': self.x_costo / .8 if not self.x_iva else (
-                                                                                                                                        (
-                                                                                                                                            self.x_costo) * 1.16) / .8,
-                                                                 'x_precio_propuesta': self.x_costo / .8 if not self.x_iva else (
-                                                                                                                                                (
-                                                                                                                                                    self.x_costo) * 1.16) / .8})]})
+                                                                 'price_unit': round(costo + .5),
+                                                                 'x_precio_propuesta': round(costo + .5),
+                                                                 'x_cantidad_disponible_compra':self.x_cantidad,
+                                                                 'x_tiempo_entrega_compra':self.x_tiempo_entrega,
+                                                                 'x_vigencia_compra':self.x_vigencia,
+                                                                 })]})
+        print(r)
     def cancel(self):
         self.x_state = 'cancel'
         view = self.env.ref('sale_purchase_confirm.wizard_cancel_form_view')
@@ -152,6 +163,7 @@ class ProposalPurchase(models.Model):
             'target': 'new',
             'res_id': wiz.id,
             'context': self.env.context}
+        return action
 
     def validar(self):
         self.x_state = 'validar'
@@ -167,6 +179,7 @@ class ProposalPurchase(models.Model):
             'target': 'new',
             'res_id': wiz.id,
             'context': self.env.context}
+        return action
 
     def autoriz(self):
         self.x_state = 'confirm'
@@ -183,7 +196,7 @@ class WizarPropo(models.TransientModel):
     x_condiciones_de_pago = fields.Char("Condiciones de Pago")
     x_costo = fields.Float("Costo")
     x_descripcion = fields.Char("Descripción")
-    x_detalle = fields.Char("Detalle")
+    x_detalle = fields.Char("Detalle", compute='get_detalle')
     x_documento = fields.Binary("Documento")
     x_familia_id = fields.Many2one("x_familia", "Familia")
     x_garantias = fields.Text("Garantias")
@@ -205,20 +218,53 @@ class WizarPropo(models.TransientModel):
                                         ("ACTIVO FIJO","ACTIVO FIJO"),
                                         ("ADMON","ADMON"),
                                         ("PROMOCION","PROMOCION")], "Rama")
-    x_rel_id = fields.Many2one("requiriment.client", "Requerimiento")
+    rel_id = fields.Many2one("requiriment.client", "Requerimiento")
     x_tiempo_entrega = fields.Char("Tiempo de entrega")
     x_vigencia = fields.Char("Vigencia")
+    vigencia_date = fields.Date("Vigencia")
+    cantidad = fields.Float("Cantidad")
+    tiempo_entrega = fields.Integer("Tiempo de entrega")
+
+    @api.onchange('cantidad')
+    def _on_change_cantidad(self):
+        for record in self:
+            record.x_cantidad= record.cantidad
+    @api.onchange('tiempo_entrega')
+    def _on_change_tiempo_entrega(self):
+        for record in self:
+            record.x_tiempo_entrega= record.tiempo_entrega
+
+    @api.onchange('vigencia_date')
+    def _on_change_vigencia_date(self):
+        for record in self:
+            now = datetime.now()
+            record.x_vigencia = (record.vigencia_date - now.date()).days
 
     def confirm(self):
         self.env['proposal.purchases'].create(
-            {'create_uid': self.create_uid.id, 'x_descripcion': self.x_descripcion, 'x_iva': self.x_iva,
-             'x_condiciones_de_pago': self.x_condiciones_de_pago, 'x_garantias': self.x_garantias,
-             'x_vigencia': self.x_vigencia, 'x_caracteristicas': self.x_caracteristicas,
-             'x_tiempo_entrega': self.x_tiempo_entrega, 'x_archivo': self.x_archivo, 'rel_id': self.x_rel_id.id,
+            {'create_uid': self.create_uid.id, 'x_descripcion': self.x_descripcion, 'x_iva': self.x_iva
+             ,'x_condiciones_de_pago': self.x_condiciones_de_pago, 'x_garantias': self.x_garantias
+             ,'vigencia_date':self.vigencia_date, 'cantidad':self.cantidad, 'tiempo_entrega':self.tiempo_entrega
+             ,'x_vigencia': self.x_vigencia, 'x_caracteristicas': self.x_caracteristicas,
+             'x_tiempo_entrega': self.x_tiempo_entrega, 'x_archivo': self.x_archivo, 'rel_id': self.rel_id.id,
              'x_marca': self.x_marca, 'x_grup_id': self.x_grup_id.id, 'x_categoria_id': self.x_categoria_id.id,
              'x_familia_id': self.x_familia_id.id, 'x_linea_id': self.x_linea_id.id, 'x_modelo': self.x_modelo,
              'x_cantidad': self.x_cantidad, 'x_costo': self.x_costo, 'x_studio_proveedor': self.x_proveedor_char,
              'x_documento': self.x_documento, 'x_note': self.x_note})
+    @api.depends('rel_id')
+    def get_detalle(self):
+        for record in self:
+            record.x_detalle = ''
+            if record.rel_id.id:
+                t = "<table class='table'><tr><td>Nombre</td><td>Descripción</td><td>Marca</td><td>Modelo</td><td>Cantidad</td><td>Precio Unitario</td><td>Presupuesto</td><td>Proveedor</td><td>linkproducto</td></tr>"
+                t = t + "<tr><td>" + str(record.rel_id.x_name) + "</td><td>" + str(
+                    record.rel_id.x_descripcion) + "</td><td>" + str(record.rel_id.x_marca) + "</td><td>" + str(
+                    record.rel_id.x_modelo) + "</td><td>" + str(record.rel_id.x_cantidad) + "</td><td>"+str(record.rel_id.x_precio_uni) + "</td><td>" + str(
+                    record.rel_id.x_presupuesto) + "</td><td>" + str(record.rel_id.x_proveedor) + "</td><td>" + str(
+                    record.rel_id.x_link_sitio) + "</td></tr></table>"
+                record.x_detalle = t
+
+
 
 class WizardCancel(models.TransientModel):
     _name = 'wizard.cancel'

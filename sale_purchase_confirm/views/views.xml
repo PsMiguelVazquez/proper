@@ -66,6 +66,21 @@
                     <field name="model">sale.order</field>
                     <field name="inherit_id" ref="sale.view_order_form"/>
                     <field name="arch" type="xml">
+                        <xpath expr="//field[@name='payment_term_id']" position="after">
+                            <field name="albaran" attrs="{'invisible': [('albaran', '=', False)]}"/>
+                            <field name="partner_loc_ids" invisible="1"/>
+                        </xpath>
+                        <xpath expr="//field[@name='partner_shipping_id']" readonly="1" position="after">
+                            <label for="partner_id_payment_method"/>
+                            <div>
+                                <field name="partner_id_payment_method_code" class="oe_inline"/>
+                                -
+                                <field name="partner_id_payment_method" class="oe_inline"/>
+                            </div>
+                        </xpath>
+                        <xpath expr="//field[@name='partner_shipping_id']" position="after">
+                            <field name="partner_id_uso_cfdi" string="Uso de CFDI" readonly="1"/>
+                        </xpath>
                     <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
                         <page string="Requerimientos" name="studio_page_0ru5U">
                             <field name="requirements_line_ids">
@@ -90,7 +105,7 @@
                             <field name="proposal_line_ids">
                                 <tree string="Propuesta de Compras" decoration-success="x_state == 'done'" decoration-warning="x_state == 'confirmado'">
                                     <field name="x_name" modifiers="{}" string="Propuesta"/>
-                                    <field name="x_product_id" optional="show"/>
+                                    <field name="x_descripcion" optional="show"/>
                                     <field name="x_cantidad" optional="show" string="Cantidad"/>
                                     <field name="x_costo" optional="show" string="Costo"/>
                                     <field optional="show" name="x_studio_proveedor" string="Proveedor" attrs="{}"/>
@@ -109,6 +124,16 @@
         </field>
                 </record>
 
+
+        <record id="stock_stock_product_search_form_view_inherit" model="ir.ui.view">
+                    <field name="model">product.product</field>
+                    <field name="inherit_id" ref="stock.view_stock_product_tree"/>
+                    <field name="arch" type="xml">
+                        <xpath expr="//field[@name='virtual_available']" position="after">
+                            <field name="stock_quant_warehouse_zero"/>
+                        </xpath>
+                    </field>
+                </record>
 
 
     <record id="action_facturar" model="ir.actions.server">

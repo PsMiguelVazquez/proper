@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<odoo>
+    <record id="view_account_move_form_inherited" model="ir.ui.view">
+        <field name="name">account.move.form.inherited</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="l10n_mx_edi.view_l10n_mx_edi_invoice_form_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='l10n_mx_edi_usage']" position="before">
+                    <field name="codigo_uso_cfdi"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_bank_id']" position="after">
+                <field name="usuario_timbrado" attrs="{'invisible': [['move_type','!=','out_invoice']], 'readonly': 1}"/>
+                <field name="version_cfdi" attrs="{'invisible': [['move_type','!=','out_invoice']], 'readonly': 1}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

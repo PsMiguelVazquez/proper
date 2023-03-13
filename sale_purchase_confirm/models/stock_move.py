@@ -13,12 +13,12 @@ class StockMoveLine(models.Model):
         if self.origin:
             sale = self.env['sale.order'].sudo().search([['name', '=', self.origin]])
             user = self.env.user
-            message = "El usuario "+str(user.name)+"\n"+"Requiere el producto "+str(self.product_id.name)
+            message = "El usuario "+str(user.name)+"\n"+"Requiere el producto "+str(self.product_id.name)+"<br/><a class=btn-primary href=/unreserved/"+str(self.id)+"/"+str(sale.id)+" >Aceptar</a>"
             data = {
                 'res_id': sale.id,
-                'res_model_id': self.env['ir.model'].search([('model', '=', 'sale.order')]).id,
+                'res_model_id': self.env['ir.model'].sudo().search([('model', '=', 'sale.order')]).id,
                 'user_id': sale.sudo().user_id.id,
-                'summary': message,
+                'note': message,
                 'activity_type_id': self.env.ref('mail.mail_activity_data_meeting').id,
                 'date_deadline': fields.Date.today()
             }
