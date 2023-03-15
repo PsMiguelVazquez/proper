@@ -101,19 +101,19 @@ class SaleOrder(models.Model):
         for ol in order_lines:
             ol.check_price_reduce = False
             ol.price_reduce_solicit = False
-        registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
-        if registro != []:
-            self.write({'x_aprovar': True, 'state': 'credito_conf'})
-        if registro == []:
-            total = self.partner_id.credit_rest - self.amount_total
-            check = total >= 0 if self.payment_term_id.id != 1 else False
-            cliente = self.partner_id.x_studio_triple_a
-            #facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in ('not_paid', 'partial')).mapped('id')
-            if check and cliente:
-                self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-                return self.action_confirm()
-            else:
-                self.write({'state': 'credito_conf'})
+        # registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
+        # if registro != []:
+        #     self.write({'x_aprovar': True, 'state': 'credito_conf'})
+        # if registro == []:
+        total = self.partner_id.credit_rest - self.amount_total
+        check = total >= 0 if self.payment_term_id.id != 1 else False
+        cliente = self.partner_id.x_studio_triple_a
+        #facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in ('not_paid', 'partial')).mapped('id')
+        if check and cliente:
+            self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+            return self.action_confirm()
+        else:
+            self.write({'state': 'credito_conf'})
 
 
     def is_valid_order_sale(self):
@@ -171,14 +171,16 @@ class SaleOrder(models.Model):
             '''
             if line.product_id.virtual_available <= 0.0:
                 if line.product_id.id in dic_cantidades_disponibles and dic_cantidades_disponibles[line.product_id.id] < line.product_uom_qty:
-                    message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n', ' ') + ' línea(' + str(i) + ')'
-                    valid = False
+                    if line.product_id.detailed_type != 'service':
+                        message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n', ' ') + ' línea(' + str(i) + ')'
+                        valid = False
                 else:
                     if line.product_id.id in dic_cantidades_disponibles.keys():
                         dic_cantidades_disponibles[line.product_id.id]-=line.product_uom_qty
                     else:
-                        message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n',' ') + ' línea(' + str(i) + ')'
-                        valid = False
+                        if line.product_id.detailed_type != 'service':
+                            message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n',' ') + ' línea(' + str(i) + ')'
+                            valid = False
             else:
                 line.product_id.virtual_available-=line.product_uom_qty
             '''
@@ -199,16 +201,21 @@ class SaleOrder(models.Model):
         # lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
         # if lines != []:
         #     raise UserError('No se ha enviado la peticion de reducción de precio')
+        valid = True
+        message = ''
         for order_line in self.order_line:
             if order_line.check_price_reduce:
-                raise UserError('No ha solicitado la reducción de precio')
+                valid = False
+                message += '\n- ' + order_line.product_id.name
+        if not valid:
+            raise UserError('No ha solicitado la reducción de precio para los siguientes productos:' + message)
         self.write({'x_aprovar': False})
         total = self.partner_id.credit_rest - self.amount_total
         check = total >= 0 if self.payment_term_id.id != 1 else False
         cliente = self.partner_id.x_studio_triple_a
-        facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(
-            lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in (
-            'not_paid', 'partial')).mapped('id')
+        # facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(
+        #     lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in (
+        #     'not_paid', 'partial')).mapped('id')
         #Si es AAA o tiene crédito
         if cliente or check:
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
@@ -274,8 +281,9 @@ class SaleOrder(models.Model):
         valid, message = self.is_valid_order_sale()
         if valid:
             r = super(SaleOrder, self).action_confirm()
-            self.picking_ids.write({'sale': self.id})
-            self.write({'albaran': self.picking_ids.filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done'))[0].id})
+            if self.picking_ids:
+                self.picking_ids.write({'sale': self.id})
+                self.write({'albaran': self.picking_ids.filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done'))[0].id})
             return r
         else:
             raise UserError(message)
@@ -424,8 +432,8 @@ class Alerta_limite_de_credito(models.TransientModel):
         mensaje = 'Se redujo el precio del producto '
         for order_line in self.sale_id.order_line:
             if order_line.price_reduce_v >0.0:
-                mensaje +=  order_line.product_id.name + ' de $' + str(round(order_line.get_valor_minimo()+.5)) + ' a $'  + str(round(order_line.price_unit +.5)) + '. '
-        self.sale_id.message_post(body=mensaje ,type="notification")
+                mensaje =  'Se redujo el precio del producto - ' +order_line.product_id.name + ' de $' + str(round(order_line.get_valor_minimo()+.5)) + ' a $'  + str(round(order_line.price_unit +.5)) + ' con margen ' + str(order_line.x_utilidad_por) +'%.'
+                self.sale_id.message_post(body=mensaje ,type="notification")
 
 
 class SaleInvoice(models.TransientModel):
