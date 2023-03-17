@@ -201,6 +201,16 @@ class SaleOrder(models.Model):
         # lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
         # if lines != []:
         #     raise UserError('No se ha enviado la peticion de reducción de precio')
+        """
+            MARKETPLACE NO SE VALIDA
+        """
+
+        if self.partner_child:
+            if self.partner_child.x_es_marketplace:
+                self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+                return self.action_confirm()
+
+
         valid = True
         message = ''
         for order_line in self.order_line:
@@ -240,6 +250,17 @@ class SaleOrder(models.Model):
             else:
                 partner = self.env['res.partner'].search([])
             record.partner_loc_ids = [(6,0, partner.ids+partner.mapped('child_ids').ids)]
+
+            # busca un almacén con el mismo nombre del cliente
+            if record.partner_child and record.partner_child.x_es_marketplace:
+                warehouse_ids = self.env['stock.warehouse'].search([('name', '=', record.partner_child.name)])
+                if warehouse_ids:
+                    # Si hay un almacén que coincide
+                    record.warehouse_id = warehouse_ids[0].id
+                else:
+                    default_warehouse = self.env['stock.warehouse'].search([('name', '=', 'MARKETPLACE')])
+                    if default_warehouse:
+                        record.warehouse_id = default_warehouse[0].id
 
     # def action_quotation_send(self):
     #     registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
