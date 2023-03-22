@@ -252,15 +252,15 @@ class SaleOrder(models.Model):
             record.partner_loc_ids = [(6,0, partner.ids+partner.mapped('child_ids').ids)]
 
             # busca un almacén con el mismo nombre del cliente
-            if record.partner_child and record.partner_child.x_es_marketplace:
-                warehouse_ids = self.env['stock.warehouse'].search([('name', '=', record.partner_child.name)])
-                if warehouse_ids:
-                    # Si hay un almacén que coincide
-                    record.warehouse_id = warehouse_ids[0].id
-                else:
-                    default_warehouse = self.env['stock.warehouse'].search([('name', '=', 'MARKETPLACE')])
-                    if default_warehouse:
-                        record.warehouse_id = default_warehouse[0].id
+            # if record.partner_child and record.partner_child.x_es_marketplace:
+            #     warehouse_ids = self.env['stock.warehouse'].search([('name', '=', record.partner_child.name)])
+            #     if warehouse_ids:
+            #         # Si hay un almacén que coincide
+            #         record.warehouse_id = warehouse_ids[0].id
+            #     else:
+            #         default_warehouse = self.env['stock.warehouse'].search([('name', '=', 'MARKETPLACE')])
+            #         if default_warehouse:
+            #             record.warehouse_id = default_warehouse[0].id
 
     # def action_quotation_send(self):
     #     registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
