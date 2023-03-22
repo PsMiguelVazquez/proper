@@ -102,7 +102,7 @@ class StockMove(models.Model):
                                 moves._assign_picking_post_process(new=new_picking)
                                 move_l = moves.move_orig_ids
                                 while move_l:
-                                    picking_child = self.env['stock.picking'].search([['location_id', '=', move_l.location_id],['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')],['scheduled_date', '=', fecha_new ], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]]) if moves.sale_line_id.date_planned_l else self.env['stock.picking'].search([['location_id', '=', move_l.location_id.id],['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]])
+                                    picking_child = self.env['stock.picking'].search([['location_id', '=', move_l.location_id.id],['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')],['scheduled_date', '=', fecha_new ], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]]) if moves.sale_line_id.date_planned_l else self.env['stock.picking'].search([['location_id', '=', move_l.location_id.id],['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]])
                                     if picking_child:
                                         move_l.write({'date': fecha_new, 'date_deadline': fecha_new})
                                         move_l.write({'picking_id': picking_child[0].id if len(picking_child) > 1 else picking_child.id})
@@ -127,7 +127,7 @@ class StockMove(models.Model):
                                 move_l = moves.move_orig_ids
                                 while move_l:
                                     picking_child = self.env['stock.picking'].search(
-                                        [['location_id', '=', move_l.location_id],['sale_id', '=', order_id.id],
+                                        [['location_id', '=', move_l.location_id.id],['sale_id', '=', order_id.id],
                                          ['state', 'not in', ('done', 'cancel')], ['scheduled_date', '=', fecha_new],
                                          ['partner_id', '=',
                                           moves.sale_line_id.date_planned_line.id]]) if moves.sale_line_id.date_planned_l else \
