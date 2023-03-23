@@ -95,7 +95,7 @@ class StockMove(models.Model):
                         fecha2 = moves.picking_id.scheduled_date
                         if fecha != moves.sale_line_id.date_planned_line or fecha2 != moves.sale_line_id.date_planned_l:
                             fecha_new = fields.datetime(moves.sale_line_id.date_planned_l.year, moves.sale_line_id.date_planned_l.month, moves.sale_line_id.date_planned_l.day) + timedelta(hours=18) if moves.sale_line_id.date_planned_l else order_id.date_order
-                            picking = self.env['stock.picking'].search([['location_id', '=', moves.location_id], ['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')],['scheduled_date', '=', fecha_new ], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]]) if moves.sale_line_id.date_planned_l else self.env['stock.picking'].search([['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]])
+                            picking = self.env['stock.picking'].search([['location_id', '=', moves.location_id.id], ['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')],['scheduled_date', '=', fecha_new ], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]]) if moves.sale_line_id.date_planned_l else self.env['stock.picking'].search([['location_id', '=', move_l.location_id.id],['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]])
                             if picking:
                                 moves.write({'date': fecha_new, 'date_deadline': fecha_new})
                                 moves.write({'picking_id': picking[0].id if len(picking)>1 else picking.id})
