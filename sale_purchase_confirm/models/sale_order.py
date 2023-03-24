@@ -57,6 +57,12 @@ class SaleOrder(models.Model):
                     record.partner_id = record.partner_child
                 record.x_studio_cliente_de_marketplace = record.partner_child.name
                 record.user_id = self.env.user.id
+                # busca un almacén con el mismo nombre del cliente
+                if record.partner_child.x_es_marketplace:
+                    warehouse_ids = self.env['stock.warehouse'].search([('name', '=', record.partner_child.name)])
+                    default_warehouse = self.env['stock.warehouse'].search([('name', '=', 'MARKETPLACE')])
+                    if default_warehouse:
+                        self.warehouse_id = default_warehouse
 
     @api.onchange('partner_id')
     def onchange_partner_id(self):
@@ -318,6 +324,8 @@ class SaleOrderLine(models.Model):
     price_reduce_solicit = fields.Boolean('Solicitud', default=False)
     invoice = fields.Boolean('Facturar', default=False)
     price_unit = fields.Float(copy=True)
+    costo_envio = fields.Float('Costo de envío')
+    comision = fields.Float('Comisión')
 
 
 
