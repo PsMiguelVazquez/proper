@@ -125,10 +125,10 @@ class ProposalPurchase(models.Model):
 
     def confirm(self):
         self.x_state = 'done'
+        marca = False
+        marca = self.env['x_fabricante'].search([['x_name', '=', self.x_marca]])
         if not self.x_product_id.id:
             # marca = env['x_fabricante'].search([['name','=', record.x_marca]])
-            marca = False
-            marca = self.env['x_fabricante'].search([['x_name', '=', self.x_marca]])
             self.x_product_id = self.env['product.product'].create(
                 {'standard_price': self.x_costo, 'x_studio_ultimo_costo': self.x_costo,
                  'default_code': self.x_modelo, 'type': 'product', 'x_fabricante': marca.id if marca else False,
@@ -137,8 +137,8 @@ class ProposalPurchase(models.Model):
                  'x_studio_many2one_field_RWuq7': self.x_familia_id.id,
                  'x_studio_many2one_field_LZOP8': self.x_linea_id.id, 'image_1920': self.x_archivo,
                  'x_producto_propuesta': self.x_new_prod_prop})
-            margen = marca['x_studio_margen_' + str(self.rel_id.x_order_id.x_studio_nivel)] if marca else 12
-            costo = self.x_costo / ((100 - margen) / 100)
+        margen = marca['x_studio_margen_' + str(self.rel_id.x_order_id.x_studio_nivel)] if marca else 12
+        costo = self.x_costo / ((100 - margen) / 100)
         r = self.rel_id.x_order_id.write({'order_line': [(0, 0, {'x_studio_nuevo_costo': round(self.x_costo + .5),
                                                                  'product_id': self.x_product_id.id,
                                                                  'product_uom_qty': self.x_cantidad,
