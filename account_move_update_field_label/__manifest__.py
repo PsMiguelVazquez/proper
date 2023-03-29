@@ -18,7 +18,7 @@
     'category': 'Accounting',
     'version': '0.1',
 
-    'depends': ['base','account','l10n_mx_edi'],
+    'depends': ['base','account','l10n_mx_edi', 'sale'],
 
     # always loaded
     'data': [
