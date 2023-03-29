@@ -25,7 +25,10 @@ class AccountMove(models.Model):
             record.serie = serie
             record.folio = folio
 
-
+    def action_post(self):
+        if not self.invoice_payment_term_id:
+            self.write({'invoice_payment_term_id': self.partner_id.property_supplier_payment_term_id.id})
+        return super(AccountMove, self).action_post()
 
     #def action_post(self):
     #    return super(AccountMove).action_post()
