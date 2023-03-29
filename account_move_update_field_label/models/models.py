@@ -41,7 +41,7 @@ class SaleAdvancePay(models.TransientModel):
         sale_orders = self.env['sale.order'].browse(self._context.get('active_ids', []))
         r = super(SaleAdvancePay, self).create_invoices()
         for s in sale_orders:
-            s.invoice_ids.write({'l10n_mx_edi_usage': s.l10n_mx_edi_usage})
+            s.invoice_ids.write({'l10n_mx_edi_usage': s.partner_id.l10n_mx_edi_usage})
         return r
 
 
