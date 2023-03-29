@@ -33,15 +33,5 @@ class AccountMove(models.Model):
             move.version_cfdi = None
         return True
 
-class SaleAdvancePay(models.TransientModel):
-    _inherit = 'sale.advance.payment.inv'
-
-
-    def create_invoices(self):
-        sale_orders = self.env['sale.order'].browse(self._context.get('active_ids', []))
-        r = super(SaleAdvancePay, self).create_invoices()
-        for s in sale_orders:
-            s.invoice_ids.write({'l10n_mx_edi_usage': s.partner_id.l10n_mx_edi_usage})
-        return r
 
 
