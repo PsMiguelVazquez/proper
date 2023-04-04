@@ -98,3 +98,16 @@ class StockPickingLL(models.TransientModel):
         r = super(StockPickingLL, self).process()
         return r
 
+class StockMoveLine(models.Model):
+    _inherit = 'stock.move.line'
+    facturas = fields.Many2many('account.move', 'Facturas', compute='get_facturas')
+
+
+    @api.depends('write_date', 'picking_id')
+    def get_facturas(self):
+        for record in self:
+            record.facturas = record.picking_id.mapped('sale_id.invoice_ids')
+
+
+
+
