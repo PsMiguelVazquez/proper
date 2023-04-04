@@ -78,7 +78,11 @@ class SaleOrder(models.Model):
     def create(self, vals):
         if 'user_id' in vals:
             vals['user_id'] = self.env.user.id
-        return super(SaleOrder, self).create(vals)
+        res =  super(SaleOrder, self).create(vals)
+        adjuntos = res.x_otros_documentos
+        for adjunto in adjuntos:
+            adjunto.write({'res_model': self._name, 'res_id': res.id})
+        return res
 
     @api.depends('amount_total')
     def set_amount_text(self):
@@ -175,7 +179,9 @@ class SaleOrder(models.Model):
                 Despues de una validación de parte de compras toma ese valor ingresado por compras en cantidad disponible (Cant. Disponible)
                 como producto adicional para surtir productos
             '''
-            if line.product_id.virtual_available <= 0.0:
+            disponible_alm_zero = line.product_id.stock_quant_warehouse_zero - line.product_uom_qty
+            # line.product_id.stock_quant_warehouse_zero -= line.product_uom_qty
+            if disponible_alm_zero< 0.0:
                 if line.product_id.id in dic_cantidades_disponibles and dic_cantidades_disponibles[line.product_id.id] < line.product_uom_qty:
                     if line.product_id.detailed_type != 'service':
                         message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n', ' ') + ' línea(' + str(i) + ')'
@@ -187,8 +193,8 @@ class SaleOrder(models.Model):
                         if line.product_id.detailed_type != 'service':
                             message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n',' ') + ' línea(' + str(i) + ')'
                             valid = False
-            else:
-                line.product_id.virtual_available-=line.product_uom_qty
+            # else:
+            #     line.product_id.virtual_available-=line.product_uom_qty
             '''
                 Validación de nuevo costo
             '''
@@ -196,6 +202,21 @@ class SaleOrder(models.Model):
             # if line.product_id.id in dic_nuevos_precios.keys() and dic_nuevos_precios[line.product_id.id] > line.price_unit:
             #     valid = False
             #     message  += '\n -El precio unitario para producto' + line.name.replace('\n', ' ') + ' no cumple con la utilidad esperada según el nuevo costo.' + ' línea(' + str(i) + ')'
+
+        '''
+            Validación de codigos de productos
+        '''
+        for i, line in enumerate(self.order_line, start=1):
+            if not line.product_id.default_code or line.product_id.default_code == '':
+                valid = False
+                message += '\n - El producto ' + line.name.replace('\n',' ') + ' no tiene configurado un código. ' + ' línea(' + str(i) + ')'
+            for propuesta in self.proposal_line_ids:
+                if propuesta.x_descripcion == line.product_id.name:
+                    if propuesta.x_modelo != line.product_id.default_code:
+                        valid = False
+                        message += '\n - No coincide el nombre del producto ' + line.name.replace('\n',
+                                                                           ' ') + ' con el un código. ' + ' en la línea(' + str(
+                            i) + ')'
 
         return valid, message
 
@@ -305,7 +326,16 @@ class SaleOrder(models.Model):
             }
 
     def action_confirm(self):
-        valid, message = self.is_valid_order_sale()
+        """
+                    MARKETPLACE NO SE VALIDA
+        """
+
+        if self.partner_child:
+            if self.partner_child.x_es_marketplace:
+                self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+                valid = True
+            else:
+                valid, message = self.is_valid_order_sale()
         if valid:
             r = super(SaleOrder, self).action_confirm()
             if self.picking_ids:
