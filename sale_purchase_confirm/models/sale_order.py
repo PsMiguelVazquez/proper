@@ -131,6 +131,14 @@ class SaleOrder(models.Model):
         message = ''
         dic_nuevos_precios = {}
         dic_cantidades_disponibles ={}
+        if not self.x_doc_entrega:
+            valid = False
+            message += 'No se ha definido el documento de entrega.\n'
+
+        if not self.x_metodo_entrega:
+            valid = False
+            message += 'No se ha definido el método de entrega.\n'
+
         if len(self.order_line) <= 0:
             valid = False
             message = 'No hay productos en la cotización'
@@ -304,6 +312,16 @@ class SaleOrder(models.Model):
             else:
                 record.check_solicitudes = False
 
+    def write(self, vals):
+        res = super(SaleOrder, self).write(vals)
+        if self.picking_ids:
+            stock_pick = self.picking_ids.filtered(lambda x: '/PICK/' in x.name and x.state != 'cancel')
+            if stock_pick and stock_pick.state != 'cancel':
+                if self.x_estado_surtido == 'surtir':
+                    stock_pick.write({'state':'assigned'})
+                else:
+                    stock_pick.write({'state':'confirmed'})
+        return res
 
     def solicitud_reduccion_send(self):
         lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
