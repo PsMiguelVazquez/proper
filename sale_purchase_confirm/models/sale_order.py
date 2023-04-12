@@ -281,7 +281,7 @@ class SaleOrder(models.Model):
             group_s = self.env.ref('sales_team.group_sale_salesman_all_leads')
             grup_ss = self.env.ref('sales_team.group_sale_manager')
             if self.env.user.id in group.users.ids and not self.env.user.id in group_s.users.ids and not self.env.user.id in grup_ss.users.ids:
-                partner = self.env['res.partner'].search(['|', ['x_nombre_agente_venta', '=', self.env.user.name], ['agente_temporal', '=', self.env.user.name]])
+                partner = self.env['res.partner'].search(['|','|', ['x_nombre_agente_venta', '=', self.env.user.name], ['agente_temporal', '=', self.env.user.name], ['x_nombre_agente_venta', '=', False]])
             else:
                 partner = self.env['res.partner'].search([])
             record.partner_loc_ids = [(6,0, partner.ids+partner.mapped('child_ids').ids)]
