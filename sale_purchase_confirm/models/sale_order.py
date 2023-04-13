@@ -187,20 +187,14 @@ class SaleOrder(models.Model):
                 Despues de una validación de parte de compras toma ese valor ingresado por compras en cantidad disponible (Cant. Disponible)
                 como producto adicional para surtir productos
             '''
-            disponible_alm_zero = line.product_id.stock_quant_warehouse_zero - line.product_uom_qty
-            # line.product_id.stock_quant_warehouse_zero -= line.product_uom_qty
-            if disponible_alm_zero< 0.0:
-                if line.product_id.id in dic_cantidades_disponibles and dic_cantidades_disponibles[line.product_id.id] < line.product_uom_qty:
-                    if line.product_id.detailed_type != 'service':
-                        message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n', ' ') + ' línea(' + str(i) + ')'
-                        valid = False
-                else:
-                    if line.product_id.id in dic_cantidades_disponibles.keys():
-                        dic_cantidades_disponibles[line.product_id.id]-=line.product_uom_qty
-                    else:
-                        if line.product_id.detailed_type != 'service':
-                            message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n',' ') + ' línea(' + str(i) + ')'
-                            valid = False
+            disponibles_total = line.product_id.stock_quant_warehouse_zero - line.product_uom_qty
+            if line.product_id.id in dic_cantidades_disponibles:
+                disponibles_total += dic_cantidades_disponibles[line.product_id.id]
+            if disponibles_total < 0.0:
+                if line.product_id.detailed_type != 'service':
+                    message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n', ' ') + '. Requiere ' + str(abs(disponibles_total))+ ' producto(s) más. línea(' + str(i) + ')'
+                    valid = False
+
             # else:
             #     line.product_id.virtual_available-=line.product_uom_qty
             '''
@@ -376,6 +370,19 @@ class SaleOrder(models.Model):
                 valid, message = self.is_valid_order_sale()
         if valid:
             r = super(SaleOrder, self).action_confirm()
+            if r:
+                prods_html = '<table class="table" style="width:100%"><thead><tr><th style="width:60% !important;">Producto</th><th style="width:15% !important; text-align:center">Cantidad</th><th style="text-align:center">Precio validado por compras</th></thead><tbody></tr>'
+                for line in self.order_line.filtered(lambda x: x.x_validacion_precio):
+                    prods_html += '<tr><td style="text-align:justify">' + line.name + '</td><td style="text-align:center">' + str(line.x_cantidad_disponible_compra) + '</td><td style="text-align:center">' + str(line.x_studio_nuevo_costo) + '</td></tr>'
+                prods_html += '</tbody></table>'
+                activity_message = ("<h4>Por favor realizar la compra de los siguientes productos</h4> %s") % (prods_html)
+                activity_user = self.env['res.users'].search([('login', 'like', '%compras1%')])
+                act = self.activity_schedule(
+                    activity_type_id= 4,
+                    summary="Compra de productos",
+                    note=activity_message,
+                    user_id=activity_user.id
+                )
             if self.picking_ids:
                 self.picking_ids.write({'sale': self.id})
                 self.write({'albaran': self.picking_ids.filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done'))[0].id})
@@ -534,11 +541,26 @@ class Alerta_limite_de_credito(models.TransientModel):
         self.sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})
         # self.env['sale.order'].browse(self.env.context.get('active_ids')).write({'state': 'sale_conf'})
         self.sale_id.order_line.order_id.update({'state': 'sale_conf'})
-        mensaje = 'Se redujo el precio del producto '
+        mensaje = '<h4>Se redujo el precio de los siguientes productos:</h4>' \
+                  '<table class="table" style="width: 100%"><thead>' \
+                  '<tr><th>Producto</th>' \
+                  '<th>Precio unitario anterior</th>' \
+                  '<th>Precio unitario propuesto</th>' \
+                  '<th>Margen anterior</th>' \
+                  '<th>Nuevo margen</th>' \
+                  '</tr></thead>' \
+                  '<tbody>'
         for order_line in self.sale_id.order_line:
-            if order_line.price_reduce_v >0.0:
-                mensaje =  'Se redujo el precio del producto - ' +order_line.product_id.name + ' de $' + str(round(order_line.get_valor_minimo()+.5)) + ' a $'  + str(round(order_line.price_unit +.5)) + ' con margen ' + str(order_line.x_utilidad_por) +'%.'
-                self.sale_id.message_post(body=mensaje ,type="notification")
+            if order_line.price_reduce_v > 0.0:
+                margen = order_line.product_id.x_fabricante[
+                    'x_studio_margen_' + str(order_line.order_id.x_studio_nivel)] if order_line.product_id.x_fabricante else 12
+                mensaje += '<tr><td>' + order_line.x_descripcion_corta + '</td><td>' \
+                           + str(round(order_line.get_valor_minimo() + .5)) + '</td><td>' \
+                           + str(order_line.price_unit) + '</td><td>' \
+                           + str(margen) + '</td><td>' \
+                           + str(order_line.x_utilidad_por) + '</td></tr>'
+        mensaje += '</tbody></table>'
+        self.sale_id.message_post(body=mensaje ,type="notification")
 
     def confirmar_validacion(self):
         self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero - x.product_uom_qty) <= 0).write({'x_validacion_precio': True})
