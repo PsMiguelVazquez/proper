@@ -343,6 +343,26 @@ class SaleOrder(models.Model):
                 'context': self.env.context,
             }
 
+    def validar_precio_masivo(self):
+        lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero - x.product_uom_qty) <= 0 and x.x_validacion_precio != True)
+        mensaje = 'Se solicitará validar datos los siguientes productos:\n'
+        if lines:
+            view = self.env.ref('sale_purchase_confirm.sale_order_validar_view')
+            for row in lines:
+                mensaje = mensaje + 'Producto: ' + str(row.product_id.name) + '\n'
+            wiz = self.env['sale.order.alerta'].create({'sale_id': self.id, 'mensaje': mensaje})
+            return {
+                'name': _('Alerta'),
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'res_model': 'sale.order.alerta',
+                'views': [(view.id, 'form')],
+                'view_id': view.id,
+                'target': 'new',
+                'res_id': wiz.id,
+                'context': self.env.context,
+            }
+
     def action_confirm(self):
         """
                     MARKETPLACE NO SE VALIDA
@@ -519,6 +539,9 @@ class Alerta_limite_de_credito(models.TransientModel):
             if order_line.price_reduce_v >0.0:
                 mensaje =  'Se redujo el precio del producto - ' +order_line.product_id.name + ' de $' + str(round(order_line.get_valor_minimo()+.5)) + ' a $'  + str(round(order_line.price_unit +.5)) + ' con margen ' + str(order_line.x_utilidad_por) +'%.'
                 self.sale_id.message_post(body=mensaje ,type="notification")
+
+    def confirmar_validacion(self):
+        self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero - x.product_uom_qty) <= 0).write({'x_validacion_precio': True})
 
 
 class SaleInvoice(models.TransientModel):
