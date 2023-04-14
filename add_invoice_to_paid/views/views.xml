@@ -38,7 +38,7 @@
             <xpath expr="//header" position="inside">
               <field name="invoice_line_ids" invisible="1"/>
               <field name="amount_rest" invisible="1"/>
-              <button name="asign_invoices" type="object" string="Asignar Facturas" attrs="{'invisible': ['|', ('state', '!=', 'posted'), ('amount_rest', '!=', 0)]}"/>
+              <button name="asign_invoices" type="object" string="Asignar Facturas" attrs="{'invisible': ['|', ('state', '!=', 'posted'), ('amount_rest', '=', 0)]}"/>
             </xpath>
           </field>
         </record>
