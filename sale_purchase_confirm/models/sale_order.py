@@ -319,11 +319,26 @@ class SaleOrder(models.Model):
 
     def solicitud_reduccion_send(self):
         lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
-        mensaje = 'Se solicitará una reduccion de precio de los siguientes productos:\n'
+        mensaje = '<h6>Se solicitará una reduccion de precio de los siguientes productos</h6><table class="table" style="width: 100%"><thead>' \
+                  '<tr><th>Producto</th>' \
+                  '<th>Precio unitario anterior</th>' \
+                  '<th>Precio unitario propuesto</th>' \
+                  '<th>Margen anterior</th>' \
+                  '<th>Nuevo margen</th>' \
+                  '</tr></thead>' \
+                  '<tbody>'
         if lines:
             view = self.env.ref('sale_purchase_confirm.sale_order_alerta_view')
-            for row in lines:
-                mensaje = mensaje +'Producto: '+ str(row.product_id.name)+' Precio solicitado:'+str(row.price_reduce_v)+'\n'
+            for order_line in lines:
+                margen = order_line.product_id.x_fabricante[
+                    'x_studio_margen_' + str(
+                        order_line.order_id.x_studio_nivel)] if order_line.product_id.x_fabricante else 12
+                mensaje += '<tr><td>' + order_line.x_descripcion_corta + '</td><td>' \
+                           + str(round(order_line.get_valor_minimo() + .5)) + '</td><td>' \
+                           + str(order_line.price_unit) + '</td><td>' \
+                           + str(margen) + '</td><td>' \
+                           + str(order_line.x_utilidad_por) + '</td></tr>'
+            mensaje += '</tbody></table>'
             wiz = self.env['sale.order.alerta'].create({'sale_id': self.id, 'mensaje': mensaje})
             return {
                 'name': _('Alerta'),
@@ -370,7 +385,7 @@ class SaleOrder(models.Model):
                 valid, message = self.is_valid_order_sale()
         if valid:
             r = super(SaleOrder, self).action_confirm()
-            if r:
+            if r and self.order_line.filtered(lambda x: x.x_validacion_precio):
                 prods_html = '<table class="table" style="width:100%"><thead><tr><th style="width:60% !important;">Producto</th><th style="width:15% !important; text-align:center">Cantidad</th><th style="text-align:center">Precio validado por compras</th></thead><tbody></tr>'
                 for line in self.order_line.filtered(lambda x: x.x_validacion_precio):
                     prods_html += '<tr><td style="text-align:justify">' + line.name + '</td><td style="text-align:center">' + str(line.x_cantidad_disponible_compra) + '</td><td style="text-align:center">' + str(line.x_studio_nuevo_costo) + '</td></tr>'
@@ -535,7 +550,7 @@ class Alerta_limite_de_credito(models.TransientModel):
     _description = 'Alerta para reduccion de precio'
 
     sale_id = fields.Many2one('sale.order', 'Pedido de venta relacionado')
-    mensaje = fields.Text('Mensaje')
+    mensaje = fields.Html('Mensaje')
 
     def confirmar_sale(self):
         self.sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})
