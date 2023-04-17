@@ -106,7 +106,7 @@ class StockMoveLine(models.Model):
     @api.depends('write_date', 'picking_id')
     def get_facturas(self):
         for record in self:
-            record.facturas = record.picking_id.mapped('sale_id.invoice_ids')
+            record.facturas = record.picking_id.sudo().mapped('sale_id.invoice_ids')
 
 
 
