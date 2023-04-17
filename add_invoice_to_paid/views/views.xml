@@ -10,8 +10,8 @@
             <group>
             <field name="payment" invisible="1"/>
             <field name="partner_id" invisible="1"/>
-            <field name="amount_rest"/>
-            <field name="invoices_ids" widget="many2many" domain="[('partner_id', '=', partner_id),('move_type', '=', 'out_invoice'), ('payment_state', 'in', ('not_paid', 'partial')), ('state', '=', 'posted')]">
+            <field name="amount_rest" string="Monto Restante"/>
+            <field name="invoices_ids" widget="many2many" domain="[('partner_id', '=', partner_id),('invoice_payment_term_id', '!=', %(account.account_payment_term_immediate)d), ('move_type', '=', 'out_invoice'), ('payment_state', 'in', ('not_paid', 'partial')), ('state', '=', 'posted')]">
               <tree editable="bottom">
                 <field name="name" readonly="1"/>
                 <field name="partner_id" readonly="1"/>
