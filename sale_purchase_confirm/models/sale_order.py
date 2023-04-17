@@ -200,8 +200,7 @@ class SaleOrder(models.Model):
             '''
                 Validación de nuevo costo
             '''
-
-            if line.product_id.id in dic_nuevos_precios.keys() and dic_nuevos_precios[line.product_id.id] > line.price_unit:
+            if not line.order_id.x_aprovacion_compras and line.product_id.id in dic_nuevos_precios.keys() and dic_nuevos_precios[line.product_id.id] > line.price_unit:
                 valid = False
                 message  += '\n -El precio unitario para producto' + line.name.replace('\n', ' ') + ' no cumple con la utilidad esperada según el nuevo costo.' + ' línea(' + str(i) + ')'
 
