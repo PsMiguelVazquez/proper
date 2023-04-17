@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<odoo>
+
+
+    <record id="view_upload_invoice_sale_form" model="ir.ui.view">
+        <field name="name">upload.invoice.wizard.form</field>
+        <field name="model">upload.invoice.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Subir factura">
+                <group name="Datos XML">
+                    <field name="adjuntos" widget="many2many_binary" />
+                    <field name="client_id"  readonly="1" options="{'no_create': True, 'no_create_edit':True}"/>
+                    <field name="monto" widget="monetary" readonly="1"/>
+                    <field name="fecha_factura"  readonly="1"/>
+                    <field name="rfc_emisor"  readonly="1"/>
+                    <field name="rfc_receptor"  readonly="1"/>
+                    <field name="uso_cfdi"  readonly="1"/>
+                    <field name="metodo_pago"  readonly="1"/>
+                    <field name="forma_pago"  readonly="1"/>
+                    <field name="version_cfdi"  readonly="1"/>
+                    <field name = 'sale_ids' string="Órdenes de venta" options="{'no_create': True, 'no_create_edit':True}">
+                         <tree>
+                            <field name="name" readonly="1" string="Orden"/>
+                            <field name="partner_id" readonly="1" string="Cliente"/>
+                            <field name="amount_untaxed" readonly="1"/>
+                            <field name="amount_tax" readonly="1"/>
+                            <field name="amount_total" readonly="1"/>
+                        </tree>
+                    </field>
+                    <field name="order_lines" string="Líneas de las órdenes" options="{'no_create': True, 'no_create_edit':True}">
+                        <tree>
+                            <field name="x_descripcion_corta" readonly="1"/>
+                            <field name="order_id" readonly="1" string="Orden"/>
+                            <field name="product_uom_qty" readonly="1"/>
+                            <field name="price_subtotal" readonly="1"/>
+                            <field name="price_tax" readonly="1"/>
+                            <field name="price_total" readonly="1"/>
+                        </tree>
+                    </field>
+                </group>
+                <footer>
+                    <button name="upload_invoice_and_assign" string="Guardar" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+
+
+
+    <record id="action_upload_invoice_sale" model="ir.actions.act_window">
+        <field name="name">Subir Factura</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">upload.invoice.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_upload_invoice_sale_form"/>
+        <field name="target">new</field>
+    </record>
+</odoo>

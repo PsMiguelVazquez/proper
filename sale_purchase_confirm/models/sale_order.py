@@ -201,9 +201,9 @@ class SaleOrder(models.Model):
                 Validación de nuevo costo
             '''
 
-            # if line.product_id.id in dic_nuevos_precios.keys() and dic_nuevos_precios[line.product_id.id] > line.price_unit:
-            #     valid = False
-            #     message  += '\n -El precio unitario para producto' + line.name.replace('\n', ' ') + ' no cumple con la utilidad esperada según el nuevo costo.' + ' línea(' + str(i) + ')'
+            if line.product_id.id in dic_nuevos_precios.keys() and dic_nuevos_precios[line.product_id.id] > line.price_unit:
+                valid = False
+                message  += '\n -El precio unitario para producto' + line.name.replace('\n', ' ') + ' no cumple con la utilidad esperada según el nuevo costo.' + ' línea(' + str(i) + ')'
 
         '''
             Validación de codigos de productos
@@ -310,11 +310,12 @@ class SaleOrder(models.Model):
         res = super(SaleOrder, self).write(vals)
         if self.picking_ids:
             stock_pick = self.picking_ids.filtered(lambda x: '/PICK/' in x.name and x.state != 'cancel')
-            if stock_pick and stock_pick.state != 'cancel':
-                if self.x_estado_surtido == 'surtir':
-                    stock_pick.write({'state':'assigned'})
-                else:
-                    stock_pick.write({'state':'confirmed'})
+            if len(stock_pick) == 1:
+                if stock_pick and stock_pick.state != 'cancel':
+                    if self.x_estado_surtido == 'surtir':
+                        stock_pick.write({'state':'assigned'})
+                    else:
+                        stock_pick.write({'state':'confirmed'})
         return res
 
     def solicitud_reduccion_send(self):
@@ -354,11 +355,26 @@ class SaleOrder(models.Model):
 
     def validar_precio_masivo(self):
         lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero - x.product_uom_qty) <= 0 and x.x_validacion_precio != True)
-        mensaje = 'Se solicitará validar datos los siguientes productos:\n'
+        mensaje = '<h6>Se solicitará validar datos de los siguientes productos</h6><table class="table" style="width: 90%;margin-left: auto;margin-right: auto;"><thead>' \
+                  '<tr><th>Producto</th>' \
+                  '<th>Disponible en almacén 0</th>' \
+                  '<th>Costo promedio</th>' \
+                  '<th>Cantidad solicitada</th>' \
+                  '<th>Cantidad faltante</th>' \
+                  '</tr></thead>' \
+                  '<tbody>'
         if lines:
             view = self.env.ref('sale_purchase_confirm.sale_order_validar_view')
-            for row in lines:
-                mensaje = mensaje + 'Producto: ' + str(row.product_id.name) + '\n'
+            for order_line in lines:
+                margen = order_line.product_id.x_fabricante[
+                    'x_studio_margen_' + str(
+                        order_line.order_id.x_studio_nivel)] if order_line.product_id.x_fabricante else 12
+                mensaje += '<tr><td>' + order_line.x_descripcion_corta + '</td><td>' \
+                           + str(order_line.product_id.stock_quant_warehouse_zero) + '</td><td>'\
+                           + str(order_line.product_id.standard_price) + '</td><td>'\
+                           + str(order_line.product_uom_qty) + '</td><td>'\
+                           + str(order_line.product_uom_qty + order_line.x_cantidad_disponible_compra - order_line.product_id.stock_quant_warehouse_zero) + '</td></tr>'
+            mensaje += '</tbody></table>'
             wiz = self.env['sale.order.alerta'].create({'sale_id': self.id, 'mensaje': mensaje})
             return {
                 'name': _('Alerta'),
@@ -421,17 +437,11 @@ class SaleOrderLine(models.Model):
 
     def get_valor_minimo(self):
         valor = 0
-        for line in self:
-            if line.order_id.x_studio_nivel:
-                margen = line.product_id.x_fabricante['x_studio_margen_' + str(line.order_id.x_studio_nivel)] if line.product_id.x_fabricante else 12
-            else:
-                #margen = 12
-                raise UserError("Falta definir el nivel en el cliente")
-            if line.x_studio_nuevo_costo > 0:
-                valor = line.x_studio_nuevo_costo / ((100 - margen) / 100)
-            else:
-                valor = line.product_id.standard_price / ((100 - margen) / 100)
-        return valor
+        if self.order_id.x_studio_nivel:
+            margen = self.product_id.x_fabricante['x_studio_margen_' + str(self.order_id.x_studio_nivel)] if self.product_id.x_fabricante else 12
+        else:
+            raise UserError("Falta definir el nivel en el cliente")
+        return  self.product_id.standard_price / ((100 - margen) / 100)
 
     @api.depends('price_unit')
     def _compute_check_price_reduce(self):
@@ -464,15 +474,6 @@ class SaleOrderLine(models.Model):
         r = super(SaleOrderLine, self).product_uom_change()
         self.limit_price()
         return r
-
-    @api.onchange('x_studio_nuevo_costo')
-    def _on_change_nuevo_costo(self):
-        for record in self:
-            if record.product_id:
-                margen = record.product_id.x_fabricante[
-                    'x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
-                valor = record.x_studio_nuevo_costo / ((100 - margen) / 100)
-                record.price_unit = round(valor + .5)
 
     #@api.onchange('price_unit')
     def limit_price(self):
@@ -556,7 +557,7 @@ class Alerta_limite_de_credito(models.TransientModel):
         self.sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})
         # self.env['sale.order'].browse(self.env.context.get('active_ids')).write({'state': 'sale_conf'})
         self.sale_id.order_line.order_id.update({'state': 'sale_conf'})
-        mensaje = '<h4>Se redujo el precio de los siguientes productos:</h4>' \
+        mensaje = '<h4>Se solicita reducir el precio de los siguientes productos:</h4>' \
                   '<table class="table" style="width: 100%"><thead>' \
                   '<tr><th>Producto</th>' \
                   '<th>Precio unitario anterior</th>' \
