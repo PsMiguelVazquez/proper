@@ -179,7 +179,7 @@ class SaleOrder(models.Model):
 
             if line.x_validacion_precio and line.x_studio_nuevo_costo == 0 :
                 valid = False
-                message += 'No se ha establecido el nuevo costo para el producto' + line.name.replace('\n','') + ' línea(' + str(i) + ')'
+                message += '\n- No se ha establecido el nuevo costo para el producto' + line.name.replace('\n','') + ' línea(' + str(i) + ')'
 
             '''
                 Validación de cantidades.
@@ -192,7 +192,7 @@ class SaleOrder(models.Model):
                 disponibles_total += dic_cantidades_disponibles[line.product_id.id]
             if disponibles_total < 0.0:
                 if line.product_id.detailed_type != 'service':
-                    message += '\n - No hay stock suficiente para el producto: ' + line.name.replace('\n', ' ') + '. Requiere ' + str(abs(disponibles_total))+ ' producto(s) más. línea(' + str(i) + ')'
+                    message += '\n- No hay stock suficiente para el producto: ' + line.name.replace('\n', ' ') + '. Requiere ' + str(abs(disponibles_total))+ ' producto(s) más. línea(' + str(i) + ')'
                     valid = False
 
             # else:
@@ -319,12 +319,15 @@ class SaleOrder(models.Model):
 
     def solicitud_reduccion_send(self):
         lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
-        mensaje = '<h6>Se solicitará una reduccion de precio de los siguientes productos</h6><table class="table" style="width: 100%"><thead>' \
-                  '<tr><th>Producto</th>' \
-                  '<th>Precio unitario anterior</th>' \
-                  '<th>Precio unitario propuesto</th>' \
-                  '<th>Margen anterior</th>' \
-                  '<th>Nuevo margen</th>' \
+        mensaje = '<h6>Se solicitará la reducción de precio de los siguientes productos</h6><table class="table" style="width: 100%"><thead>' \
+                  '<tr style="width: 30% !important;"><th>Producto</th>' \
+                  '<th style="width: 10%">Costo promedio</th>' \
+                  '<th style="width: 10%">Precio unitario anterior</th>' \
+                  '<th style="width: 10%">Margen anterior</th>' \
+                  '<th style="width: 10%">Nuevo costo</th>' \
+                  '<th style="width: 10%">Nuevo precio mínimo recomendado</th>' \
+                  '<th style="width: 10%">Nuevo precio unitario</th>' \
+                  '<th style="width: 10%">Nuevo margen</th>' \
                   '</tr></thead>' \
                   '<tbody>'
         if lines:
@@ -333,11 +336,16 @@ class SaleOrder(models.Model):
                 margen = order_line.product_id.x_fabricante[
                     'x_studio_margen_' + str(
                         order_line.order_id.x_studio_nivel)] if order_line.product_id.x_fabricante else 12
-                mensaje += '<tr><td>' + order_line.x_descripcion_corta + '</td><td>' \
+                mensaje += '<tr><td>' + order_line.name + '</td><td>' \
+                           + str(order_line.product_id.standard_price) + '</td><td>' \
                            + str(round(order_line.get_valor_minimo() + .5)) + '</td><td>' \
-                           + str(order_line.price_unit) + '</td><td>' \
                            + str(margen) + '</td><td>' \
-                           + str(order_line.x_utilidad_por) + '</td></tr>'
+                           + str(order_line.x_studio_nuevo_costo) + '</td><td>' \
+                           + str(round(order_line.x_studio_nuevo_costo / ((100 - margen) / 100))) + '</td><td>' \
+                           + str(round(order_line.price_unit)) + '</td><td>' \
+                           + str(round((1 - (order_line.x_studio_nuevo_costo / order_line.price_unit)) * 100) if order_line.x_studio_nuevo_costo> 0 else order_line.x_utilidad_por) \
+                           + '</td></tr>'
+
             mensaje += '</tbody></table>'
             wiz = self.env['sale.order.alerta'].create({'sale_id': self.id, 'mensaje': mensaje})
             return {
@@ -353,7 +361,7 @@ class SaleOrder(models.Model):
             }
 
     def validar_precio_masivo(self):
-        lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero - x.product_uom_qty) <= 0 and x.x_validacion_precio != True)
+        lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero - x.product_uom_qty) < 0 and x.x_validacion_precio != True)
         mensaje = '<h6>Se solicitará validar datos de los siguientes productos</h6><table class="table" style="width: 90%;margin-left: auto;margin-right: auto;"><thead>' \
                   '<tr><th>Producto</th>' \
                   '<th>Disponible en almacén 0</th>' \
@@ -400,8 +408,8 @@ class SaleOrder(models.Model):
                 valid, message = self.is_valid_order_sale()
         if valid:
             r = super(SaleOrder, self).action_confirm()
-            if r and self.order_line.filtered(lambda x: x.x_validacion_precio):
-                prods_html = '<table class="table" style="width:100%"><thead><tr><th style="width:60% !important;">Producto</th><th style="width:15% !important; text-align:center">Cantidad</th><th style="text-align:center">Precio validado por compras</th></thead><tbody></tr>'
+            if r and self.order_line.filtered(lambda x: x.x_validacion_precio and x.x_cantidad_disponible_compra > 0):
+                prods_html = '<table class="table" style="width:100%"><thead><tr><th style="width:60% !important;">Producto</th><th style="width:15% !important; text-align:center">Cantidad</th><th style="text-align:center">Costo validado por compras</th></thead><tbody></tr>'
                 for line in self.order_line.filtered(lambda x: x.x_validacion_precio):
                     prods_html += '<tr><td style="text-align:justify">' + line.name + '</td><td style="text-align:center">' + str(line.x_cantidad_disponible_compra) + '</td><td style="text-align:center">' + str(line.x_studio_nuevo_costo) + '</td></tr>'
                 prods_html += '</tbody></table>'
@@ -442,20 +450,23 @@ class SaleOrderLine(models.Model):
             raise UserError("Falta definir el nivel en el cliente")
         return  self.product_id.standard_price / ((100 - margen) / 100)
 
-    @api.depends('price_unit')
+    @api.depends('price_unit','x_studio_nuevo_costo')
     def _compute_check_price_reduce(self):
+        valor_nuevo_costo = 0.0
         for record in self:
             if record.order_id.x_studio_nivel:
                 margen = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
                 if record.x_studio_nuevo_costo > 0.0:
-                    valor = record.x_studio_nuevo_costo / ((100 - margen) / 100)
-                else:
-                    valor = record.product_id.standard_price / ((100 - margen) / 100)
+                    valor_nuevo_costo = record.x_studio_nuevo_costo / ((100 - margen) / 100)
+                valor = record.product_id.standard_price / ((100 - margen) / 100)
             else:
                 # margen = 12
                 # valor = record.product_id.standard_price / ((100 - margen) / 100)
                 raise UserError("Falta definir el nivel en el cliente")
-            if valor <= record.price_unit:
+            if valor_nuevo_costo > record.price_unit:
+                record.price_reduce_v = record.price_unit
+                record.check_price_reduce = True
+            elif valor <= record.price_unit:
                 record.check_price_reduce = False
                 record.price_reduce_v = 0.0
             else:
@@ -556,29 +567,35 @@ class Alerta_limite_de_credito(models.TransientModel):
         self.sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})
         # self.env['sale.order'].browse(self.env.context.get('active_ids')).write({'state': 'sale_conf'})
         self.sale_id.order_line.order_id.update({'state': 'sale_conf'})
-        mensaje = '<h4>Se solicita reducir el precio de los siguientes productos:</h4>' \
-                  '<table class="table" style="width: 100%"><thead>' \
-                  '<tr><th>Producto</th>' \
-                  '<th>Precio unitario anterior</th>' \
-                  '<th>Precio unitario propuesto</th>' \
-                  '<th>Margen anterior</th>' \
-                  '<th>Nuevo margen</th>' \
+        mensaje = '<h6>Se solicita la reducción de precio de los siguientes productos</h6><table class="table" style="width: 100%"><thead>' \
+                  '<tr style="width: 30% !important;"><th>Producto</th>' \
+                  '<th style="width: 10%">Costo promedio</th>' \
+                  '<th style="width: 10%">Precio unitario anterior</th>' \
+                  '<th style="width: 10%">Margen anterior</th>' \
+                  '<th style="width: 10%">Nuevo costo</th>' \
+                  '<th style="width: 10%">Nuevo precio mínimo recomendado</th>' \
+                  '<th style="width: 10%">Nuevo precio unitario</th>' \
+                  '<th style="width: 10%">Nuevo margen</th>' \
                   '</tr></thead>' \
                   '<tbody>'
         for order_line in self.sale_id.order_line:
             if order_line.price_reduce_v > 0.0:
                 margen = order_line.product_id.x_fabricante[
                     'x_studio_margen_' + str(order_line.order_id.x_studio_nivel)] if order_line.product_id.x_fabricante else 12
-                mensaje += '<tr><td>' + order_line.x_descripcion_corta + '</td><td>' \
+                mensaje += '<tr><td>' + order_line.name + '</td><td>' \
+                           + str(order_line.product_id.standard_price) + '</td><td>' \
                            + str(round(order_line.get_valor_minimo() + .5)) + '</td><td>' \
-                           + str(order_line.price_unit) + '</td><td>' \
                            + str(margen) + '</td><td>' \
-                           + str(order_line.x_utilidad_por) + '</td></tr>'
+                           + str(order_line.x_studio_nuevo_costo) + '</td><td>' \
+                           + str(round(order_line.x_studio_nuevo_costo / ((100 - margen) / 100))) + '</td><td>' \
+                           + str(round(order_line.price_unit)) + '</td><td>' \
+                           + str(round((1 - (order_line.x_studio_nuevo_costo / order_line.price_unit)) * 100) if order_line.x_studio_nuevo_costo> 0 else order_line.x_utilidad_por) \
+                           + '</td></tr>'
         mensaje += '</tbody></table>'
         self.sale_id.message_post(body=mensaje ,type="notification")
 
     def confirmar_validacion(self):
-        self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero - x.product_uom_qty) <= 0).write({'x_validacion_precio': True})
+        self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero - x.product_uom_qty) < 0).write({'x_validacion_precio': True})
 
 
 class SaleInvoice(models.TransientModel):

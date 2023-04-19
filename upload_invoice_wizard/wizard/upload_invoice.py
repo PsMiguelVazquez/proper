@@ -26,6 +26,24 @@ class UploadInvoice(models.TransientModel):
     tipo_movimiento = fields.Char('Tipo de movimiento')
     id_metodo_pago = fields.Integer('Id Método de pago')
     codigos_producto = fields.Char('Códigos de producto')
+    total_ordenes = fields.Float('Total', compute='_compute_total_ordenes')
+    total_lineas = fields.Float('Total líneas', compute='_compute_total_lineas')
+
+    @api.depends('order_lines')
+    def _compute_total_lineas(self):
+        for record in self:
+            if record.order_lines:
+                self.total_lineas = sum(self.order_lines.mapped('price_total'))
+            else:
+                self.total_lineas = 0
+
+    @api.depends('sale_ids')
+    def _compute_total_ordenes(self):
+        for record in self:
+            if record.sale_ids:
+                self.total_ordenes = sum(self.sale_ids.mapped('amount_total'))
+            else:
+                self.total_ordenes = 0
 
 
     def get_node(self,cfdi_node, attribute, namespaces):
@@ -38,8 +56,11 @@ class UploadInvoice(models.TransientModel):
     @api.constrains('adjuntos')
     def _check_adjuntos(self,):
         for record in self:
-            if len(record.adjuntos.filtered(lambda x: x.mimetype == 'application/xml')) > 1:
+            total_xmls = len(record.adjuntos.filtered(lambda x: x.mimetype == 'application/xml'))
+            if total_xmls > 1:
                 raise ValidationError('Solo puede subir un archivo de tipo XML')
+            if total_xmls == 0:
+                raise ValidationError('Debe subir un archivo de tipo XML')
 
 
     def validate(self):
@@ -149,7 +170,7 @@ class UploadInvoice(models.TransientModel):
             if record.adjuntos:
                 xmls = record.adjuntos.filtered(lambda x: x.mimetype == 'application/xml')
                 pdfs = record.adjuntos.filtered(lambda x: x.mimetype == 'application/pdf')
-                if xmls[0]:
+                if xmls and xmls[0]:
                     cfdi_node = fromstring(xmls[0].raw)
                     emisor_node = cfdi_node.Emisor
                     ######### Lista de productos en el XML ########
