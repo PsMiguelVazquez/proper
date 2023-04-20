@@ -51,15 +51,16 @@ class AccountPaymentWidget(models.TransientModel):
     def done(self):
         check_sum = sum(self.invoices_ids.mapped('porcent_assign'))
         move_line = self.env['account.move.line'].search([('payment_id', '=', self.payment.id), ('balance', '<', 0)])
-        if check_sum > self.amount_rest:
-            return odoo.exceptions.UserError("No se puede asignar mas del monto: "+str(self.amount_rest))
+        ###Redondea a dos decimales
+        if round(check_sum,2) > self.amount_rest:
+            raise odoo.exceptions.UserError("No se puede asignar mas del monto: "+str(self.amount_rest) + '. Intentando asignar ' + str(check_sum))
         else:
             if move_line:
                 for move in self.invoices_ids:
                     amount = move.porcent_assign
                     r = move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
             else:
-                return odoo.exceptions.UserError("No hay asiento disponible para el movimiento")
+                raise odoo.exceptions.UserError("No hay asiento disponible para el movimiento")
         return True
 
 
