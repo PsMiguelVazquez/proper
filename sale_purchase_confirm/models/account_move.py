@@ -64,8 +64,11 @@ class Proposal(models.Model):
 
 class AccountMoveRevers(models.TransientModel):
     _inherit = 'account.move.reversal'
+    uso_cfdi = fields.Selection(string='Uso de CFDI', selection=[('G02', 'G02 - Devoluciones, descuentos o bonificaciones')], default='G02')
 
     def _prepare_default_reversal(self, move):
         r = super(AccountMoveRevers, self)._prepare_default_reversal(move)
         r['invoice_payment_term_id'] = move.invoice_payment_term_id.id
+        if self.uso_cfdi:
+            r['l10n_mx_edi_usage'] = self.uso_cfdi
         return r
