@@ -47,7 +47,7 @@ class productPr(models.Model):
             location_supplier = self.env.ref('stock.stock_location_suppliers').id
             picking_in = False
             if record.id:
-                move_in = self.env['stock.move.line'].search([['product_id', '=', record.id], ['location_id', '=', location_supplier], ['company_id', '=', self.env.company.id]], order='id desc', limit=1)
+                move_in = self.env['stock.move.line'].search([['product_id', '=', record.id], ['location_id', '=', location_supplier]], order='id desc', limit=1)
                 if move_in.id:
                     picking_in = move_in.move_id.mapped('purchase_line_id.price_unit')
             record.move_in = picking_in
