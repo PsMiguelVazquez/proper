@@ -35,3 +35,21 @@ class StockMove(models.Model):
 
     def _action_confirm(self, merge=True, merge_into=False):
         return super(StockMove, self)._action_confirm(merge=False, merge_into=merge_into)
+
+
+class productPr(models.Model):
+    _inherit = 'product.product'
+    move_in = fields.Float(compute='_get_in_out')
+
+    @api.depends('qty_available')
+    def _get_in_out(self):
+        for record in self:
+            location_supplier = self.env.ref('stock.stock_location_suppliers').id
+            picking_in = False
+            if record.id:
+                move_in = self.env['stock.move.line'].search([['product_id', '=', record.id], ['location_id', '=', location_supplier]], order='id desc', limit=1)
+                if move_in.id:
+                    picking_in = move_in.move_id.mapped('purchase_line_id.price_unit')[-1]
+                    if picking_in!=0:
+                        record.update({'x_studio_ultimo_costo': picking_in})
+            record.move_in = picking_in
