@@ -79,6 +79,8 @@ class SaleOrder(models.Model):
         if 'user_id' in vals:
             vals['user_id'] = self.env.user.id
         res =  super(SaleOrder, self).create(vals)
+        if not res.payment_term_id:
+            res.write({'payment_term_id': res.partner_id.property_payment_term_id })
         adjuntos = res.x_otros_documentos
         for adjunto in adjuntos:
             adjunto.write({'res_model': self._name, 'res_id': res.id})
