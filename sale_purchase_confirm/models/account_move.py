@@ -30,8 +30,14 @@ class AccountMove(models.Model):
             self.write({'invoice_payment_term_id': self.partner_id.property_supplier_payment_term_id.id})
         return super(AccountMove, self).action_post()
 
-    #def action_post(self):
-    #    return super(AccountMove).action_post()
+    def remove_other_lines(self, picking_lines):
+        self = self.with_context({'check_move_validity': False})
+        self.invoice_line_ids = self.invoice_line_ids.filtered(lambda x: x.product_id.id in picking_lines.mapped('product_id.id'))
+        self.line_ids.filtered(lambda x: not x.product_id)[0].recompute_tax_line = True
+        for linea in picking_lines:
+            self.invoice_line_ids.filtered(lambda x: x.product_id == linea.product_id)\
+                .write({'quantity': linea.qty_done})
+        self._onchange_recompute_dynamic_lines()
 
 
 class Requirement(models.Model):
@@ -69,6 +75,24 @@ class AccountMoveRevers(models.TransientModel):
     def _prepare_default_reversal(self, move):
         r = super(AccountMoveRevers, self)._prepare_default_reversal(move)
         r['invoice_payment_term_id'] = move.invoice_payment_term_id.id
+        r['l10n_mx_edi_payment_policy'] = 'PUE'
         if self.uso_cfdi:
             r['l10n_mx_edi_usage'] = self.uso_cfdi
+        return r
+    #
+    def reverse_moves(self):
+        r = super(AccountMoveRevers, self).reverse_moves()
+        nota_credito = self.env['account.move'].browse(r['res_id'])
+        picking_lines = self.helpdesk_ticket_id.picking_ids.move_line_ids_without_package
+        if picking_lines:
+            nota_credito.remove_other_lines(picking_lines)
+            nota_credito.x_tipo_de_relacion ='03'
+        else:
+            nota_credito.x_tipo_de_relacion = '01'
+        if nota_credito.l10n_mx_edi_origin:
+            origin = nota_credito.l10n_mx_edi_origin.split('|')
+            if len(origin) > 1:
+                nota_credito.l10n_mx_edi_origin = nota_credito.x_tipo_de_relacion + '|' + origin[1]
+            if len(origin) == 1:
+                nota_credito.l10n_mx_edi_origin = nota_credito.x_tipo_de_relacion = nota_credito.l10n_mx_edi_origin + '|' + origin[0]
         return r
