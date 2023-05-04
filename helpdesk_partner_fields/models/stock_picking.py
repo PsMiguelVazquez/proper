@@ -13,7 +13,7 @@ class StockPicking(models.Model):
         if r:
             if self.env.context.get('default_pick_ids'):
                 picks = self.env['stock.picking'].search([('id', '=', self.env.context.get('default_pick_ids')[0])])
-                ticket = self.env['helpdesk.ticket'].search([('sale_order_id', '=', picks.sale_id.id)]).filtered(lambda x:  picks in x.picking_ids)
+                ticket = self.env['helpdesk.ticket'].sudo().search([('sale_order_id', '=', picks.sale_id.id)]).filtered(lambda x:  picks in x.picking_ids)
                 if ticket:
                     if not self.env['mail.activity'].search(
                             [('res_id', '=', ticket.id), ('activity_type_id', '=', 4), ('summary', '=', 'Ticket reasignado')]):
