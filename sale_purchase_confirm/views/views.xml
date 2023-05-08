@@ -207,7 +207,7 @@
                 <sheet>
                     <group>
                         <field name="proposal_ids" invisible="1"/>
-                        <field name="partner_id" required="1" string="Proveedor"/>
+                        <field name="partner_id" required="1" string="Proveedor" domain="[('supplier_rank', '=', 1)]"/>
                     </group>
                 </sheet>
                 <footer>
