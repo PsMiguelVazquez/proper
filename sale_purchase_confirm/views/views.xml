@@ -205,8 +205,10 @@
         <field name="arch" type="xml">
             <form>
                 <sheet>
-                    <field name="proposal_ids" invisible="1"/>
-                    <field name="partner_id" required="1" string="Proveedor"/>
+                    <group>
+                        <field name="proposal_ids" invisible="1"/>
+                        <field name="partner_id" required="1" string="Proveedor"/>
+                    </group>
                 </sheet>
                 <footer>
                     <button type="object" name="confirm" string="Crear Orden" />
