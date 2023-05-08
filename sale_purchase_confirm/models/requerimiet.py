@@ -1,5 +1,6 @@
 from odoo import models, fields,api, _
 from datetime import datetime
+from odoo.exceptions import UserError
 
 
 class RequerimientClient(models.Model):
@@ -86,7 +87,7 @@ class ProposalPurchase(models.Model):
     x_pro_aten = fields.Selection([('yes', 'SI'), ('no', 'NO')], "Propuesta Atendida")
     x_product_id = fields.Many2one("product.product", "producto")
     x_proveedor = fields.Many2one("res.partner", "proveedor")
-    x_state = fields.Selection([('draft', 'Borrador'), ('done', 'Propuesta Aceptada'), ('cancel', 'Cancelado'), ('validar', 'Re-Validar'), ('atendido', 'Atenidod'), ('confirm', 'Compra Autorizada')],"estado", default='draft')
+    x_state = fields.Selection([('draft', 'Borrador'), ('done', 'Propuesta Aceptada'), ('cancel', 'Cancelado'), ('validar', 'Re-Validar'), ('atendido', 'Atendido'), ('confirm', 'Compra Autorizada')],"estado", default='draft')
     x_studio_aprovacin_de_compras = fields.Boolean("Aprovación de Compras", related='rel_id.x_order_id.x_aprovacion_compras')
     x_studio_archivo = fields.Binary("Archivo")
     x_studio_archivo_filename = fields.Char("Filename for x_studio_binary_field_kkNkg")
@@ -148,6 +149,7 @@ class ProposalPurchase(models.Model):
                                                                  'x_cantidad_disponible_compra':self.x_cantidad,
                                                                  'x_tiempo_entrega_compra':self.x_tiempo_entrega,
                                                                  'x_vigencia_compra':self.x_vigencia,
+                                                                 'proposal_id': self.id
                                                                  })]})
     def cancel(self):
         self.x_state = 'cancel'

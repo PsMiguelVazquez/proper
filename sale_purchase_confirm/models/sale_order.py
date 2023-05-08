@@ -442,6 +442,7 @@ class SaleOrderLine(models.Model):
     costo_envio = fields.Float('Costo de envío')
     comision = fields.Float('Comisión')
     x_studio_nuevo_costo = fields.Monetary('Nuevo costo')
+    proposal_id = fields.Many2one('proposal.purchases','Propuesta de origen')
 
 
     def get_valor_minimo(self):
