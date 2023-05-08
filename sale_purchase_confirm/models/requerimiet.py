@@ -324,7 +324,7 @@ class PurchaseCreateWizard(models.TransientModel):
         valida = [l in stat for l in lista]
         valida = set(valida)
         if True in valida:
-            raise UserWarning("Hay propuestas sin validar")
+            raise UserError("Hay propuestas sin validar")
         else:
             orden = self.env['purchase.order'].create({'partner_id': self.partner_id.id})
             for p in self.proposal_ids:
