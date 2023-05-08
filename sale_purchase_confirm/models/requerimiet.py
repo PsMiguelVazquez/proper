@@ -323,8 +323,10 @@ class PurchaseCreateWizard(models.TransientModel):
         if True in valida:
             raise UserError("Hay propuestas sin validar")
         else:
+            action = self.env["ir.actions.actions"]._for_xml_id("purchase.purchase_form_action")
             orden = self.env['purchase.order'].create({'partner_id': self.partner_id.id})
+            action['domain'] = [('id', 'in', orden.ids)]
             for p in self.proposal_ids:
-                self.env['purchase.order.line'].create({'product_id': p.x_product_id.id, 'price_unit': p.x_costo, 'product_uom_qty': p.cantidad, 'name': p.x_product_id.display_name})
-            return orden
+                self.env['purchase.order.line'].create({'product_id': p.x_product_id.id, 'price_unit': p.x_costo, 'product_qty': p.cantidad, 'name': p.x_product_id.display_name})
+            return action
 
