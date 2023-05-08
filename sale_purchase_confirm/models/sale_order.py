@@ -431,6 +431,19 @@ class SaleOrder(models.Model):
             self.write({'state': 'sale_conf'})
             #raise UserError(message)
 
+    def action_cancel(self):
+        if 'posted' in self.invoice_ids.mapped('state'):
+            raise UserError(" No se puede cancelar dado que:\n Existen Facturas publicadas")
+        else:
+            if self.purchase_ids:
+                if self.env.user.has_group ('purchase.group_purchase_manager'):
+                    return super(SaleOrder, self).action_cancel()
+                else:
+                    self.message_post("Existen OC en proceso")
+                    self.write({'state': 'done'})
+            else:
+                return super(SaleOrder, self).action_cancel()
+
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
