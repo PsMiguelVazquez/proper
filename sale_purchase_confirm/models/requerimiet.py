@@ -193,22 +193,19 @@ class ProposalPurchase(models.Model):
         self.x_state = 'confirm'
 
     def create_purchase(self):
-        if self.x_state == 'done':
-            view = self.env.ref('sale_purchase_confirm.wizard_puchase_create_form')
-            wiz = self.env['wizard.purchase.create'].create({'proposal_ids': [(6, 0, self.ids)]})
-            action = {
-                'name': 'Create Purchase',
-                'type': 'ir.actions.act_window',
-                'view_mode': 'form',
-                'res_model': 'wizard.purchase.create',
-                'views': [(view.id, 'form')],
-                'view_id': view.id,
-                'target': 'new',
-                'res_id': wiz.id,
-                'context': self.env.context}
-            return action
-        else:
-            raise UserWarning("La propuesta aun no esta validada")
+        view = self.env.ref('sale_purchase_confirm.wizard_puchase_create_form')
+        wiz = self.env['wizard.purchase.create'].create({'proposal_ids': [(6, 0, self.ids)]})
+        action = {
+            'name': 'Create Purchase',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'wizard.purchase.create',
+            'views': [(view.id, 'form')],
+            'view_id': view.id,
+            'target': 'new',
+            'res_id': wiz.id,
+            'context': self.env.context}
+        return action
 
 
 class WizarPropo(models.TransientModel):
