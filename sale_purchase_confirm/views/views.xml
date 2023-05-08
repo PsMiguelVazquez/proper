@@ -198,5 +198,30 @@
             </xpath>
         </field>
     </record>
+
+    <record model="ir.ui.view" id="wizard_puchase_create_form">
+        <field name="model">wizard.purchase.create</field>
+        <field name="name"></field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="proposal_ids" invisible="1"/>
+                    <field name="partner_id" required="1" string="Proveedor"/>
+                </sheet>
+                <footer>
+                    <button type="object" name="confirm" string="Crear Orden" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_purchase_create_propo" model="ir.actions.act_window">
+        <field name="name">Crear Orden</field>
+        <field name="res_model">wizard.purchase.create</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{}</field>
+        <field name="binding_model_id" ref="model_proposal_purchases" />
+    </record>
   </data>
 </odoo>

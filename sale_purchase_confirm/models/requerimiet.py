@@ -106,6 +106,12 @@ class ProposalPurchase(models.Model):
     vigencia_date = fields.Date("Vigencia")
     cantidad = fields.Float("Cantidad")
     tiempo_entrega = fields.Integer("Tiempo de entrega")
+    state = fields.Selection([('draft', 'Borrador'), ('done', 'Propuesta Aceptada'), ('cancel', 'Cancelado'), ('validar', 'Re-Validar'), ('atendido', 'Atenidod'), ('confirm', 'Compra Autorizada')],"estado", default='draft', compute='set_state')
+
+    @api.depends('x_state')
+    def set_state(self):
+        for record in self:
+            record.state = record.x_state
 
     @api.depends('rel_id')
     def get_detalle(self):
@@ -185,6 +191,24 @@ class ProposalPurchase(models.Model):
 
     def autoriz(self):
         self.x_state = 'confirm'
+
+    def create_purchase(self):
+        if self.x_state == 'done':
+            view = self.env.ref('sale_purchase_confirm.wizard_puchase_create_form')
+            wiz = self.env['wizard.purchase.create'].create({'proposal_ids': [(6, 0, self.ids)]})
+            action = {
+                'name': 'Create Purchase',
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'res_model': 'wizard.purchase.create',
+                'views': [(view.id, 'form')],
+                'view_id': view.id,
+                'target': 'new',
+                'res_id': wiz.id,
+                'context': self.env.context}
+            return action
+        else:
+            raise UserWarning("La propuesta aun no esta validada")
 
 
 class WizarPropo(models.TransientModel):
@@ -284,4 +308,26 @@ class WizardRevalid(models.TransientModel):
 
     def confirm(self):
         self.proposal_id.write({'x_studio_revalidacion': self.description})
+
+
+class PurchaseCreateWizard(models.TransientModel):
+    _name = 'wizard.purchase.create'
+    proposal_ids = fields.Many2many('proposal.purchases')
+    partner_id = fields.Many2one('res.partner')
+
+    def confirm(self):
+        if not self.proposal_ids:
+            self.proposal_ids = [(6, 0, self._.get('active_ids',[]))]
+        r = False
+        stat = self.proposal_ids.mapped('x_state')
+        lista = ('draft', 'done', 'cancel', 'validar', 'atendido')
+        valida = [l in stat for l in lista]
+        valida = set(valida)
+        if True in valida:
+            raise UserWarning("Hay propuestas sin validar")
+        else:
+            orden = self.env['purchase.order'].create({'partner_id': self.partner_id.id})
+            for p in self.proposal_ids:
+                self.env['purchase.order.line'].create({'product_id': p.x_product_id.id, 'price_unit': p.x_costo, 'product_uom_qty': p.cantidad})
+            return orden
 

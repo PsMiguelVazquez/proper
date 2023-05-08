@@ -127,7 +127,9 @@
         <field name="arch" type="xml">
             <form>
             <header>
-                <field name="x_state" modifiers="{}" widget="statusbar"/>
+                <field name="x_state" invisible="1"/>
+                <field name="state" modifiers="{}" widget="statusbar"/>
+                <button name="create_purchase" string="Crear Orden" type="object" states="done"/>
             </header>
             <sheet string="Propuesta de Compras">
                 <group>
