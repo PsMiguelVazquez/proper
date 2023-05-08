@@ -129,7 +129,7 @@
             <header>
                 <field name="x_state" invisible="1"/>
                 <field name="state" modifiers="{}" widget="statusbar"/>
-                <button name="create_purchase" string="Crear Orden" type="object" states="done"/>
+                <button name="create_purchase" string="Crear Orden" type="object" states="confirm"/>
             </header>
             <sheet string="Propuesta de Compras">
                 <group>
