@@ -329,6 +329,6 @@ class PurchaseCreateWizard(models.TransientModel):
             for p in self.proposal_ids:
                 if p.x_product_id:
                     self.env['purchase.order.line'].create({'order_id': orden.id, 'product_id': p.x_product_id.id, 'price_unit': p.x_costo, 'product_qty': p.cantidad, 'name': p.x_product_id.display_name})
-            self.proposal_ids.mapped('rel_id.x_order_id').write({'purchase_ids': [(4, [orden.id])]   })
+            self.proposal_ids.mapped('rel_id.x_order_id').write({'purchase_ids': [(4, orden.id)] })
             return action
 
