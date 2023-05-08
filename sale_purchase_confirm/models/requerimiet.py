@@ -314,7 +314,7 @@ class PurchaseCreateWizard(models.TransientModel):
 
     def confirm(self):
         if not self.proposal_ids:
-            self.proposal_ids = [(6, 0, self._.get('active_ids',[]))]
+            self.proposal_ids = [(6, 0, self.env.context.get('active_ids', []))]
         r = False
         stat = self.proposal_ids.mapped('x_state')
         lista = ('draft', 'done', 'cancel', 'validar', 'atendido')
@@ -327,6 +327,7 @@ class PurchaseCreateWizard(models.TransientModel):
             orden = self.env['purchase.order'].create({'partner_id': self.partner_id.id})
             action['domain'] = [('id', 'in', orden.ids)]
             for p in self.proposal_ids:
-                self.env['purchase.order.line'].create({'order_id': orden.id, 'product_id': p.x_product_id.id, 'price_unit': p.x_costo, 'product_qty': p.cantidad, 'name': p.x_product_id.display_name})
+                if p.x_product_id:
+                    self.env['purchase.order.line'].create({'order_id': orden.id, 'product_id': p.x_product_id.id, 'price_unit': p.x_costo, 'product_qty': p.cantidad, 'name': p.x_product_id.display_name})
             return action
 
