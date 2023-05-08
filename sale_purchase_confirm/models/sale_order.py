@@ -428,7 +428,8 @@ class SaleOrder(models.Model):
                 self.write({'albaran': self.picking_ids.filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done'))[0].id})
             return r
         else:
-            raise UserError(message)
+            self.write({'state': 'sale_conf'})
+            #raise UserError(message)
 
 
 class SaleOrderLine(models.Model):
