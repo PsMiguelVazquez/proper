@@ -439,7 +439,7 @@ class SaleOrder(models.Model):
                 if self.env.user.has_group ('purchase.group_purchase_manager'):
                     return super(SaleOrder, self).action_cancel()
                 else:
-                    self.message_post("Existen OC en proceso")
+                    self.message_post(body="Existen OC en proceso", type='notification')
                     self.write({'state': 'done'})
             else:
                 return super(SaleOrder, self).action_cancel()
