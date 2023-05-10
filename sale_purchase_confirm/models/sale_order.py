@@ -440,7 +440,7 @@ class SaleOrder(models.Model):
                     return super(SaleOrder, self).action_cancel()
                 else:
                     self.message_post(body="Existen OC en proceso", type='notification')
-                    self.write({'state': 'done'})
+                    self.write({'state': 'done', 'x_aprovacion_compras': True})
             else:
                 return super(SaleOrder, self).action_cancel()
 
