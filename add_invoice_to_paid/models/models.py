@@ -47,6 +47,14 @@ class AccountPaymentWidget(models.TransientModel):
     invoices_ids = fields.Many2many('account.move')
     partner_id = fields.Many2one('res.partner')
     amount_rest = fields.Float(related='payment.amount_rest')
+    amount_applied = fields.Float('Monto aplicado' , compute='_compute_amount_applied')
+
+    @api.depends('invoices_ids')
+    def _compute_amount_applied(self):
+        for record in self:
+            record.amount_applied = sum(record.invoices_ids.mapped('porcent_assign'))
+
+
 
     def done(self):
         check_sum = sum(self.invoices_ids.mapped('porcent_assign'))
