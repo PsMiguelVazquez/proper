@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="account_move_cancel_reason" model="ir.ui.view">
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='payment_reference']" position="before">
+                <field name="motivo_cancelacion" attrs="{'invisible':[('edi_state', '!=', 'to_cancel')], 'required':[('edi_state','=','to_cancel')]}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_cancel_invoices_03_04" model="ir.actions.server">
+        <field name="name">Marcar como cancelada</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="account_move_proper.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move" />
+        <field name="code">action=model.mark_as_cancelled()</field>
+        <field name="state">code</field>
+    </record>
+    <record id="action_duplicate_invoice" model="ir.actions.server">
+        <field name="name">Duplicar (motivo 1)</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="account_move_proper.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move" />
+        <field name="code">action=model.duplicate_invoice()</field>
+        <field name="state">code</field>
+    </record>
+</odoo>
