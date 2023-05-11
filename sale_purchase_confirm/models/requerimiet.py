@@ -25,6 +25,13 @@ class RequerimientClient(models.Model):
     x_studio_related_field_ap2ah = fields.Char("Vendedor", related='x_order_id.user_id.display_name')
     cantidad = fields.Float("Cantidad")
 
+    @api.onchange('x_modelo')
+    def onchange_modelo(self):
+        for record in self:
+            if record.x_modelo:
+                prod = self.env['product.product'].search([('default_code','ilike',record.x_modelo)]).filtered(lambda x: x.default_code.lower() == record.x_modelo.lower())
+                if prod:
+                    raise UserError('Ya existe un producto dado de alta con ese código.' + str(record.x_modelo) + '\n' + prod.name)
 
     @api.model
     def create(self, vals):
@@ -113,6 +120,14 @@ class ProposalPurchase(models.Model):
         for record in self:
             record.state = record.x_state
 
+    @api.onchange('x_modelo')
+    def onchange_modelo(self):
+        for record in self:
+            if record.x_modelo:
+                prod = self.env['product.product'].search([('default_code','ilike',record.x_modelo)]).filtered(lambda x: x.default_code.lower() == record.x_modelo.lower())
+                if prod:
+                    raise UserError('Ya existe un producto dado de alta con ese código.' + str(record.x_modelo) + '\n' + prod.name)
+
     @api.depends('rel_id')
     def get_detalle(self):
         for record in self:
@@ -134,6 +149,8 @@ class ProposalPurchase(models.Model):
         self.x_state = 'done'
         marca = False
         marca = self.env['x_fabricante'].search([['x_name', '=', self.x_marca]])
+        if self.x_modelo:
+            self.x_product_id = self.env['product.product'].search([('default_code', '=', self.x_modelo)])
         if not self.x_product_id.id:
             # marca = env['x_fabricante'].search([['name','=', record.x_marca]])
             self.x_product_id = self.env['product.product'].create(
