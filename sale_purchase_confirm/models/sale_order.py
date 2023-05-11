@@ -517,11 +517,11 @@ class SaleOrder(models.Model):
         if valid:
             r = super(SaleOrder, self).action_confirm()
             if r and self.order_line.filtered(lambda x: x.x_validacion_precio):
-                prods_html = '<table class="table" style="width:100%"><thead><tr><th style="width:60% !important;">Producto</th><th style="width:15% !important; text-align:center">Cantidad</th><th style="text-align:center">Costo validado por compras</th></thead><tbody></tr>'
+                prods_html = '<table class="table" style="width:100%"><thead><tr><th style="width:60% !important;">Producto</th><th style="width:15% !important; text-align:center">Cantidad requerida</th><th style="width:15% !important; text-align:center">Cantidad validada por compras</th><th style="text-align:center">Costo validado por compras</th></thead><tbody></tr>'
                 for line in self.order_line.filtered(lambda x: x.x_validacion_precio):
-                    prods_html += '<tr><td style="text-align:justify">' + line.name + '</td><td style="text-align:center">' + str(line.x_cantidad_disponible_compra) + '</td><td style="text-align:center">' + str(line.x_studio_nuevo_costo) + '</td></tr>'
+                    prods_html += '<tr><td style="text-align:justify">' + line.name + '</td><td style="text-align:center">' + str(line.product_uom_qty - line.product_id.stock_quant_warehouse_zero + line.x_cantidad_disponible_compra) + '</td><td style="text-align:center">' + str(line.x_cantidad_disponible_compra) + '</td><td style="text-align:center">' + str(line.x_studio_nuevo_costo) + '</td></tr>'
                 prods_html += '</tbody></table>'
-                activity_message = ("<h4>Por favor realizar la cotización/compra de los siguientes productos</h4> %s") % (prods_html)
+                activity_message = ("<h3>Por favor realizar la compra de los siguientes productos</h3> %s") % (prods_html)
                 activity_user = self.env['res.users'].search([('login', 'like', '%compras1%')])
                 act = self.activity_schedule(
                     activity_type_id= 4,
@@ -532,11 +532,11 @@ class SaleOrder(models.Model):
             if self.picking_ids:
                 self.picking_ids.write({'sale': self.id})
                 self.write({'albaran': self.picking_ids.filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done'))[0].id})
-                for line in self.picking_ids.move_line_ids:
-                    for ol in self.order_line:
-                        if line.product_id == ol.product_id:
-                            ol.x_Reservado = line.product_uom_qty
-                            break
+                # for line in self.picking_ids.move_line_ids:
+                #     for ol in self.order_line:
+                #         if line.product_id == ol.product_id:
+                #             ol.x_Reservado = line.product_uom_qty
+                #             break
             return r
         else:
             # self.write({'state': 'sale_conf'})
