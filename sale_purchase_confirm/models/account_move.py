@@ -9,6 +9,12 @@ class AccountMove(models.Model):
     serie = fields.Char('Serie', compute="set_folio")
     folio = fields.Char('Folio', compute="set_folio")
     reason = fields.Char("Motivo")
+    tipo_nota = fields.Selection(string='Tipo de nota de crédito', selection=[('01','01 - Descuentos o bonificaciones'),('03','03 - Devolición de mercancia')])
+
+    @api.onchange('tipo_nota')
+    def onchange_tipo_nota(self):
+        for record in self:
+            record.x_tipo_de_relacion = record.tipo_nota
 
     @api.depends('name')
     def set_folio(self):
@@ -83,12 +89,6 @@ class AccountMoveRevers(models.TransientModel):
     def reverse_moves(self):
         r = super(AccountMoveRevers, self).reverse_moves()
         nota_credito = self.env['account.move'].browse(r['res_id'])
-        picking_lines = self.helpdesk_ticket_id.picking_ids.move_line_ids_without_package
-        if picking_lines:
-            nota_credito.remove_other_lines(picking_lines)
-            nota_credito.x_tipo_de_relacion ='03'
-        else:
-            nota_credito.x_tipo_de_relacion = '01'
         if nota_credito.l10n_mx_edi_origin:
             origin = nota_credito.l10n_mx_edi_origin.split('|')
             if len(origin) > 1:

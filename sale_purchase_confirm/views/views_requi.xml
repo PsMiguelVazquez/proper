@@ -22,7 +22,7 @@
                             <field name="x_marca" modifiers="{}"/>
                             <field name="x_modelo" modifiers="{}"/>
                             <field name="x_order_id" on_change="1" can_create="true" can_write="true" modifiers="{}"/>
-                            <field name="x_proveedor" modifiers="{}"/>
+                            <field name="x_proveedor" string="Proveedor" can_create="true" can_write="true" widget="res_partner_many2one" context="{'res_partner_search_mode': 'supplier', 'show_vat': True}" modifiers="{}"/>
                             <field name="x_count" modifiers="{&quot;readonly&quot;: true}"/>
                         </group>
                         <group>
@@ -55,7 +55,7 @@
                     <field name="x_modelo"/>
                     <field name="x_presupuesto"/>
                     <field name="x_studio_related_field_1eaGE" string="Cliente"/>
-                    <field name="x_proveedor"/>
+                    <field name="x_proveedor" string="Proveedor" can_create="true" can_write="true" widget="res_partner_many2one" context="{'res_partner_search_mode': 'supplier', 'show_vat': True}" modifiers="{}"/>
                     <field name="x_cantidad" invisible="1"/>
                     <field name="cantidad" />
                     <field name="x_studio_related_field_ap2ah" string="Vendedor"/>
@@ -100,7 +100,8 @@
                  <!-- <field name="x_archivo_2" string="Archivo"/>-->
 
                     <field name="x_note" string="Notas"/>
-                  <field name="x_proveedor_char"/>
+                  <field name="x_proveedor_char" invisible="1"/>
+                  <field name="x_proveedor" string="Proveedor" can_create="true" can_write="true" widget="res_partner_many2one" context="{'res_partner_search_mode': 'supplier', 'show_vat': True}" modifiers="{}"/>
                   <field name="create_uid" string="Agente de compra"/>
                 </group>
               </group>
@@ -127,7 +128,9 @@
         <field name="arch" type="xml">
             <form>
             <header>
-                <field name="x_state" modifiers="{}" widget="statusbar"/>
+                <field name="x_state" invisible="1"/>
+                <field name="state" modifiers="{}" widget="statusbar"/>
+                <button name="create_purchase" string="Crear Orden" type="object" states="confirm"/>
             </header>
             <sheet string="Propuesta de Compras">
                 <group>
@@ -148,7 +151,6 @@
                         <field name="x_cantidad" modifiers="{}"/>
                         <field name="x_costo" modifiers="{}" string="Costo Unitario"/>
                         <field name="x_iva" modifiers="{}" string="Incluye IVA" invisible="1"/>
-                        <field name="x_proveedor" can_create="true" can_write="true" modifiers="{}" readonly="1" invisible="1"/>
                         <field name="rel_id" on_change="1" can_create="true" can_write="true" modifiers="{}" readonly="1" invisible="1"/>
                         <separator/>
                     </group>
@@ -158,7 +160,8 @@
                         <field name="tiempo_entrega" />
                         <field name="x_vigencia" invisible="1"/>
                         <field name="vigencia_date" />
-                        <field name="x_studio_proveedor" modifiers="{}"/>
+                        <field name="x_studio_proveedor" modifiers="{}" invisible="1"/>
+                        <field name="x_proveedor" string="Proveedor" can_create="true" can_write="true" widget="res_partner_many2one" context="{'res_partner_search_mode': 'supplier', 'show_vat': True}" modifiers="{}"/>
                         <field name="x_archivo"/>
                         <field name="x_note" string="Notas"/>
                         <field name="create_uid" string="Agente de compra"/>
@@ -193,6 +196,9 @@
         <field name="model">proposal.purchases</field>
         <field name="arch" type="xml">
             <tree string="Propuesta de Compras">
+<!--                <header>-->
+<!--                    <button string="Generar orden" name="generar_orden" type="object"/>-->
+<!--                </header>-->
                 <field name="create_date" string="Fecha de creación"/>
                 <field name="write_date" string="Fecha de modificación"/>
                 <field name="x_studio_related_field_gKx5P" string="Orden de venta" readonly="1"/>
@@ -202,13 +208,13 @@
                     <field name="x_modelo"/>
                     <field name="x_product_id" attrs="{}" invisible="1"/>
                     <field name="x_studio_proveedor"/>
-                    <field name="x_proveedor" string="Proveedor" invisible="1"/>
+                    <field name="x_proveedor" string="Proveedor"/>
                     <field name="x_costo" string="Costo"/>
                     <field name="x_cantidad" string="Cantidad"/>
                     <field name="x_motivo_cancelacion" readonly="1"/>
                     <field name="x_state" string="Estado" readonly="1"/>
                     <field name="x_studio_estado_de_cotizacin" string="Estado de Cotización" readonly="1"/>
-                    <field name="x_studio_aprovacin_de_compras" string="Aprovación de Compras"/>
+                    <field name="x_studio_aprovacin_de_compras" string="Aprobación de Compras"/>
             </tree>
         </field>
         </record>

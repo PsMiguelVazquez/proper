@@ -1,5 +1,6 @@
 from odoo import models, fields,api, _
 from datetime import datetime
+from odoo.exceptions import UserError
 
 
 class RequerimientClient(models.Model):
@@ -24,6 +25,13 @@ class RequerimientClient(models.Model):
     x_studio_related_field_ap2ah = fields.Char("Vendedor", related='x_order_id.user_id.display_name')
     cantidad = fields.Float("Cantidad")
 
+    @api.onchange('x_modelo')
+    def onchange_modelo(self):
+        for record in self:
+            if record.x_modelo:
+                prod = self.env['product.product'].search([('default_code','ilike',record.x_modelo)]).filtered(lambda x: x.default_code.lower() == record.x_modelo.lower())
+                if prod:
+                    raise UserError('Ya existe un producto dado de alta con ese código.' + str(record.x_modelo) + '\n' + prod.name)
 
     @api.model
     def create(self, vals):
@@ -86,7 +94,7 @@ class ProposalPurchase(models.Model):
     x_pro_aten = fields.Selection([('yes', 'SI'), ('no', 'NO')], "Propuesta Atendida")
     x_product_id = fields.Many2one("product.product", "producto")
     x_proveedor = fields.Many2one("res.partner", "proveedor")
-    x_state = fields.Selection([('draft', 'Borrador'), ('done', 'Propuesta Aceptada'), ('cancel', 'Cancelado'), ('validar', 'Re-Validar'), ('atendido', 'Atenidod'), ('confirm', 'Compra Autorizada')],"estado", default='draft')
+    x_state = fields.Selection([('draft', 'Borrador'), ('done', 'Propuesta Aceptada'), ('cancel', 'Cancelado'), ('validar', 'Re-Validar'), ('atendido', 'Atendido'), ('confirm', 'Compra Autorizada')],"estado", default='draft')
     x_studio_aprovacin_de_compras = fields.Boolean("Aprovación de Compras", related='rel_id.x_order_id.x_aprovacion_compras')
     x_studio_archivo = fields.Binary("Archivo")
     x_studio_archivo_filename = fields.Char("Filename for x_studio_binary_field_kkNkg")
@@ -105,6 +113,20 @@ class ProposalPurchase(models.Model):
     vigencia_date = fields.Date("Vigencia")
     cantidad = fields.Float("Cantidad")
     tiempo_entrega = fields.Integer("Tiempo de entrega")
+    state = fields.Selection([('draft', 'Borrador'), ('done', 'Propuesta Aceptada'), ('cancel', 'Cancelado'), ('validar', 'Re-Validar'), ('atendido', 'Atenidod'), ('confirm', 'Compra Autorizada')],"estado", default='draft', compute='set_state')
+
+    @api.depends('x_state')
+    def set_state(self):
+        for record in self:
+            record.state = record.x_state
+
+    @api.onchange('x_modelo')
+    def onchange_modelo(self):
+        for record in self:
+            if record.x_modelo:
+                prod = self.env['product.product'].search([('default_code','ilike',record.x_modelo)]).filtered(lambda x: x.default_code.lower() == record.x_modelo.lower())
+                if prod:
+                    raise UserError('Ya existe un producto dado de alta con ese código.' + str(record.x_modelo) + '\n' + prod.name)
 
     @api.depends('rel_id')
     def get_detalle(self):
@@ -127,6 +149,8 @@ class ProposalPurchase(models.Model):
         self.x_state = 'done'
         marca = False
         marca = self.env['x_fabricante'].search([['x_name', '=', self.x_marca]])
+        if self.x_modelo:
+            self.x_product_id = self.env['product.product'].search([('default_code', '=', self.x_modelo)])
         if not self.x_product_id.id:
             # marca = env['x_fabricante'].search([['name','=', record.x_marca]])
             self.x_product_id = self.env['product.product'].create(
@@ -148,6 +172,7 @@ class ProposalPurchase(models.Model):
                                                                  'x_cantidad_disponible_compra':self.x_cantidad,
                                                                  'x_tiempo_entrega_compra':self.x_tiempo_entrega,
                                                                  'x_vigencia_compra':self.x_vigencia,
+                                                                 'proposal_id': self.id
                                                                  })]})
     def cancel(self):
         self.x_state = 'cancel'
@@ -183,6 +208,21 @@ class ProposalPurchase(models.Model):
 
     def autoriz(self):
         self.x_state = 'confirm'
+
+    def create_purchase(self):
+        view = self.env.ref('sale_purchase_confirm.wizard_puchase_create_form')
+        wiz = self.env['wizard.purchase.create'].create({'proposal_ids': [(6, 0, self.ids)]})
+        action = {
+            'name': 'Create Purchase',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'wizard.purchase.create',
+            'views': [(view.id, 'form')],
+            'view_id': view.id,
+            'target': 'new',
+            'res_id': wiz.id,
+            'context': self.env.context}
+        return action
 
 
 class WizarPropo(models.TransientModel):
@@ -282,4 +322,30 @@ class WizardRevalid(models.TransientModel):
 
     def confirm(self):
         self.proposal_id.write({'x_studio_revalidacion': self.description})
+
+
+class PurchaseCreateWizard(models.TransientModel):
+    _name = 'wizard.purchase.create'
+    proposal_ids = fields.Many2many('proposal.purchases')
+    partner_id = fields.Many2one('res.partner')
+
+    def confirm(self):
+        if not self.proposal_ids:
+            self.proposal_ids = [(6, 0, self.env.context.get('active_ids', []))]
+        r = False
+        stat = self.proposal_ids.mapped('x_state')
+        lista = ('draft', 'done', 'cancel', 'validar', 'atendido')
+        valida = [l in stat for l in lista]
+        valida = set(valida)
+        if True in valida:
+            raise UserError("Hay propuestas sin validar")
+        else:
+            action = self.env["ir.actions.actions"]._for_xml_id("purchase.purchase_form_action")
+            orden = self.env['purchase.order'].create({'partner_id': self.partner_id.id})
+            action['domain'] = [('id', 'in', orden.ids)]
+            for p in self.proposal_ids:
+                if p.x_product_id:
+                    self.env['purchase.order.line'].create({'order_id': orden.id, 'product_id': p.x_product_id.id, 'price_unit': p.x_costo, 'product_qty': p.cantidad, 'name': p.x_product_id.display_name})
+            self.proposal_ids.mapped('rel_id.x_order_id').write({'purchase_ids': [(4, orden.id)] })
+            return action
 

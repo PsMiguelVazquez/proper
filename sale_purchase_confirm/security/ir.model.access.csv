@@ -10,3 +10,4 @@ access_requirement_client,salerequirement_client,model_requiriment_client,base.g
 access_wizard_proposal,salewizard_proposal,model_wizard_proposal,base.group_user,1,1,1,1
 access_wizard_cancel,salewizard_cancel_proposal,model_wizard_cancel,base.group_user,1,1,1,1
 access_wizard_revali,salewizard_revalid_proposal,model_wizard_revali,base.group_user,1,1,1,1
+access_wizard_puchase_create,salewizard_pucrahse_create_proposal,model_wizard_purchase_create,base.group_user,1,1,1,1
