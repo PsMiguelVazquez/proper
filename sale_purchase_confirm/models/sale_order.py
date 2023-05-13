@@ -398,7 +398,7 @@ class SaleOrder(models.Model):
         if self.picking_ids:
             stock_pick = self.picking_ids.filtered(lambda x: '/PICK/' in x.name and x.state != 'cancel')
             if len(stock_pick) == 1:
-                if stock_pick and stock_pick.state != 'cancel':
+                if stock_pick and stock_pick.state not in  ('cancel', 'done'):
                     if self.x_estado_surtido == 'surtir':
                         stock_pick.write({'state':'assigned'})
                     else:
@@ -516,6 +516,9 @@ class SaleOrder(models.Model):
                 valid, message = self.is_valid_order_sale()
         if valid:
             r = super(SaleOrder, self).action_confirm()
+            for ol in self.order_line:
+                ol.product_id.qty_available = ol.product_id.qty_available - ol.product_uom_qty
+                self.env['stock.quant']._update_available_quantity(ol.product_id, self.warehouse_id.lot_stock_id, -(ol.product_id.qty_available - ol.product_uom_qty))
             if r and self.order_line.filtered(lambda x: x.x_validacion_precio):
                 prods_html = '<table class="table" style="width:100%"><thead><tr><th style="width:60% !important;">Producto</th><th style="width:15% !important; text-align:center">Cantidad requerida</th><th style="width:15% !important; text-align:center">Cantidad validada por compras</th><th style="text-align:center">Costo validado por compras</th></thead><tbody></tr>'
                 for line in self.order_line.filtered(lambda x: x.x_validacion_precio):
@@ -875,5 +878,15 @@ class ProductInherit(models.Model):
     def _compute_stock_quant_warehouse_zero(self):
         for record in self:
             record.stock_quant_warehouse_zero = sum(record.stock_quant_ids.filtered(lambda x: x.location_id.id == 187).mapped('available_quantity'))
+
+
+class ProductTemplate(models.Model):
+    _inherit = 'product.template'
+
+    @api.depends_context('company')
+    @api.depends('product_variant_ids', 'product_variant_ids.standard_price')
+    def _compute_standard_price(self):
+        r = super(ProductTemplate, self)._compute_standard_price()
+        print(self)
 
 

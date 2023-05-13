@@ -151,6 +151,8 @@ class ProposalPurchase(models.Model):
         marca = self.env['x_fabricante'].search([['x_name', '=', self.x_marca]])
         if self.x_modelo:
             self.x_product_id = self.env['product.product'].search([('default_code', '=', self.x_modelo)])
+            if len(self.x_product_id) > 1:
+                raise UserError('El producto que deseas confirmar está repetido.')
         if not self.x_product_id.id:
             # marca = env['x_fabricante'].search([['name','=', record.x_marca]])
             self.x_product_id = self.env['product.product'].create(
