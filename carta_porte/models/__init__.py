@@ -1,1 +1,1 @@
-from . import stock, sale, product, account_move
+from . import stock, sale, product
