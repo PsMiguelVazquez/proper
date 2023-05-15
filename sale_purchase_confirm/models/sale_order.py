@@ -516,9 +516,9 @@ class SaleOrder(models.Model):
                 valid, message = self.is_valid_order_sale()
         if valid:
             r = super(SaleOrder, self).action_confirm()
-            for ol in self.order_line:
-                ol.product_id.qty_available = ol.product_id.qty_available - ol.product_uom_qty
-                self.env['stock.quant']._update_available_quantity(ol.product_id, self.warehouse_id.lot_stock_id, -(ol.product_id.qty_available - ol.product_uom_qty))
+            # for ol in self.order_line:
+            #     ol.product_id.qty_available = ol.product_id.qty_available - ol.product_uom_qty
+            #     self.env['stock.quant']._update_available_quantity(ol.product_id, self.warehouse_id.lot_stock_id, -(ol.product_id.qty_available - ol.product_uom_qty))
             if r and self.order_line.filtered(lambda x: x.x_validacion_precio):
                 prods_html = '<table class="table" style="width:100%"><thead><tr><th style="width:60% !important;">Producto</th><th style="width:15% !important; text-align:center">Cantidad requerida</th><th style="width:15% !important; text-align:center">Cantidad validada por compras</th><th style="text-align:center">Costo validado por compras</th></thead><tbody></tr>'
                 for line in self.order_line.filtered(lambda x: x.x_validacion_precio):
