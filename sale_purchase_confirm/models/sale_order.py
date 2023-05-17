@@ -760,6 +760,7 @@ class Alerta_limite_de_credito(models.TransientModel):
     def confirmar_validacion(self):
         self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0).write({'x_validacion_precio': True})
     def confirmar_parcial(self):
+        mensaje = ''
         self.sale_id.order_line.order_id.update({'state': 'sale_conf', 'solicitud_parcial': True})
         self.sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})
         lines = self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0)
