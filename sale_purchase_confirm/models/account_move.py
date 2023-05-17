@@ -16,12 +16,13 @@ class AccountMove(models.Model):
     folio = fields.Char('Folio', compute="set_folio")
     reason = fields.Char("Motivo")
     tipo_nota = fields.Selection(string='Tipo de nota de crédito', selection=[('01','01 - Descuentos o bonificaciones'),('03','03 - Devolición de mercancia')])
-    invoice_datetime = fields.Char('Fecha y hora de facturación', compute='_compute_invoice_datetime')
+    invoice_datetime = fields.Char('Fecha y hora de timbrado', compute='_compute_invoice_datetime')
 
     def _compute_invoice_datetime(self):
         for record in self:
             self.invoice_datetime = ''
-            user_local = pytz.timezone(self.env.user.tz)
+            user_tz = self.env.user.tz if self.env.user.tz else 'America/Mexico_City'
+            user_local = pytz.timezone(user_tz)
             att_xml = self.env['ir.attachment'].search([('res_model','=','account.move'),('res_id','=',record.id),('mimetype','=','application/xml')])
             if att_xml:
                 try:
