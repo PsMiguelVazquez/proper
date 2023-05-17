@@ -132,6 +132,8 @@ class SaleOrder(models.Model):
         total = self.partner_id.credit_rest - self.amount_total
         check = total >= 0 if self.payment_term_id.id != 1 else False
         cliente = self.partner_id.x_studio_triple_a
+        self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0).write({'x_validacion_precio': True})
+
         #facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in ('not_paid', 'partial')).mapped('id')
         if check and cliente:
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
@@ -268,8 +270,8 @@ class SaleOrder(models.Model):
             if self.partner_child.x_es_marketplace:
                 self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
                 return self.action_confirm()
-        lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra  - x.product_uom_qty) < 0 and x.x_validacion_precio == True)
-        if lines:
+        lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra  - x.product_uom_qty) < 0)
+        if lines or self.validacion_parcial == False:
             mensaje = '<h3>Se solicita aprobar la orden parcial.</h3><table class="table" style="width: 100%"><thead>' \
                         '<tr style="width: 40% !important;"><th>Producto</th>' \
                       '<th style="width: 20%">Existencia en almacén 0</th>' \
