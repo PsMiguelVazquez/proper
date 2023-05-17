@@ -365,7 +365,9 @@ class SaleOrder(models.Model):
                 partner = self.env['res.partner'].search(['|','|', ['x_nombre_agente_venta', '=', self.env.user.name], ['agente_temporal', '=', self.env.user.name], ['x_nombre_agente_venta', '=', False]])
             else:
                 partner = self.env['res.partner'].search([])
-            record.partner_loc_ids = [(6,0, partner.ids+partner.mapped('child_ids').ids)]
+            partner_general = self.env["res.partner"].search([("name", '=', "\"PUBLICO EN GENERAL\"")])
+            partner_ids = partner.ids+partner.mapped('child_ids').ids+partner_general.ids+partner_general.mapped('child_ids').ids
+            record.partner_loc_ids = [(6,0, partner_ids)]
 
             # busca un almacén con el mismo nombre del cliente
             # if record.partner_child and record.partner_child.x_es_marketplace:
