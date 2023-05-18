@@ -29,6 +29,7 @@ class SaleOrder(models.Model):
     partner_id_payment_method_code = fields.Char(string='Código Forma de pago', related='partner_id.x_studio_mtodo_de_pago.code')
     validacion_parcial = fields.Boolean(string='Validación parcial',default=False)
     solicitud_parcial = fields.Boolean(default=False)
+    solicito_validacion = fields.Boolean(default=False)
 
 
     def _prepare_invoice(self):
@@ -125,6 +126,7 @@ class SaleOrder(models.Model):
             ol.check_price_reduce = False
             ol.price_reduce_solicit = False
         self.validacion_parcial = True
+        self.solicito_validacion = False
         # registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
         # if registro != []:
         #     self.write({'x_aprovar': True, 'state': 'credito_conf'})
@@ -132,8 +134,6 @@ class SaleOrder(models.Model):
         total = self.partner_id.credit_rest - self.amount_total
         check = total >= 0 if self.payment_term_id.id != 1 else False
         cliente = self.partner_id.x_studio_triple_a
-        self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0).write({'x_validacion_precio': True})
-
         #facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in ('not_paid', 'partial')).mapped('id')
         if check and cliente:
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
@@ -163,14 +163,20 @@ class SaleOrder(models.Model):
             valid = True
             message = ''
             return valid, message
+        if self.order_line.filtered(lambda x: x.check_price_reduce):
+            message += 'No ha solicitado la reducción de precios para los siguientes productos:'
+            for order_line in self.order_line:
+                if order_line.check_price_reduce:
+                    valid = False
+                    message += '\n- ' + order_line.product_id.name
 
         if not self.x_doc_entrega:
             valid = False
-            message += 'No se ha definido el documento de entrega.\n'
+            message += '\n\n- No se ha definido el documento de entrega.'
 
         if not self.x_metodo_entrega:
             valid = False
-            message += 'No se ha definido el método de entrega.\n'
+            message += '\n- No se ha definido el método de entrega.\n'
 
         if len(self.order_line) <= 0:
             valid = False
@@ -270,8 +276,8 @@ class SaleOrder(models.Model):
             if self.partner_child.x_es_marketplace:
                 self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
                 return self.action_confirm()
-        lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra  - x.product_uom_qty) < 0)
-        if lines or self.validacion_parcial == False:
+        lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra  - x.product_uom_qty) < 0 and x.x_validacion_precio == True)
+        if lines:
             mensaje = '<h3>Se solicita aprobar la orden parcial.</h3><table class="table" style="width: 100%"><thead>' \
                         '<tr style="width: 40% !important;"><th>Producto</th>' \
                       '<th style="width: 20%">Existencia en almacén 0</th>' \
@@ -329,14 +335,13 @@ class SaleOrder(models.Model):
             }
 
 
-        valid = True
-        message = ''
-        for order_line in self.order_line:
-            if order_line.check_price_reduce:
-                valid = False
-                message += '\n- ' + order_line.product_id.name
+        valid, message = self.is_valid_order_sale()
+        # for order_line in self.order_line:
+        #     if order_line.check_price_reduce:
+        #         valid = False
+        #         message += '\n- ' + order_line.product_id.name
         if not valid:
-            raise UserError('No ha solicitado la reducción de precio para los siguientes productos:' + message)
+            raise UserError(message)
         self.write({'x_aprovar': False})
         total = self.partner_id.credit_rest - self.amount_total
         check = total >= 0 if self.payment_term_id.id != 1 else False
@@ -519,32 +524,35 @@ class SaleOrder(models.Model):
             else:
                 valid, message = self.is_valid_order_sale()
         if valid:
-            r = super(SaleOrder, self).action_confirm()
-            # for ol in self.order_line:
-            #     ol.product_id.qty_available = ol.product_id.qty_available - ol.product_uom_qty
-            #     self.env['stock.quant']._update_available_quantity(ol.product_id, self.warehouse_id.lot_stock_id, -(ol.product_id.qty_available - ol.product_uom_qty))
-            if r and self.order_line.filtered(lambda x: x.x_validacion_precio):
-                prods_html = '<table class="table" style="width:100%"><thead><tr><th style="width:60% !important;">Producto</th><th style="width:15% !important; text-align:center">Cantidad requerida</th><th style="width:15% !important; text-align:center">Cantidad validada por compras</th><th style="text-align:center">Costo validado por compras</th></thead><tbody></tr>'
-                for line in self.order_line.filtered(lambda x: x.x_validacion_precio):
-                    prods_html += '<tr><td style="text-align:justify">' + line.name + '</td><td style="text-align:center">' + str(line.product_uom_qty - line.product_id.stock_quant_warehouse_zero + line.x_cantidad_disponible_compra) + '</td><td style="text-align:center">' + str(line.x_cantidad_disponible_compra) + '</td><td style="text-align:center">' + str(line.x_studio_nuevo_costo) + '</td></tr>'
-                prods_html += '</tbody></table>'
-                activity_message = ("<h3>Por favor realizar la compra de los siguientes productos</h3> %s") % (prods_html)
-                activity_user = self.env['res.users'].search([('login', 'like', '%compras1%')])
-                act = self.activity_schedule(
-                    activity_type_id= 4,
-                    summary="Compra de productos",
-                    note=activity_message,
-                    user_id=activity_user.id
-                )
-            if self.picking_ids:
-                self.picking_ids.write({'sale': self.id})
-                self.write({'albaran': self.picking_ids.filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done'))[0].id})
-                # for line in self.picking_ids.move_line_ids:
-                #     for ol in self.order_line:
-                #         if line.product_id == ol.product_id:
-                #             ol.x_Reservado = line.product_uom_qty
-                #             break
-            return r
+            if self.solicito_validacion:
+                self.write({'state': 'sale_conf', 'solicito_validacion': False})
+            else:
+                r = super(SaleOrder, self).action_confirm()
+                # for ol in self.order_line:
+                #     ol.product_id.qty_available = ol.product_id.qty_available - ol.product_uom_qty
+                #     self.env['stock.quant']._update_available_quantity(ol.product_id, self.warehouse_id.lot_stock_id, -(ol.product_id.qty_available - ol.product_uom_qty))
+                if r and self.order_line.filtered(lambda x: x.x_validacion_precio):
+                    prods_html = '<table class="table" style="width:100%"><thead><tr><th style="width:60% !important;">Producto</th><th style="width:15% !important; text-align:center">Cantidad requerida</th><th style="width:15% !important; text-align:center">Cantidad validada por compras</th><th style="text-align:center">Costo validado por compras</th></thead><tbody></tr>'
+                    for line in self.order_line.filtered(lambda x: x.x_validacion_precio):
+                        prods_html += '<tr><td style="text-align:justify">' + line.name + '</td><td style="text-align:center">' + str(line.product_uom_qty - line.product_id.stock_quant_warehouse_zero) + '</td><td style="text-align:center">' + str(line.x_cantidad_disponible_compra) + '</td><td style="text-align:center">' + str(line.x_studio_nuevo_costo) + '</td></tr>'
+                    prods_html += '</tbody></table>'
+                    activity_message = ("<h3>Por favor realizar la compra de los siguientes productos</h3> %s") % (prods_html)
+                    activity_user = self.env['res.users'].search([('login', 'like', '%compras1%')])
+                    act = self.activity_schedule(
+                        activity_type_id= 4,
+                        summary="Compra de productos",
+                        note=activity_message,
+                        user_id=activity_user.id
+                    )
+                if self.picking_ids:
+                    self.picking_ids.write({'sale': self.id})
+                    self.write({'albaran': self.picking_ids.filtered(lambda x: x.picking_type_id.code == 'outgoing' and x.state not in ('cancel', 'draft', 'done'))[0].id})
+                    # for line in self.picking_ids.move_line_ids:
+                    #     for ol in self.order_line:
+                    #         if line.product_id == ol.product_id:
+                    #             ol.x_Reservado = line.product_uom_qty
+                    #             break
+                return r
         else:
             # self.write({'state': 'sale_conf'})
             raise UserError(message)
@@ -575,7 +583,18 @@ class SaleOrderLine(models.Model):
     comision = fields.Float('Comisión')
     x_studio_nuevo_costo = fields.Monetary('Nuevo costo')
     proposal_id = fields.Many2one('proposal.purchases','Propuesta de origen')
+    utilidad_esperada = fields.Integer('Utilidad esperada', compute='_compute_utilidad_esperada')
+    
 
+
+
+    @api.depends('x_studio_nuevo_costo','price_unit')
+    def _compute_utilidad_esperada(self):
+        for record in self:
+            record.utilidad_esperada = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
+            if record['x_studio_nuevo_costo'] > 0.0:
+                utilidad_esperada_nuevo_costo = (1 - (record.x_studio_nuevo_costo / record.price_unit)) * 100
+                record.utilidad_esperada = max(utilidad_esperada_nuevo_costo,record.utilidad_esperada)
 
     def get_valor_minimo(self):
         valor = 0
@@ -616,8 +635,9 @@ class SaleOrderLine(models.Model):
 
     @api.onchange('product_uom', 'product_uom_qty')
     def product_uom_change(self):
+        old_price = self.price_unit
         r = super(SaleOrderLine, self).product_uom_change()
-        self.limit_price()
+        self.price_unit= old_price
         return r
 
     #@api.onchange('price_unit')
@@ -700,10 +720,12 @@ class Alerta_limite_de_credito(models.TransientModel):
 
     def confirmar_sale(self):
         self.sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})
-        self.sale_id.order_line.order_id.update({'state': 'sale_conf', 'solicitud_parcial': True})
-        self.sale_id.order_line.filtered(
-            lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0).write(
-            {'x_validacion_precio': True})
+        self.sale_id.write({'solicito_validacion': True})
+        lines_no_stock = self.sale_id.order_line.filtered(
+            lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0)
+        if lines_no_stock:
+            self.sale_id.write({'state': 'sale_conf', 'solicitud_parcial': True})
+            lines_no_stock.write({'x_validacion_precio': True})
         # self.env['sale.order'].browse(self.env.context.get('active_ids')).write({'state': 'sale_conf'})
         self.sale_id.order_line.order_id.update({'state': 'sale_conf'})
         mensaje = '<h3>Se solicita la reducción de precio de los siguientes productos</h3><table class="table" style="width: 100%"><thead>' \
@@ -731,8 +753,6 @@ class Alerta_limite_de_credito(models.TransientModel):
                            + str(round((1 - (order_line.x_studio_nuevo_costo / order_line.price_unit)) * 100) if order_line.x_studio_nuevo_costo> 0 else order_line.x_utilidad_por) \
                            + '</td></tr>'
         mensaje += '</tbody></table>'
-        lines_no_stock = self.sale_id.order_line.filtered(
-            lambda x: (x.product_id.stock_quant_warehouse_zero + + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0)
         if lines_no_stock:
             mensaje += '</tbody></table>'
             mensaje += '<h3>Los siguientes productos no tienen existencia o tienen existencia parcial y se solicita la aprobación de la orden parcial</h3><table class="table" style="width: 100%;margin-left: auto;margin-right: auto;"><thead>' \
@@ -759,6 +779,8 @@ class Alerta_limite_de_credito(models.TransientModel):
 
     def confirmar_validacion(self):
         self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0).write({'x_validacion_precio': True})
+        self.sale_id.write({'solicito_validacion': True})
+
     def confirmar_parcial(self):
         mensaje = ''
         self.sale_id.order_line.order_id.update({'state': 'sale_conf', 'solicitud_parcial': True})
