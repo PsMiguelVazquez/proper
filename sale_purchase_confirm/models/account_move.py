@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+import base64
+
+from datetime import datetime
+import xml.etree.ElementTree as ET
+import pytz
+
 from odoo import models, fields, api
 from .. import extensions
 
@@ -10,6 +16,26 @@ class AccountMove(models.Model):
     folio = fields.Char('Folio', compute="set_folio")
     reason = fields.Char("Motivo")
     tipo_nota = fields.Selection(string='Tipo de nota de crédito', selection=[('01','01 - Descuentos o bonificaciones'),('03','03 - Devolición de mercancia')])
+    invoice_datetime = fields.Char('Fecha y hora de timbrado', compute='_compute_invoice_datetime')
+    x_estado_actuali_cli = fields.Selection(string='Estado de actualizacion del cliente',selection=[('3.3','3.3'),('4.0','4.0')], related='partner_id.x_estado_cli_actua')
+
+    def _compute_invoice_datetime(self):
+        for record in self:
+            self.invoice_datetime = ''
+            user_tz = self.env.user.tz if self.env.user.tz else 'America/Mexico_City'
+            user_local = pytz.timezone(user_tz)
+            att_xml = self.env['ir.attachment'].search([('res_model','=','account.move'),('res_id','=',record.id),('mimetype','=','application/xml')])
+            if att_xml:
+                try:
+                    path = att_xml[0]._full_path(att_xml.store_fname)
+                    tree = ET.parse(path)
+                    elements = [el for el in tree.iter()]
+                    for element in elements:
+                        if 'TimbreFiscalDigital' in element.tag:
+                            local_date = user_local.localize(datetime.strptime(element.attrib['FechaTimbrado'], '%Y-%m-%dT%H:%M:%S'), is_dst=None)
+                            self.invoice_datetime = local_date.strftime("%d/%m/%Y %H:%M:%S")
+                except:
+                    continue
 
     @api.onchange('tipo_nota')
     def onchange_tipo_nota(self):

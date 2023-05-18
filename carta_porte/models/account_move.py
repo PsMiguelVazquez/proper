@@ -28,3 +28,30 @@ class AccountMove(models.Model):
                             except:
                                 continue
 
+
+class AccountPayment(models.Model):
+    _inherit = 'account.payment'
+    use_cfdi = fields.Char('Uso CFDI', compute='get_cfi_use')
+    nombre_receptor = fields.Char("Nombre")
+
+
+    @api.depends('attachment_ids')
+    def get_cfi_use(self):
+        for record in self:
+            record.use_cfdi = ""
+            if record.attachment_ids:
+                for att in record.attachment_ids:
+                    if att.datas:
+                        if 'Payment' in att.name and 'xml' in att.name:
+                            path = att._full_path(att.store_fname)
+                            try:
+                                with open(path, 'r') as f:
+                                    data = f.read()
+                                Bs_data = BeautifulSoup(data, "xml")
+                                for s in Bs_data.children:
+                                    for ss in s.children:
+                                        if ss.name == "Receptor":
+                                            record.use_cfdi = ss.attrs.get("UsoCFDI")
+                                            record.nombre_receptor = ss.attrs.get("Nombre")
+                            except:
+                                continue
