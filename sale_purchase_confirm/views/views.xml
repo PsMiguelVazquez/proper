@@ -93,6 +93,13 @@
                     <field name="model">sale.order</field>
                     <field name="inherit_id" ref="sale.view_order_form"/>
                     <field name="arch" type="xml">
+                        <xpath expr="//field[@name='order_line']/tree" position="inside">
+                            <field name="x_utilidad_por" invisible="1"/>
+                            <field name="utilidad_esperada" invisible="1"/>
+                        </xpath>
+                        <xpath expr="//field[@name='order_line']/tree" position="attributes">
+                            <attribute name="decoration-danger">x_utilidad_por &lt; utilidad_esperada</attribute>
+                        </xpath>
                         <xpath expr="//field[@name='payment_term_id']" position="after">
                             <field name="albaran" attrs="{'invisible': [('albaran', '=', False)]}"/>
                             <field name="partner_loc_ids" invisible="1"/>
