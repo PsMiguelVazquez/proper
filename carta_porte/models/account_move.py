@@ -32,6 +32,7 @@ class AccountMove(models.Model):
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
     use_cfdi = fields.Char('Uso CFDI', compute='get_cfi_use')
+    nombre_receptor = fields.Char("Nombre")
 
 
     @api.depends('attachment_ids')
@@ -51,5 +52,6 @@ class AccountPayment(models.Model):
                                     for ss in s.children:
                                         if ss.name == "Receptor":
                                             record.use_cfdi = ss.attrs.get("UsoCFDI")
+                                            record.nombre_receptor = ss.attrs.get("Nombre")
                             except:
                                 continue
