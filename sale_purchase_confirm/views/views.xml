@@ -176,7 +176,7 @@
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
                 <header>
-                    <button string="Validar datos masivamente" name="validar_precio_masivo" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button string="Validar datos masivamente" name="validar_precio_masivo" type="object" attrs="{'invisible': [('state', 'not in', ['draft','send'])]}"/>
                 </header>
             </field>
         </record>

@@ -27,6 +27,7 @@
         'security/ir.model.access.csv',
         'views/views.xml',
         'views/templates.xml',
-        'views/views_requi.xml'
+        'views/views_requi.xml',
+        'views/account_move_view.xml'
     ],
 }

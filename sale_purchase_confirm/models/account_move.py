@@ -17,6 +17,7 @@ class AccountMove(models.Model):
     reason = fields.Char("Motivo")
     tipo_nota = fields.Selection(string='Tipo de nota de crédito', selection=[('01','01 - Descuentos o bonificaciones'),('03','03 - Devolición de mercancia')])
     invoice_datetime = fields.Char('Fecha y hora de timbrado', compute='_compute_invoice_datetime')
+    x_estado_actuali_cli = fields.Selection(string='Estado de actualizacion del cliente',selection=[('3.3','3.3'),('4.0','4.0')], related='partner_id.x_estado_cli_actua')
 
     def _compute_invoice_datetime(self):
         for record in self:
