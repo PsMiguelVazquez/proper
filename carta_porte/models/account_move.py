@@ -7,6 +7,7 @@ from odoo.exceptions import UserError
 class AccountMove(models.Model):
     _inherit = 'account.move'
     use_cfdi = fields.Char('Uso CFDI', compute='get_cfi_use')
+    nombre_receptor = fields.Char("Nombre")
 
     @api.depends('attachment_ids')
     def get_cfi_use(self):
@@ -25,6 +26,7 @@ class AccountMove(models.Model):
                                     for ss in s.children:
                                         if ss.name == "Receptor":
                                             record.use_cfdi = ss.attrs.get("UsoCFDI")
+                                            record.nombre_receptor = ss.attrs.get("Nombre")
                             except:
                                 continue
 
