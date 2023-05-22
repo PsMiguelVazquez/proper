@@ -584,9 +584,8 @@ class SaleOrderLine(models.Model):
     x_studio_nuevo_costo = fields.Monetary('Nuevo costo')
     proposal_id = fields.Many2one('proposal.purchases','Propuesta de origen')
     utilidad_esperada = fields.Integer('Utilidad esperada', compute='_compute_utilidad_esperada')
-    
-
-
+    existencia_alm_0 = fields.Float(related='product_id.stock_quant_warehouse_zero')
+    existencia_html = fields.Char(string="", compute='_compute_existencia_html')
 
     @api.depends('x_studio_nuevo_costo','price_unit')
     def _compute_utilidad_esperada(self):
@@ -637,10 +636,17 @@ class SaleOrderLine(models.Model):
     def product_uom_change(self):
         old_price = self.price_unit
         r = super(SaleOrderLine, self).product_uom_change()
-        self.price_unit= old_price
+        if self.product_uom_qty <=1:
+            self.limit_price()
+        else:
+            self.price_unit = old_price
         return r
 
-    #@api.onchange('price_unit')
+    @api.depends('product_uom_qty','product_id')
+    def _compute_existencia_html(self):
+        for record in self:
+            color = '#D23F3A' if record.product_id.stock_quant_warehouse_zero - record.product_uom_qty  < 0 else ' #00A09D'
+            record.existencia_html = '<img src="/sale_purchase_confirm/static/img/chart.png" style="width:15px; filter: opacity(0.5) drop-shadow(0 0 0 '+ color +') saturate(450%);;"/>'
     def limit_price(self):
         for record in self:
             valor = 0
