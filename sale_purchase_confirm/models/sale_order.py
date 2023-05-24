@@ -592,7 +592,6 @@ class SaleOrderLine(models.Model):
     def _compute_cantidad_asignada(self):
         for record in self:
             cant_asig = 0
-            producto = self.product_id
             picking_lines = self.env['stock.move.line'].search([('origin','=',record.order_id.name),
                                                                ('product_id','=',record.product_id.id),
                                                                ('reference','ilike','PICK')])

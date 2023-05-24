@@ -179,7 +179,7 @@
                     <field name="existencia_html" string=" "  widget="html" readonly="1"/>
                 </xpath>
                 <xpath expr="//page/field[@name='order_line']/tree/field[@name='qty_delivered']" position="before">
-                    <field name="cantidad_asignada"/>
+                    <field name="cantidad_asignada" decoration-success="cantidad_asignada==product_uom_qty" decoration-danger="state=='sale' and cantidad_asignada&lt;product_uom_qty"/>
                 </xpath>
             </field>
         </record>
