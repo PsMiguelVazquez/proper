@@ -178,6 +178,9 @@
                     <field name="existencia_alm_0" invisible="1"/>
                     <field name="existencia_html" string=" "  widget="html" readonly="1"/>
                 </xpath>
+                <xpath expr="//page/field[@name='order_line']/tree/field[@name='qty_delivered']" position="before">
+                    <field name="cantidad_asignada"/>
+                </xpath>
             </field>
         </record>
 

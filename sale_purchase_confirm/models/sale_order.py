@@ -586,6 +586,23 @@ class SaleOrderLine(models.Model):
     utilidad_esperada = fields.Integer('Utilidad esperada', compute='_compute_utilidad_esperada')
     existencia_alm_0 = fields.Float(related='product_id.stock_quant_warehouse_zero')
     existencia_html = fields.Char(string="", compute='_compute_existencia_html')
+    cantidad_asignada = fields.Integer(string="Cantidad asignada",compute='_compute_cantidad_asignada')
+
+    @api.depends('price_unit')
+    def _compute_cantidad_asignada(self):
+        for record in self:
+            cant_asig = 0
+            producto = self.product_id
+            picking_lines = self.env['stock.move.line'].search([('origin','=',record.order_id.name),
+                                                               ('product_id','=',record.product_id.id),
+                                                               ('reference','ilike','PICK')])
+            for picking_line in picking_lines:
+                if picking_line.picking_id.state == 'confirmed' or picking_line.picking_id.state == 'assigned':
+                    cant_asig += picking_line.product_uom_qty
+                if picking_line.picking_id.state == 'done':
+                    cant_asig += picking_line.qty_done
+            record.cantidad_asignada = cant_asig
+
 
     @api.depends('x_studio_nuevo_costo','price_unit')
     def _compute_utilidad_esperada(self):
@@ -645,7 +662,10 @@ class SaleOrderLine(models.Model):
     @api.depends('product_uom_qty','product_id')
     def _compute_existencia_html(self):
         for record in self:
-            color = '#D23F3A' if record.product_id.stock_quant_warehouse_zero - record.product_uom_qty  < 0 else ' #00A09D'
+            if record.order_id.state != 'sale':
+                color = '#D23F3A' if record.product_id.stock_quant_warehouse_zero - record.product_uom_qty  < 0 else ' #00A09D'
+            else:
+                color = '#D23F3A' if record.cantidad_asignada - record.product_uom_qty < 0 else ' #00A09D'
             record.existencia_html = '<img src="/sale_purchase_confirm/static/img/chart.png" style="width:15px; filter: opacity(0.5) drop-shadow(0 0 0 '+ color +') saturate(450%);;"/>'
     def limit_price(self):
         for record in self:
