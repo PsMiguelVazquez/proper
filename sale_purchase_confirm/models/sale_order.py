@@ -30,6 +30,15 @@ class SaleOrder(models.Model):
     validacion_parcial = fields.Boolean(string='Validación parcial',default=False)
     solicitud_parcial = fields.Boolean(default=False)
     solicito_validacion = fields.Boolean(default=False)
+    es_orden_parcial = fields.Boolean(compute='_compute_es_orden_parcial')
+
+    @api.depends('order_line')
+    def _compute_es_orden_parcial(self):
+        for record in self:
+            if record.order_line.filtered(lambda x: x.cantidad_asignada < x.product_uom_qty) and record.state == 'sale':
+                record.es_orden_parcial = True
+            else:
+                record.es_orden_parcial = False
 
 
     def _prepare_invoice(self):
