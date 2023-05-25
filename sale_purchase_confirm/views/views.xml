@@ -93,6 +93,10 @@
                     <field name="model">sale.order</field>
                     <field name="inherit_id" ref="sale.view_order_form"/>
                     <field name="arch" type="xml">
+                        <xpath expr="//sheet/div[1]" position="after">
+                            <field name="es_orden_parcial" invisible="1"/>
+                            <widget name="web_ribbon" bg_color="bg-danger" title="Asignado parcialmente" attrs="{'invisible': [('es_orden_parcial', '!=', True)]}"/>
+                        </xpath>
                         <xpath expr="//field[@name='order_line']/tree" position="inside">
                             <field name="x_utilidad_por" invisible="1"/>
                             <field name="utilidad_esperada" invisible="1"/>
@@ -177,6 +181,9 @@
                 <xpath expr="//page/field[@name='order_line']/tree/field[@name='product_uom_qty']" position="after">
                     <field name="existencia_alm_0" invisible="1"/>
                     <field name="existencia_html" string=" "  widget="html" readonly="1"/>
+                </xpath>
+                <xpath expr="//page/field[@name='order_line']/tree/field[@name='qty_delivered']" position="before">
+                    <field name="cantidad_asignada" decoration-success="cantidad_asignada==product_uom_qty" decoration-danger="state=='sale' and cantidad_asignada&lt;product_uom_qty"/>
                 </xpath>
             </field>
         </record>
