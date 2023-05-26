@@ -47,7 +47,7 @@
         <field name="name">Vista Tree</field>
         <field name="model">requiriment.client</field>
         <field name="arch" type="xml">
-            <tree string="Solicitud de requerimiento del cliente">
+            <tree string="Solicitud de requerimiento del cliente" default_order="id desc">
                 <field name="x_order_id"/>
                 <field name="x_name" modifiers="{}" attrs="{'invisible': [('x_name', '=', False)]}"/>
                     <field name="x_descripcion"/>
@@ -195,7 +195,7 @@
         <field name="name">Form Tree</field>
         <field name="model">proposal.purchases</field>
         <field name="arch" type="xml">
-            <tree string="Propuesta de Compras">
+            <tree string="Propuesta de Compras" default_order="id desc">
 <!--                <header>-->
 <!--                    <button string="Generar orden" name="generar_orden" type="object"/>-->
 <!--                </header>-->

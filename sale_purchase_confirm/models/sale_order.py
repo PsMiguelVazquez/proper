@@ -35,7 +35,7 @@ class SaleOrder(models.Model):
     @api.depends('order_line')
     def _compute_es_orden_parcial(self):
         for record in self:
-            if record.order_line.filtered(lambda x: x.cantidad_asignada < x.product_uom_qty) and record.state == 'sale':
+            if record.order_line.filtered(lambda x: x.cantidad_asignada + x.qty_delivered < x.product_uom_qty) and record.state == 'sale':
                 record.es_orden_parcial = True
             else:
                 record.es_orden_parcial = False
@@ -601,15 +601,23 @@ class SaleOrderLine(models.Model):
     def _compute_cantidad_asignada(self):
         for record in self:
             cant_asig = 0
-            picking_lines = self.env['stock.move.line'].search([('origin','=',record.order_id.name),
-                                                               ('product_id','=',record.product_id.id),
-                                                               ('reference','ilike','PICK')])
-            for picking_line in picking_lines:
-                if picking_line.picking_id.state == 'confirmed' or picking_line.picking_id.state == 'assigned':
+            orden = record.order_id
+            picking_lines = orden.picking_ids.filtered(lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state == 'assigned').mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
+            record.cantidad_asignada = sum(picking_lines.mapped('reserved_availability'))
+
+    '''
+        @api.depends('price_unit')
+        def _compute_cantidad_asignada(self):
+            for record in self:
+                cant_asig = 0
+                picking_lines = self.env['stock.move.line'].search([('origin','=',record.order_id.name),
+                                                                   ('product_id','=',record.product_id.id),
+                                                                   ('reference','ilike','PICK'),
+                                                                    ('state','=','assigned')])
+                for picking_line in picking_lines:
                     cant_asig += picking_line.product_uom_qty
-                if picking_line.picking_id.state == 'done':
-                    cant_asig += picking_line.qty_done
-            record.cantidad_asignada = cant_asig
+                record.cantidad_asignada = cant_asig
+    '''
 
 
     @api.depends('x_studio_nuevo_costo','price_unit')
@@ -673,7 +681,7 @@ class SaleOrderLine(models.Model):
             if record.order_id.state != 'sale':
                 color = '#D23F3A' if record.product_id.stock_quant_warehouse_zero - record.product_uom_qty  < 0 else ' #00A09D'
             else:
-                color = '#D23F3A' if record.cantidad_asignada - record.product_uom_qty < 0 else ' #00A09D'
+                color = '#D23F3A' if record.cantidad_asignada + record.qty_delivered - record.product_uom_qty < 0 else ' #00A09D'
             record.existencia_html = '<img src="/sale_purchase_confirm/static/img/chart.png" style="width:15px; filter: opacity(0.5) drop-shadow(0 0 0 '+ color +') saturate(450%);;"/>'
     def limit_price(self):
         for record in self:
