@@ -602,7 +602,7 @@ class SaleOrderLine(models.Model):
         for record in self:
             cant_asig = 0
             orden = record.order_id
-            picking_lines = orden.picking_ids.filtered(lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state == 'assigned')\
+            picking_lines = orden.picking_ids.filtered(lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed'])\
                 .mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
             if picking_lines:
                 producto = picking_lines[0].product_id
@@ -621,19 +621,6 @@ class SaleOrderLine(models.Model):
             else:
                 record.cantidad_asignada = 0
 
-    '''
-        @api.depends('price_unit')
-        def _compute_cantidad_asignada(self):
-            for record in self:
-                cant_asig = 0
-                picking_lines = self.env['stock.move.line'].search([('origin','=',record.order_id.name),
-                                                                   ('product_id','=',record.product_id.id),
-                                                                   ('reference','ilike','PICK'),
-                                                                    ('state','=','assigned')])
-                for picking_line in picking_lines:
-                    cant_asig += picking_line.product_uom_qty
-                record.cantidad_asignada = cant_asig
-    '''
 
 
     @api.depends('x_studio_nuevo_costo','price_unit')
