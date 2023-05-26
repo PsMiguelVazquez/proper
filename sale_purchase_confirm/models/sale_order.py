@@ -602,8 +602,24 @@ class SaleOrderLine(models.Model):
         for record in self:
             cant_asig = 0
             orden = record.order_id
-            picking_lines = orden.picking_ids.filtered(lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state == 'assigned').mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
-            record.cantidad_asignada = sum(picking_lines.mapped('reserved_availability'))
+            picking_lines = orden.picking_ids.filtered(lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state == 'assigned')\
+                .mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
+            if picking_lines:
+                producto = picking_lines[0].product_id
+                total_reservado = sum(picking_lines.mapped('reserved_availability'))
+                lineas_pedido = record.order_id.order_line.filtered(lambda x: x.product_id == producto)
+                if len(lineas_pedido) > 1:
+                    for linea in lineas_pedido:
+                        if total_reservado > linea.qty_to_deliver:
+                            linea.cantidad_asignada = linea.qty_to_deliver
+                            total_reservado -= linea.qty_to_deliver
+                        else:
+                            linea.cantidad_asignada = total_reservado
+                            total_reservado = 0
+                else:
+                    record.cantidad_asignada = total_reservado
+            else:
+                record.cantidad_asignada = 0
 
     '''
         @api.depends('price_unit')
