@@ -626,7 +626,7 @@ class SaleOrderLine(models.Model):
     @api.depends('x_studio_nuevo_costo','price_unit')
     def _compute_utilidad_esperada(self):
         for record in self:
-            record.utilidad_esperada = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
+            record.utilidad_esperada = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante and record.order_id.x_studio_nivel else 12
             if record['x_studio_nuevo_costo'] > 0.0:
                 utilidad_esperada_nuevo_costo = (1 - (record.x_studio_nuevo_costo / record.price_unit)) * 100
                 record.utilidad_esperada = max(utilidad_esperada_nuevo_costo,record.utilidad_esperada)
