@@ -597,14 +597,31 @@ class SaleOrderLine(models.Model):
     existencia_html = fields.Char(string="", compute='_compute_existencia_html')
     cantidad_asignada = fields.Integer(string="Cantidad asignada",compute='_compute_cantidad_asignada')
 
-    @api.depends('price_unit')
+    @api.depends('product_uom_qty')
     def _compute_cantidad_asignada(self):
         for record in self:
             cant_asig = 0
             orden = record.order_id
+            record.cantidad_asignada = 0
             picking_lines = orden.picking_ids.filtered(lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed'])\
                 .mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
-            if picking_lines:
+            if not picking_lines:
+                kit = record.product_id.bom_ids.bom_line_ids
+                productos_kit = kit.mapped('product_id')
+                necesarios_dic = {x.product_id.default_code: x.product_qty for x in kit }
+                picking_lines = orden.picking_ids.filtered(
+                    lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned',
+                                                                                                        'confirmed']) \
+                    .mapped('move_ids_without_package').filtered(lambda y: y.product_id in productos_kit)
+                asignados = []
+                # for linea in picking_lines:
+                for producto in productos_kit:
+                    asignados.append(sum(picking_lines.filtered(lambda x: x.product_id == producto).mapped('reserved_availability'))/necesarios_dic[producto.default_code])
+                if asignados:
+                    record.cantidad_asignada = min(asignados)
+                else:
+                    record.cantidad_asignada = 0
+            else:
                 producto = picking_lines[0].product_id
                 total_reservado = sum(picking_lines.mapped('reserved_availability'))
                 lineas_pedido = record.order_id.order_line.filtered(lambda x: x.product_id == producto)
@@ -618,14 +635,14 @@ class SaleOrderLine(models.Model):
                             total_reservado = 0
                 else:
                     record.cantidad_asignada = total_reservado
-            else:
-                record.cantidad_asignada = 0
 
 
 
     @api.depends('x_studio_nuevo_costo','price_unit')
     def _compute_utilidad_esperada(self):
         for record in self:
+            if not record.order_id.x_studio_nivel:
+                    raise UserError('Falta definir el nivel del cliente')
             record.utilidad_esperada = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante and record.order_id.x_studio_nivel else 12
             if record['x_studio_nuevo_costo'] > 0.0:
                 utilidad_esperada_nuevo_costo = (1 - (record.x_studio_nuevo_costo / record.price_unit)) * 100
