@@ -602,28 +602,31 @@ class SaleOrderLine(models.Model):
         for record in self:
             cant_asig = 0
             orden = record.order_id
-            picking_lines = orden.picking_ids.filtered(lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state == 'assigned').mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
-            record.cantidad_asignada = sum(picking_lines.mapped('reserved_availability'))
+            picking_lines = orden.picking_ids.filtered(lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed'])\
+                .mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
+            if picking_lines:
+                producto = picking_lines[0].product_id
+                total_reservado = sum(picking_lines.mapped('reserved_availability'))
+                lineas_pedido = record.order_id.order_line.filtered(lambda x: x.product_id == producto)
+                if len(lineas_pedido) > 1:
+                    for linea in lineas_pedido:
+                        if total_reservado > linea.qty_to_deliver:
+                            linea.cantidad_asignada = linea.qty_to_deliver
+                            total_reservado -= linea.qty_to_deliver
+                        else:
+                            linea.cantidad_asignada = total_reservado
+                            total_reservado = 0
+                else:
+                    record.cantidad_asignada = total_reservado
+            else:
+                record.cantidad_asignada = 0
 
-    '''
-        @api.depends('price_unit')
-        def _compute_cantidad_asignada(self):
-            for record in self:
-                cant_asig = 0
-                picking_lines = self.env['stock.move.line'].search([('origin','=',record.order_id.name),
-                                                                   ('product_id','=',record.product_id.id),
-                                                                   ('reference','ilike','PICK'),
-                                                                    ('state','=','assigned')])
-                for picking_line in picking_lines:
-                    cant_asig += picking_line.product_uom_qty
-                record.cantidad_asignada = cant_asig
-    '''
 
 
     @api.depends('x_studio_nuevo_costo','price_unit')
     def _compute_utilidad_esperada(self):
         for record in self:
-            record.utilidad_esperada = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
+            record.utilidad_esperada = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante and record.order_id.x_studio_nivel else 12
             if record['x_studio_nuevo_costo'] > 0.0:
                 utilidad_esperada_nuevo_costo = (1 - (record.x_studio_nuevo_costo / record.price_unit)) * 100
                 record.utilidad_esperada = max(utilidad_esperada_nuevo_costo,record.utilidad_esperada)
