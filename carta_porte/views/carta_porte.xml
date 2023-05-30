@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_picking_carta_porte" model="ir.ui.view">
+        <field name="model">stock.picking</field>
+        <field name="name">stock.picking.carta_porte</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header//button[@name='l10n_mx_edi_action_send_delivery_guide']" position="replace">
+                <button name="l10n_mx_edi_action_send_delivery_guide"
+                        type="object"
+                        string="Generar Carta Porte"
+                        attrs="{'invisible':['|', '|', '|',('state', 'not in', ['done','assigned']),('country_code', '!=', 'MX'),('picking_type_code', '!=', 'outgoing'),('l10n_mx_edi_status', 'not in', [False, 'cancelled'])]}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
