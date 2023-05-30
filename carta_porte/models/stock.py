@@ -1,4 +1,5 @@
 from odoo import fields,models, api, _, modules
+from odoo.exceptions import UserError
 import base64
 import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
@@ -9,6 +10,16 @@ class StockPicking(models.Model):
     transporte = fields.Char(compute='get_xml_data_edi', string='Transporte')
     code_vehicle = fields.Char(compute='get_xml_data_edi', string='Codigo Vehicular')
     rfc_figura = fields.Char(compute='get_xml_data_edi', string='RFC Figura')
+    fecha_timbrado_carta = fields.Datetime('Fecha de timbrado de Carta Porte')
+
+    def l10n_mx_edi_action_send_delivery_guide(self):
+        date_done_or = self.date_done
+        self.date_done = fields.Datetime.now()
+        r = super(StockPicking, self).l10n_mx_edi_action_send_delivery_guide()
+        if r:
+            self.fecha_timbrado_carta = fields.Datetime.now()
+        self.date_done = date_done_or
+        return r
 
     @api.depends('l10n_mx_edi_cfdi_file_id')
     def get_xml_data_edi(self):

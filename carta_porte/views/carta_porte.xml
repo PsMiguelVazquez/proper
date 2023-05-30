@@ -11,6 +11,9 @@
                         string="Generar Carta Porte"
                         attrs="{'invisible':['|', '|', '|',('state', 'not in', ['done','assigned']),('country_code', '!=', 'MX'),('picking_type_code', '!=', 'outgoing'),('l10n_mx_edi_status', 'not in', [False, 'cancelled'])]}"/>
             </xpath>
+            <xpath expr="//field[@name='date_done']" position="after">
+                <field name="fecha_timbrado_carta" invisible="1"/>
+            </xpath>
         </field>
     </record>
 </odoo>
