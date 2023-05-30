@@ -600,41 +600,45 @@ class SaleOrderLine(models.Model):
     @api.depends('product_uom_qty')
     def _compute_cantidad_asignada(self):
         for record in self:
-            cant_asig = 0
-            orden = record.order_id
-            record.cantidad_asignada = 0
-            picking_lines = orden.picking_ids.filtered(lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed'])\
-                .mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
-            if not picking_lines:
-                kit = record.product_id.bom_ids.bom_line_ids
-                productos_kit = kit.mapped('product_id')
-                necesarios_dic = {x.product_id.default_code: x.product_qty for x in kit }
-                picking_lines = orden.picking_ids.filtered(
-                    lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned',
-                                                                                                        'confirmed']) \
-                    .mapped('move_ids_without_package').filtered(lambda y: y.product_id in productos_kit)
-                asignados = []
-                # for linea in picking_lines:
-                for producto in productos_kit:
-                    asignados.append(sum(picking_lines.filtered(lambda x: x.product_id == producto).mapped('reserved_availability'))/necesarios_dic[producto.default_code])
-                if asignados:
-                    record.cantidad_asignada = min(asignados)
-                else:
-                    record.cantidad_asignada = 0
+            # if record.product_id.categ_id.name == 'SERVICIOS':
+            if record.product_id.detailed_type == 'service':
+                record.cantidad_asignada = record.product_uom_qty
             else:
-                producto = picking_lines[0].product_id
-                total_reservado = sum(picking_lines.mapped('reserved_availability'))
-                lineas_pedido = record.order_id.order_line.filtered(lambda x: x.product_id == producto)
-                if len(lineas_pedido) > 1:
-                    for linea in lineas_pedido:
-                        if total_reservado > linea.qty_to_deliver:
-                            linea.cantidad_asignada = linea.qty_to_deliver
-                            total_reservado -= linea.qty_to_deliver
-                        else:
-                            linea.cantidad_asignada = total_reservado
-                            total_reservado = 0
+                cant_asig = 0
+                orden = record.order_id
+                record.cantidad_asignada = 0
+                picking_lines = orden.picking_ids.filtered(lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed'])\
+                    .mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
+                if not picking_lines:
+                    kit = record.product_id.bom_ids.bom_line_ids
+                    productos_kit = kit.mapped('product_id')
+                    necesarios_dic = {x.product_id.default_code: x.product_qty for x in kit }
+                    picking_lines = orden.picking_ids.filtered(
+                        lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned',
+                                                                                                            'confirmed']) \
+                        .mapped('move_ids_without_package').filtered(lambda y: y.product_id in productos_kit)
+                    asignados = []
+                    # for linea in picking_lines:
+                    for producto in productos_kit:
+                        asignados.append(sum(picking_lines.filtered(lambda x: x.product_id == producto).mapped('reserved_availability'))/necesarios_dic[producto.default_code])
+                    if asignados:
+                        record.cantidad_asignada = min(asignados)
+                    else:
+                        record.cantidad_asignada = 0
                 else:
-                    record.cantidad_asignada = total_reservado
+                    producto = picking_lines[0].product_id
+                    total_reservado = sum(picking_lines.mapped('reserved_availability'))
+                    lineas_pedido = record.order_id.order_line.filtered(lambda x: x.product_id == producto)
+                    if len(lineas_pedido) > 1:
+                        for linea in lineas_pedido:
+                            if total_reservado > linea.qty_to_deliver:
+                                linea.cantidad_asignada = linea.qty_to_deliver
+                                total_reservado -= linea.qty_to_deliver
+                            else:
+                                linea.cantidad_asignada = total_reservado
+                                total_reservado = 0
+                    else:
+                        record.cantidad_asignada = total_reservado
 
 
 
