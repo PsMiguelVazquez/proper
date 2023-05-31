@@ -13,12 +13,14 @@ class StockPicking(models.Model):
     fecha_timbrado_carta = fields.Datetime('Fecha de timbrado de Carta Porte')
 
     def l10n_mx_edi_action_send_delivery_guide(self):
-        date_done_or = self.date_done
+        date_done_original = self.date_done
+        if not self.move_lines.filtered(lambda ml: ml.quantity_done > 0):
+            raise UserError('No hay cantidades hechas, no se puede generar la carta porte')
         self.date_done = fields.Datetime.now()
         r = super(StockPicking, self).l10n_mx_edi_action_send_delivery_guide()
         if r:
             self.fecha_timbrado_carta = fields.Datetime.now()
-        self.date_done = date_done_or
+        self.date_done = date_done_original
         return r
 
     @api.depends('l10n_mx_edi_cfdi_file_id')
@@ -35,15 +37,20 @@ class StockPicking(models.Model):
                         if ss.name == 'Complemento':
                             complemeto = ss
                 element = list(complemeto.children)[0]
-                ult = list(element.children)[-1]
-                pen = list(element.children)[-2]
-                record.version = element.attrs.get("Version")
-                record.transporte = element.attrs.get("TranspInternac")
-                record.code_vehicle = list(list(pen.children)[-1].children)[0].attrs.get('ConfigVehicular')
-                record.rfc_figura = list(ult.children)[0].attrs.get('RFCFigura')
+                try:
+                    ult = list(element.children)[-1]
+                    pen = list(element.children)[-2]
+                    record.version = element.attrs.get("Version") if element and element.attrs.get("Version") else ''
+                    record.transporte = element.attrs.get("TranspInternac") if element and element.attrs.get("TranspInternac") else ''
+                    record.code_vehicle = list(list(pen.children)[-1].children)[0].attrs.get('ConfigVehicular') if pen and list(list(pen.children)[-1].children)[0].attrs.get('ConfigVehicular') else ''
+                    record.rfc_figura = list(ult.children)[0].attrs.get('RFCFigura') if ult and list(ult.children)[0].attrs.get('RFCFigura') else ''
+                except:
+                    record.version = ""
+                    record.transporte = ""
+                    record.code_vehicle = ""
+                    record.rfc_figura = ""
             else:
                 record.version = ""
                 record.transporte = ""
                 record.code_vehicle = ""
                 record.rfc_figura = ""
-
