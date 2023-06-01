@@ -103,6 +103,7 @@ class Proposal(models.Model):
 class AccountMoveRevers(models.TransientModel):
     _inherit = 'account.move.reversal'
     uso_cfdi = fields.Selection(string='Uso de CFDI', selection=[('G02', 'G02 - Devoluciones, descuentos o bonificaciones')], default='G02')
+    tipo_relacion = fields.Selection(string='Tipo de relación', selection=[('01', '01 - Descuentos o bonificaciones'),('03', '03 - Devolución de mercancias')],default='03')
 
     def _prepare_default_reversal(self, move):
         r = super(AccountMoveRevers, self)._prepare_default_reversal(move)
@@ -115,6 +116,10 @@ class AccountMoveRevers(models.TransientModel):
     def reverse_moves(self):
         r = super(AccountMoveRevers, self).reverse_moves()
         nota_credito = self.env['account.move'].browse(r['res_id'])
+        picking_lines = self.helpdesk_ticket_id.picking_ids.move_line_ids_without_package
+        if picking_lines:
+            nota_credito.remove_other_lines(picking_lines)
+        nota_credito.x_tipo_de_relacion = self.tipo_relacion
         if nota_credito.l10n_mx_edi_origin:
             origin = nota_credito.l10n_mx_edi_origin.split('|')
             if len(origin) > 1:
