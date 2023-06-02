@@ -101,7 +101,15 @@ class StockPickingLL(models.TransientModel):
 class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'
     facturas = fields.Many2many('account.move', 'Facturas', compute='get_facturas')
+    sale_price_ls = fields.Float('Precio de venta', compute='get_sale_price_ls')
 
+    @api.depends('picking_id.sale_id')
+    def get_sale_price_ls(self):
+        for record in self:
+            price = 0
+            if record.picking_id.sale_id:
+                price = record.picking_id.sale_id.order_line.filtered(lambda x: x.product_id.id == record.product_id.id).mapped('price_unit')[-1]
+            record.sale_price_ls = price
 
     @api.depends('write_date', 'picking_id')
     def get_facturas(self):
