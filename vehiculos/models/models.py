@@ -108,7 +108,8 @@ class StockMoveLine(models.Model):
         for record in self:
             price = 0
             if record.picking_id.sale_id:
-                price = record.picking_id.sale_id.order_line.filtered(lambda x: x.product_id.id == record.product_id.id).mapped('price_unit')[-1]
+                lines = record.picking_id.sale_id.order_line.filtered(lambda x: x.product_id.id == record.product_id.id)
+                price = record.picking_id.sale_id.order_line.filtered(lambda x: x.product_id.id == record.product_id.id).mapped('price_unit')[0] if lines else 0
             record.sale_price_ls = price
 
     @api.depends('write_date', 'picking_id')
