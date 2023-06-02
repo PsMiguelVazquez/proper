@@ -249,6 +249,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='date']" position="after">
                 <field name="uso_cfdi"/>
+                <field name="tipo_relacion"/>
 <!--                <field name="tipo_relacion"/>-->
             </xpath>
         </field>
