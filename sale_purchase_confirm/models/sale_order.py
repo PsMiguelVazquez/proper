@@ -35,7 +35,7 @@ class SaleOrder(models.Model):
     @api.depends('order_line')
     def _compute_es_orden_parcial(self):
         for record in self:
-            if record.order_line.filtered(lambda x: x.cantidad_asignada + x.qty_delivered < x.product_uom_qty) and record.state == 'sale':
+            if record.order_line.filtered(lambda x: x.cantidad_asignada + x.qty_delivered + x.qty_invoiced < x.product_uom_qty) and record.state == 'sale':
                 record.es_orden_parcial = True
             else:
                 record.es_orden_parcial = False
@@ -705,7 +705,7 @@ class SaleOrderLine(models.Model):
             if record.order_id.state != 'sale':
                 color = '#D23F3A' if record.product_id.stock_quant_warehouse_zero - record.product_uom_qty  < 0 else ' #00A09D'
             else:
-                color = '#D23F3A' if record.cantidad_asignada + record.qty_delivered - record.product_uom_qty < 0 else ' #00A09D'
+                color = '#D23F3A' if record.cantidad_asignada + record.qty_delivered + record.qty_invoiced - record.product_uom_qty < 0 else ' #00A09D'
             record.existencia_html = '<img src="/sale_purchase_confirm/static/img/chart.png" style="width:15px; filter: opacity(0.5) drop-shadow(0 0 0 '+ color +') saturate(450%);;"/>'
     def limit_price(self):
         for record in self:

@@ -247,6 +247,10 @@
         <field name="model">account.move.reversal</field>
         <field name="inherit_id" ref="account.view_account_move_reversal"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='reason']" position="replace">
+                <field name="motivo"/>
+                <field name="reason" attrs="{'invisible': [('motivo', '!=', 'otros')]}"/>
+            </xpath>
             <xpath expr="//field[@name='date']" position="after">
                 <field name="uso_cfdi"/>
                 <field name="tipo_relacion"/>
