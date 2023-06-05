@@ -31,6 +31,7 @@ class SaleOrder(models.Model):
     solicitud_parcial = fields.Boolean(default=False)
     solicito_validacion = fields.Boolean(default=False)
     es_orden_parcial = fields.Boolean(compute='_compute_es_orden_parcial')
+    sales_agent = fields.Many2one(related='partner_id.sales_agent')
 
     @api.depends('order_line')
     def _compute_es_orden_parcial(self):

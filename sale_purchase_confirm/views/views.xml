@@ -211,6 +211,9 @@
                 <header>
                     <button string="Validar datos masivamente" name="validar_precio_masivo" type="object" attrs="{'invisible': [('state', 'not in', ['draft','send'])]}"/>
                 </header>
+                <xpath expr="//field[@name='partner_invoice_id']" position="before">
+                    <field name="sales_agent" string="Vendedor asocialdo al cliente"/>
+                </xpath>
             </field>
         </record>
 
@@ -221,6 +224,12 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='state_id']" position="replace">
                     <field name="state_id" string="Estado" class="o_address_state" placeholder="Estado" options="{&quot;no_open&quot;: True,'no_create': True, 'no_create_edit':True}}" />
+                </xpath>
+                <xpath expr="//field[@name='city']" position="after">
+                    <field name="city_id" string="Ciudad" class="o_address_city" placeholder="Ciudad" options="{&quot;no_open&quot;: True,'no_create': True, 'no_create_edit':True}}" />
+                </xpath>
+                <xpath expr="//field[@name='city']" position="attributes">
+                    <attribute name="invisible">1</attribute>
                 </xpath>
             </field>
         </record>
