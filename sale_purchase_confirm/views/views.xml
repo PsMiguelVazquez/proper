@@ -214,6 +214,17 @@
             </field>
         </record>
 
+        <record id="mx_partner_address_form_inherit" model="ir.ui.view">
+            <field name="name">mx.partner.addres.form.inherited</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="l10n_mx_edi.mx_partner_address_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='state_id']" position="replace">
+                    <field name="state_id" string="Estado" class="o_address_state" placeholder="Estado" options="{&quot;no_open&quot;: True,'no_create': True, 'no_create_edit':True}}" />
+                </xpath>
+            </field>
+        </record>
+
 
     <record id="action_facturar" model="ir.actions.server">
         <field name="name">Facturar</field>
