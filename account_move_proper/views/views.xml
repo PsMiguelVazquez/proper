@@ -10,6 +10,19 @@
         </field>
     </record>
 
+
+    <record id="view_account_move_form_inherited_dates" model="ir.ui.view">
+        <field name="name">account.move.form.inherited.dates</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="l10n_mx_edi.view_l10n_mx_edi_invoice_form_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='l10n_mx_edi_origin']" position="after">
+                <field name="fecha_entrega_mercancia" attrs="{'invisible':[('move_type', '!=', 'out_invoice')], 'readonly': True}"/>
+                <field name="fecha_recepcion_credito"/>
+            </xpath>
+        </field>
+    </record>
+
     <record id="action_cancel_invoices_03_04" model="ir.actions.server">
         <field name="name">Marcar como cancelada</field>
         <field name="type">ir.actions.server</field>
