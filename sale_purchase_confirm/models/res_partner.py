@@ -9,11 +9,3 @@ class ResPartner(models.Model):
         for record in self:
             operation = record.credit_limit-record.credit
             record.credit_rest =0 if operation<0 else operation
-
-    # _sql_constraints = [('niv','unique(niv)','Ya existe otro cliente con ese RFC')]
-    @api.constrains('vat')
-    def _check_rfc(self):
-        for record in self:
-            cliente = self.env['res.partner'].search([('vat','ilike',record.vat),('id','!=',record.id)])
-            if cliente:
-                raise ValidationError('Ya existe otro cliente ('+ ', '.join(cliente.mapped('name'))+') con ese RFC')
