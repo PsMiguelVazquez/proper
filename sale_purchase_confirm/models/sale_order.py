@@ -38,7 +38,7 @@ class SaleOrder(models.Model):
     def _check_orden_compra(self):
         for record in self:
             orden_venta = self.env['sale.order'].search([('x_studio_n_orden_de_compra','=',record.x_studio_n_orden_de_compra),('id','!=',record.id)])
-            if orden_venta:
+            if orden_venta and record.x_studio_n_orden_de_compra and record.x_studio_n_orden_de_compra != '':
                 raise ValidationError('Ya existe otro pedido ('+ ', '.join(orden_venta.mapped('name'))+') con ese número de orden de compra')
 
 
