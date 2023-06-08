@@ -5,6 +5,7 @@ from odoo import models, fields, api, _
 from datetime import datetime
 from .. import extensions
 from odoo.exceptions import UserError
+from odoo.exceptions import ValidationError
 
 
 class SaleOrder(models.Model):
@@ -31,6 +32,16 @@ class SaleOrder(models.Model):
     solicitud_parcial = fields.Boolean(default=False)
     solicito_validacion = fields.Boolean(default=False)
     es_orden_parcial = fields.Boolean(compute='_compute_es_orden_parcial')
+    sales_agent = fields.Many2one(related='partner_id.sales_agent')
+
+    @api.constrains('x_studio_n_orden_de_compra')
+    def _check_orden_compra(self):
+        for record in self:
+            orden_venta = self.env['sale.order'].search([('x_studio_n_orden_de_compra','=',record.x_studio_n_orden_de_compra),('id','!=',record.id)])
+            if orden_venta and record.x_studio_n_orden_de_compra and record.x_studio_n_orden_de_compra != '':
+                raise ValidationError('Ya existe otro pedido ('+ ', '.join(orden_venta.mapped('name'))+') con ese número de orden de compra')
+
+
 
     @api.depends('order_line')
     def _compute_es_orden_parcial(self):

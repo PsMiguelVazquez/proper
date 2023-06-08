@@ -2,10 +2,17 @@
 import odoo.exceptions
 from odoo import models, fields, api, _
 import json
+from odoo.exceptions import UserError
 
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
     amount_rest = fields.Float(compute='get_invoices')
+
+    def action_process_edi_web_services(self):
+        if self.amount_rest > 0.0:
+            raise UserError('No se puede timbrar un pago que no está totalmente aplicado. Falta aplicar: $' +str(self.amount_rest))
+        r = super(AccountPayment, self).action_process_edi_web_services()
+        return r
 
     def get_invoices(self):
         for record in self:

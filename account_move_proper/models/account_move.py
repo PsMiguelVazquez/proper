@@ -11,6 +11,16 @@ class AccountMove(models.Model):
                                                                                       ('02','02 - Comprobante emitido con errores sin relación'),
                                                                                       ('03','03 - No se llevó a cabo la operación'),
                                                                                       ('04','04 - Operación nominativa relacionada en la factura global')])
+    fecha_entrega_mercancia = fields.Date(string='Fecha de entrega de la mercancía', compute='_compute_fecha_entrega_mercancia')
+    fecha_recepcion_credito = fields.Date(string='Fecha recepción de la factura (Crédito)')
+
+    def _compute_fecha_entrega_mercancia(self):
+        for record in self:
+            mov_out = self.env['stock.picking'].search([('x_studio_facturas','=',record.id),('state','=','done'),('picking_type_code','=','outgoing')])
+            if mov_out and mov_out[0].date_done:
+                record.fecha_entrega_mercancia = mov_out[0].date_done
+            else:
+                record.fecha_entrega_mercancia = None
 
 
     # def action_post(self):
