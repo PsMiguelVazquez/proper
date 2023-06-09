@@ -8,7 +8,6 @@ class SaleOrder(models.Model):
 
 
     def upload_invoice(self):
-        print(self)
         w = self.env['upload.invoice.wizard'].create({'subtotal': 0.0, 'monto': 0.0})
         view = self.env.ref('upload_invoice_wizard.view_upload_invoice_sale_form')
         return {

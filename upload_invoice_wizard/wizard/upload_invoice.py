@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
 class UploadInvoice(models.TransientModel):
@@ -28,6 +28,7 @@ class UploadInvoice(models.TransientModel):
     codigos_producto = fields.Char('Códigos de producto')
     total_ordenes = fields.Float('Total', compute='_compute_total_ordenes')
     total_lineas = fields.Float('Total líneas', compute='_compute_total_lineas')
+    mensaje_error = fields.Text('')
 
     @api.depends('order_lines')
     def _compute_total_lineas(self):
@@ -171,107 +172,112 @@ class UploadInvoice(models.TransientModel):
                 xmls = record.adjuntos.filtered(lambda x: x.mimetype == 'application/xml')
                 pdfs = record.adjuntos.filtered(lambda x: x.mimetype == 'application/pdf')
                 if xmls and xmls[0]:
-                    cfdi_node = fromstring(xmls[0].raw)
-                    emisor_node = cfdi_node.Emisor
-                    ######### Lista de productos en el XML ########
-                    self.codigos_producto = cfdi_node['Conceptos']['Concepto']
+                    try:
+                        cfdi_node = fromstring(xmls[0].raw)
+                        emisor_node = cfdi_node.Emisor
+                        ######### Lista de productos en el XML ########
+                        self.codigos_producto = cfdi_node['Conceptos']['Concepto']
 
-                    receptor_node = cfdi_node.Receptor
-                    tfd_node = self.get_node(
-                        cfdi_node,
-                        'tfd:TimbreFiscalDigital[1]',
-                        {'tfd': 'http://www.sat.gob.mx/TimbreFiscalDigital'},
-                    )
+                        receptor_node = cfdi_node.Receptor
+                        tfd_node = self.get_node(
+                            cfdi_node,
+                            'tfd:TimbreFiscalDigital[1]',
+                            {'tfd': 'http://www.sat.gob.mx/TimbreFiscalDigital'},
+                        )
 
-                    ####  Folio y serie
-                    serie = cfdi_node.get('Serie')
-                    folio = cfdi_node.get('Folio')
-                    cfdi_ref = serie + folio
+                        ####  Folio y serie
+                        serie = cfdi_node.get('Serie')
+                        folio = cfdi_node.get('Folio')
+                        cfdi_ref = serie + folio
 
-                    ####  MetodoPago
-                    MetodoPago = cfdi_node.get('MetodoPago')
+                        ####  MetodoPago
+                        MetodoPago = cfdi_node.get('MetodoPago')
 
-                    ####  FormaPago
-                    FormaPago = cfdi_node.get('FormaPago')
+                        ####  FormaPago
+                        FormaPago = cfdi_node.get('FormaPago')
 
-                    ####  Version
-                    cfdi_version = 'CFDI (' + cfdi_node.get('Version') + ')'
+                        ####  Version
+                        cfdi_version = 'CFDI (' + cfdi_node.get('Version') + ')'
 
-                    ##### Document type
-                    cfdi_type = cfdi_node.get('TipoDeComprobante')
-                    if cfdi_type == 'I':
-                        move_type = 'out_invoice'
-                    if cfdi_type == 'E':
-                        move_type = 'out_refund'
+                        ##### Document type
+                        cfdi_type = cfdi_node.get('TipoDeComprobante')
+                        if cfdi_type == 'I':
+                            move_type = 'out_invoice'
+                        if cfdi_type == 'E':
+                            move_type = 'out_refund'
 
-                    SubTotal = cfdi_node.get('SubTotal')
-                    total = cfdi_node.get('Total')
+                        SubTotal = cfdi_node.get('SubTotal')
+                        total = cfdi_node.get('Total')
 
-                    cfdi_date = cfdi_node.get('Fecha')
+                        cfdi_date = cfdi_node.get('Fecha')
 
-                    ####  Comprobante info
+                        ####  Comprobante info
 
-                    # Emisor
-                    emisor_name = emisor_node.get('Nombre', emisor_node.get('Nombre'))
-                    emisor_vat = emisor_node.get('Rfc', emisor_node.get('rfc'))
+                        # Emisor
+                        emisor_name = emisor_node.get('Nombre', emisor_node.get('Nombre'))
+                        emisor_vat = emisor_node.get('Rfc', emisor_node.get('rfc'))
 
-                    # Receptor
-                    receptor_name = receptor_node.get('Nombre', receptor_node.get('Nombre'))
-                    receptor_vat = receptor_node.get('Rfc', emisor_node.get('rfc'))
-                    receptor_usocfdi = receptor_node.get('UsoCFDI', emisor_node.get('UsoCFDI'))
+                        # Receptor
+                        receptor_name = receptor_node.get('Nombre', receptor_node.get('Nombre'))
+                        receptor_vat = receptor_node.get('Rfc', emisor_node.get('rfc'))
+                        receptor_usocfdi = receptor_node.get('UsoCFDI', emisor_node.get('UsoCFDI'))
 
-                    cfdi_uuid = tfd_node.get('UUID')
+                        cfdi_uuid = tfd_node.get('UUID')
 
-                    partner_id = self.env['res.partner'].search([('vat','=',receptor_vat)])
-                    if partner_id:
-                        self.client_id = partner_id[0]
+                        partner_id = self.env['res.partner'].search([('vat', '=', receptor_vat)]).filtered(lambda x: x.company_type == 'company')
+                        if partner_id:
+                            self.client_id = partner_id[0]
+                        else:
+                            self.mensaje_error = 'No existe en el sistema el cliente con RFC ' + receptor_vat + ' en el XML. Tiene que darlo de alta como CLIENTE antes de subir esta factura'
 
-                    l10n_mx_edi_payment_method_id = self.env['l10n_mx_edi.payment.method'].search([('code', '=', FormaPago)])
-                    partner_data = self.env['res.partner'].search([('id', '=', self.client_id.id)])
-                    property_payment_term_id = partner_data['property_payment_term_id']
-                    if property_payment_term_id:
-                        property_payment_term_id = property_payment_term_id[0]
-                    else:
-                        property_payment_term_id = 1
+                        l10n_mx_edi_payment_method_id = self.env['l10n_mx_edi.payment.method'].search([('code', '=', FormaPago)])
+                        partner_data = self.env['res.partner'].search([('id', '=', self.client_id.id)])
+                        property_payment_term_id = partner_data['property_payment_term_id']
+                        # if property_payment_term_id:
+                        #     property_payment_term_id = property_payment_term_id[0]
+                        # else:
+                        #     property_payment_term_id = 1
 
-                    self.folio_fiscal = cfdi_uuid
-                    self.monto = total
-                    self.fecha_factura = cfdi_date
-                    self.rfc_emisor = emisor_vat
-                    self.rfc_receptor = receptor_vat
-                    self.uso_cfdi = receptor_usocfdi
-                    self.metodo_pago = MetodoPago
-                    self.forma_pago = FormaPago
-                    self.version_cfdi = cfdi_version
-                    self.ref = cfdi_ref
-                    self.tipo_movimiento = move_type
-                    self.subtotal = SubTotal
-                    self.id_metodo_pago = l10n_mx_edi_payment_method_id.id
-                    self.terminos_pago = property_payment_term_id.id
-                    self.terminos_pago_id = property_payment_term_id.id
-                    self.sale_ids = self.env['sale.order'].search([('id','in',self.env.context.get('active_ids'))])
-                    self.order_lines = self.sale_ids.mapped('order_line')
+                        self.folio_fiscal = cfdi_uuid
+                        self.monto = total
+                        self.fecha_factura = cfdi_date
+                        self.rfc_emisor = emisor_vat
+                        self.rfc_receptor = receptor_vat
+                        self.uso_cfdi = receptor_usocfdi
+                        self.metodo_pago = MetodoPago
+                        self.forma_pago = FormaPago
+                        self.version_cfdi = cfdi_version
+                        self.ref = cfdi_ref
+                        self.tipo_movimiento = move_type
+                        self.subtotal = SubTotal
+                        self.id_metodo_pago = l10n_mx_edi_payment_method_id.id
+                        self.terminos_pago = property_payment_term_id.id if property_payment_term_id else 1
+                        self.terminos_pago_id = property_payment_term_id.id
+                        self.sale_ids = self.env['sale.order'].search([('id', 'in', self.env.context.get('active_ids'))])
+                        self.order_lines = self.sale_ids.mapped('order_line')
 
-                    w = self.env['upload.invoice.wizard'].search([('id', '=', self.id.origin)])
-                    w.folio_fiscal = cfdi_uuid
-                    w.monto = total
-                    w.fecha_factura = cfdi_date
-                    w.rfc_emisor = emisor_vat
-                    w.rfc_receptor = receptor_vat
-                    w.uso_cfdi = receptor_usocfdi
-                    w.metodo_pago = MetodoPago
-                    w.forma_pago = FormaPago
-                    w.version_cfdi = cfdi_version
-                    w.ref = cfdi_ref
-                    w.tipo_movimiento = move_type
-                    w.subtotal = SubTotal
-                    w.client_id = self.client_id
-                    w.id_metodo_pago = self.id_metodo_pago
-                    w.terminos_pago = self.terminos_pago
-                    w.terminos_pago_id = property_payment_term_id.id
-                    w.codigos_producto = self.codigos_producto
-                    w.sale_ids =self.sale_ids
-                    w.order_lines = self.order_lines
+                        w = self.env['upload.invoice.wizard'].search([('id', '=', self.id.origin)])
+                        w.folio_fiscal = cfdi_uuid
+                        w.monto = total
+                        w.fecha_factura = cfdi_date
+                        w.rfc_emisor = emisor_vat
+                        w.rfc_receptor = receptor_vat
+                        w.uso_cfdi = receptor_usocfdi
+                        w.metodo_pago = MetodoPago
+                        w.forma_pago = FormaPago
+                        w.version_cfdi = cfdi_version
+                        w.ref = cfdi_ref
+                        w.tipo_movimiento = move_type
+                        w.subtotal = SubTotal
+                        w.client_id = self.client_id
+                        w.id_metodo_pago = self.id_metodo_pago
+                        w.terminos_pago = self.terminos_pago
+                        w.terminos_pago_id = property_payment_term_id.id
+                        w.codigos_producto = self.codigos_producto
+                        w.sale_ids = self.sale_ids
+                        w.order_lines = self.order_lines
+                    except:
+                        self.mensaje_error ='Error al obtener los datos del documento XML. Compruebe la estructura del archivo'
             else:
                 self.folio_fiscal = ''
                 self.monto = 0.0
@@ -291,3 +297,4 @@ class UploadInvoice(models.TransientModel):
                 self.terminos_pago = ''
                 self.order_lines = None
                 self.sale_ids = None
+                self.mensaje_error= None

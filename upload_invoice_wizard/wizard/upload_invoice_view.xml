@@ -9,8 +9,9 @@
             <form string="Subir factura">
                 <group name="Datos XML">
                     <field name="adjuntos" widget="many2many_binary" />
+                    <field name="mensaje_error" decoration-danger="'mensaje_error'" readonly="1"/>
                     <group>
-                        <field name="client_id"  readonly="1" options="{'no_create': True, 'no_create_edit':True}"/>
+                        <field name="client_id" required="1" domain="[('vat','=','rfc_receptor')]" options="{'no_create': True, 'no_create_edit':True}"/>
                         <field name="fecha_factura"  readonly="1"/>
                         <field name="rfc_emisor"  readonly="1"/>
                         <field name="rfc_receptor"  readonly="1"/>
@@ -21,18 +22,6 @@
                         <field name="forma_pago"  readonly="1"/>
                         <field name="version_cfdi"  readonly="1"/>
                     </group>
-<!--                    <field name = 'sale_ids' string="Órdenes de venta" options="{'no_create': True, 'no_create_edit':True}">-->
-<!--                         <tree editable="bottom">-->
-<!--                            <field name="name" readonly="1" string="Orden"/>-->
-<!--                            <field name="partner_id" readonly="1" string="Cliente"/>-->
-<!--                            <field name="amount_untaxed" readonly="1"/>-->
-<!--                            <field name="amount_tax" readonly="1"/>-->
-<!--                            <field name="amount_total" />-->
-<!--                        </tree>-->
-<!--                    </field>-->
-<!--                    <group>-->
-<!--                        <field name="total_ordenes"/>-->
-<!--                    </group>-->
                     <field name="order_lines" string="Líneas de las órdenes" options="{'no_create': True}">
                         <tree editable="bottom">
                             <field name="x_descripcion_corta" readonly="1"/>
