@@ -13,14 +13,24 @@ class AccountMove(models.Model):
                                                                                       ('04','04 - Operación nominativa relacionada en la factura global')])
     fecha_entrega_mercancia = fields.Date(string='Fecha de entrega de la mercancía', compute='_compute_fecha_entrega_mercancia')
     fecha_recepcion_credito = fields.Date(string='Fecha recepción de la factura (Crédito)')
+    fecha_confirmacion_cancelacion = fields.Date(string='Fecha de confirmación de cancelación ante el SAT')
+    ejecutivo_cuenta = fields.Char(string='Ejecutivo de cuenta', related='partner_id.x_nom_corto_agente_venta')
+    fecha_entrega_mercancia_html = fields.Html(string='Fechas de entrega', compute='_compute_fecha_entrega_mercancia')
 
     def _compute_fecha_entrega_mercancia(self):
         for record in self:
+            fecha_entrega_mercancia_html = ''
             mov_out = self.env['stock.picking'].search([('x_studio_facturas','=',record.id),('state','=','done'),('picking_type_code','=','outgoing')])
             if mov_out and mov_out[0].date_done:
                 record.fecha_entrega_mercancia = mov_out[0].date_done
             else:
                 record.fecha_entrega_mercancia = None
+            fecha_entrega_mercancia_html = "<table class='table' style='width: 100%'><thead><tr><th>OUT</th><th>Fecha</th><tr></thead><tbody>"
+            for mov in mov_out:
+                fecha_entrega_mercancia_html += "<tr><td>" + mov.name +"</td><td>" + mov.date_done.strftime("%d/%m/%Y") + "</td></tr>"
+            fecha_entrega_mercancia_html += "</tbody></table>"
+            self.fecha_entrega_mercancia_html = fecha_entrega_mercancia_html
+
 
 
     # def action_post(self):
@@ -105,6 +115,7 @@ class AccountMove(models.Model):
             }
 
     def button_process_edi_web_services(self):
+        folio_fiscal_uuid = ''
         if self.edi_state == 'to_cancel':
             '''
                 Motivo de cancelación 01 - Comprobante emitido con errores con relación
@@ -130,8 +141,17 @@ class AccountMove(models.Model):
                                       '\n\t1. Solicitar la cancelación con el motivo correspondiente en su portal SAT.'
                                       '\n\t2. Una vez que esté seguro que se realizó la cancelación ante el SAT de click en el menú de acciones (ícono de engrane) y seleccione la opción "Marcar como cancelado".'
                                       '\n\nAl realizar estos pasos la factura quedará como cancelada tambien en Odoo.')
-
+            folio_fiscal_uuid= self.l10n_mx_edi_cfdi_uuid
         super(AccountMove, self).button_process_edi_web_services()
+        if folio_fiscal_uuid != '' :
+            self.l10n_mx_edi_cfdi_uuid = folio_fiscal_uuid
+
+    def action_retry_edi_documents_error(self):
+        folio_fiscal = self.l10n_mx_edi_cfdi_uuid
+        r = super(AccountMove, self).action_retry_edi_documents_error()
+        if folio_fiscal and folio_fiscal != '':
+            self.l10n_mx_edi_cfdi_uuid = folio_fiscal
+        return r
 
 
 

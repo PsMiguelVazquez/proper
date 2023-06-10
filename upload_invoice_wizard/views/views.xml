@@ -2,7 +2,7 @@
 <odoo>
     <record id="sale_order_tree_inherit" model="ir.ui.view">
         <field name="model">sale.order</field>
-        <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
+        <field name="inherit_id" ref="studio_customization.odoo_studio_sale_ord_24d44f78-6430-46dc-a961-0f92b2feaf0b"/>
         <field name="arch" type="xml">
             <tree>
                 <header>
