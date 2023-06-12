@@ -705,11 +705,12 @@ class SaleOrderLine(models.Model):
 
     @api.onchange('product_uom', 'product_uom_qty')
     def product_uom_change(self):
+        #Se guarda el precio unitario antiguo para que en el caso de que se cambien las cantidades no se recalcule precio unitario
         old_price = self.price_unit
         r = super(SaleOrderLine, self).product_uom_change()
-        if self.product_uom_qty <=1:
-            self.limit_price()
-        else:
+        self.limit_price()
+        #si cambia el precio unitario despues de limitarlo, lo regresa a como estaba originalmente
+        if round(old_price,2) != round(self.price_unit, 2):
             self.price_unit = old_price
         return r
 
@@ -727,22 +728,16 @@ class SaleOrderLine(models.Model):
             if record.product_id:
                 if record.order_id.x_studio_nivel:
                     margen = record.product_id.x_fabricante['x_studio_margen_' + str(record.order_id.x_studio_nivel)] if record.product_id.x_fabricante else 12
-                    valor = record.product_id.standard_price / ((100 - margen) / 100)
                 else:
                     margen = 12
-                    valor = record.product_id.standard_price / ((100 - margen) / 100)
-                if valor != 0:
-                    if valor < record.price_unit:
-                        record.update({'price_unit': round(record.price_unit + .5), 'check_price_reduce': False})
-                    else:
-                        # record.update({'price_unit': round(valor+ .5), 'price_reduce_v': record.price_unit, 'check_price_reduce': True})
-                        record.update({'price_unit': round(valor+ .5)})
+                valor = record.product_id.standard_price / ((100 - margen) / 100)
                 '''
                 Parche temporal para evitar que los productos cambien de precio al agregar
                 #valias lineas del mismo producto en la misma cotización
                 '''
                 record.product_id.update({'lst_price': 0})
             record['x_nuevo_precio'] = round(valor + .5)
+            record.update({'price_unit': round(valor+ .5)})
 
     @api.depends('product_id')
     def get_stock(self):
