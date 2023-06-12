@@ -88,7 +88,10 @@ class AccountMove(models.Model):
             'version_cfdi': invoice.version_cfdi,
             'invoice_line_ids': product_list,
             'sale_id': invoice.sale_id,
-            'partner_shipping_id':  invoice.partner_shipping_id
+            'partner_shipping_id':  invoice.partner_shipping_id,
+            'x_comentarios': invoice.x_comentarios,
+            'x_atencion': invoice.x_atencion,
+            'x_observaciones': invoice.x_observaciones
         }
         invoice_id = self.env['account.move'].create(invoice_dict)
         invoice.sale_id.order_line.invoice_lines |= invoice_id.invoice_line_ids
