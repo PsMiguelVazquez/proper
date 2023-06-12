@@ -12,7 +12,7 @@ class AccountMove(models.Model):
                                                                                       ('03','03 - No se llevó a cabo la operación'),
                                                                                       ('04','04 - Operación nominativa relacionada en la factura global')])
     fecha_entrega_mercancia = fields.Date(string='Fecha de entrega de la mercancía', compute='_compute_fecha_entrega_mercancia')
-    fecha_recepcion_credito = fields.Date(string='Fecha recepción de la factura (Crédito)')
+    fecha_recepcion_credito = fields.Date(string='Fecha de recepción de evidencias')
     fecha_confirmacion_cancelacion = fields.Date(string='Fecha de confirmación de cancelación ante el SAT')
     ejecutivo_cuenta = fields.Char(string='Ejecutivo de cuenta', related='partner_id.x_nom_corto_agente_venta')
     fecha_entrega_mercancia_html = fields.Html(string='Fechas de entrega', compute='_compute_fecha_entrega_mercancia')
@@ -125,7 +125,9 @@ class AccountMove(models.Model):
                  2 - El campo CFDI de origen debe comenzar por "04|"
             '''
             if self.motivo_cancelacion == '01':
-                factura_sustituta = self.env['account.move'].search([('l10n_mx_edi_origin','=', '04|' + self.l10n_mx_edi_origin.split('|')[1]),('l10n_mx_edi_cfdi_uuid','!=',False)])
+                factura_sustituta = self.env['account.move']
+                if self.l10n_mx_edi_origin:
+                    factura_sustituta = self.env['account.move'].search([('l10n_mx_edi_origin','=', '04|' + self.l10n_mx_edi_origin.split('|')[1]),('l10n_mx_edi_cfdi_uuid','!=',False)])
                 if not factura_sustituta:
                     raise ValidationError('Para el motivo de cancielación 01 se necesitan seguir los siguientes pasos:\n'
                                           'Paso 1: Colocar el Folio Fiscal de la Nueva Factura en el campo “CFDI Origen”, acompañado del código 04|'
