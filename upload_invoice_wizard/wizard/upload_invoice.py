@@ -88,6 +88,7 @@ class UploadInvoice(models.TransientModel):
                             'product_id': line.product_id,
                             'price_unit': line.price_unit,
                             'tax_ids': line.tax_id,
+                            'product_uom_id': line.product_id.uom_id.id
                         }
                         product_list.append(product_dict)
                 invoice_dict = {
