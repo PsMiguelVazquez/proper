@@ -80,15 +80,16 @@ class UploadInvoice(models.TransientModel):
             if not invoice_id and self.client_id:
                 product_list =[]
                 for line in self.order_lines:
-                    product_dict = {
-                        'sequence': 10,
-                        'name': line.product_id.name,
-                        'quantity': 1.0,
-                        'product_id': line.product_id,
-                        'price_unit': line.price_unit,
-                        'tax_ids': line.tax_id,
-                    }
-                    product_list.append(product_dict)
+                    if line.product_uom_qty > 0:
+                        product_dict = {
+                            'sequence': 10,
+                            'name': line.product_id.name,
+                            'quantity': line.product_uom_qty,
+                            'product_id': line.product_id,
+                            'price_unit': line.price_unit,
+                            'tax_ids': line.tax_id,
+                        }
+                        product_list.append(product_dict)
                 invoice_dict = {
                     'invoice_date': self.fecha_factura,
                     'ref': self.ref,
@@ -103,7 +104,8 @@ class UploadInvoice(models.TransientModel):
                     'l10n_mx_edi_usage': self.uso_cfdi,
                     'version_cfdi': self.version_cfdi,
                     'invoice_line_ids': product_list,
-                    'l10n_mx_edi_cfdi_uuid': self.folio_fiscal
+                    'l10n_mx_edi_cfdi_uuid': self.folio_fiscal,
+                    'invoice_origin': ', '.join(self.sale_ids.mapped('name'))
                 }
                 invoice_id = self.env['account.move'].create(invoice_dict)
                 if invoice_id:
@@ -141,17 +143,20 @@ class UploadInvoice(models.TransientModel):
                     'l10n_mx_edi_payment_policy': self.metodo_pago,
                     'l10n_mx_edi_usage': self.uso_cfdi,
                     'version_cfdi': self.version_cfdi,
+                    'invoice_origin': ', '.join(self.sale_ids.mapped('name'))
                 }
                 self.env['account.move'].write(invoice_dict)
 
                 for sale_order_id in self.sale_ids:
+                    sale_order_id.invoice_ids |= invoice_id
                     sale_order_dict = {
-                        'invoice_ids': invoice_id,
+                        'invoice_ids': sale_order_id.invoice_ids,
                         'invoice_status': 'invoiced',
                         'x_estado_surtido': 'surtir',
                     }
                     for sale_order_line_id in sale_order_id.order_line:
-                        sale_order_line_id.write({'invoice_lines': invoice_id.line_ids})
+                        if sale_order_line_id.product_uom_qty > 0:
+                            sale_order_line_id.write({'invoice_lines': invoice_id.line_ids})
                     sale_order_id.write(sale_order_dict)
                     invoice_msg = (
                                           "This invoice has been created from: <a href=# data-oe-model=sale.order data-oe-id=%d>%s</a>") % (
