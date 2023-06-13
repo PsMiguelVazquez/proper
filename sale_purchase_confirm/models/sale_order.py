@@ -154,12 +154,14 @@ class SaleOrder(models.Model):
         total = self.partner_id.credit_rest - self.amount_total
         check = total >= 0 if self.payment_term_id.id != 1 else False
         cliente = self.partner_id.x_studio_triple_a
-        if self.partner_id.id != 234696:
-            facturas_vencidas_cliente = self.env['account.move'].search(
-                [('partner_id', '=', self.partner_id.id), ('state', '=', 'posted'),
-                 ('payment_state', 'in', ['not_paid', 'partial']), ('invoice_date_due', '<', fields.Datetime().now())])
+        facturas_vencidas_cliente = self.env['account.move'].search([
+            ('partner_id', '=', self.partner_id.id)
+            , ('state', '=', 'posted')
+            , ('payment_state', 'in', ['not_paid', 'partial'])
+            , ('invoice_date_due', '<', fields.Datetime().now())
+        ]).filtered(lambda x: not x.x_fecha_pago_pro or x.x_fecha_pago_pro < fields.Date.today())
         #facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in ('not_paid', 'partial')).mapped('id')
-        if (check and cliente) and not facturas_vencidas_cliente:
+        if (check or cliente) and not facturas_vencidas_cliente:
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
             return self.action_confirm()
         else:
@@ -371,7 +373,12 @@ class SaleOrder(models.Model):
         check = total >= 0 if self.payment_term_id.id != 1 else False
         cliente = self.partner_id.x_studio_triple_a
         ##Para partners diferentes de publico en general
-        facturas_vencidas_cliente = self.env['account.move'].search([('partner_id','=',self.partner_id.id),('state','=','posted'),('payment_state','in',['not_paid','partial']),('invoice_date_due','<',fields.Datetime().now())])
+        facturas_vencidas_cliente = self.env['account.move'].search([
+            ('partner_id', '=', self.partner_id.id)
+            , ('state', '=', 'posted')
+            , ('payment_state', 'in', ['not_paid','partial'])
+            , ('invoice_date_due', '<', fields.Datetime().now())
+        ]).filtered(lambda x: not x.x_fecha_pago_pro or x.x_fecha_pago_pro < fields.Date.today())
         #Si es AAA o tiene crédito
         if (cliente or check) and not facturas_vencidas_cliente:
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
