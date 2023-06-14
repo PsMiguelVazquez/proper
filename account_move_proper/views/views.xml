@@ -40,4 +40,13 @@
         <field name="code">action=model.duplicate_invoice()</field>
         <field name="state">code</field>
     </record>
+
+    <record id="action_repair_invoice" model="ir.actions.server">
+        <field name="name">Reparar esta factura</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="account_move_proper.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move" />
+        <field name="code">action=model.repair_invoice()</field>
+        <field name="state">code</field>
+    </record>
 </odoo>

@@ -36,6 +36,23 @@ class AccountMove(models.Model):
     # def action_post(self):
     #     super(AccountMove, self).action_post()
 
+    def repair_invoice(self):
+        # if self.env['account.move'].search([('sale_id','in',self.ids)]).filtered(lambda x: x.state == 'posted'):
+        #     raise UserError(_('No se puede subir una factura externa si la orden ya tiene una factura publicada'))
+        self.env['account.move'].search([('id','=',self.env.context.get('active_id'))])
+        w = self.env['upload.invoice.wizard'].create({'subtotal': 0.0, 'monto': 0.0,'reparar_factura':True, 'invoice_ids': self.env.context.get('active_id') })
+        view = self.env.ref('upload_invoice_wizard.view_upload_invoice_sale_form')
+        return {
+            'name': _('Reparar Factura'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'upload.invoice.wizard',
+            'view_mode': 'form',
+            'res_id': w.id,
+            'views': [(view.id, 'form')],
+            'view_id': view.id,
+            'target': 'new'
+        }
+
 
     def mark_as_cancelled(self):
         account_move = self.env['account.move'].browse(self.env.context.get('active_ids'))
