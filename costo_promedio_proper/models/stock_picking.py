@@ -33,6 +33,6 @@ class StockPicking(models.Model):
                                                 /(on_hand_qty_dic[elem] + done_qtys_dic[elem]),2) })
                 for elem2 in std_price_dic:
                     product = self.env['product.product'].search([('default_code','=',elem2)])
-                    product.product_tmpl_id.write({'standard_price_on_stock': std_price_dic[elem2], 'standard_price': std_price_dic[elem2]})
+                    product.product_tmpl_id.write({'standard_price': std_price_dic[elem2]})
                 return r
         return r
