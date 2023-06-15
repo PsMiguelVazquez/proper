@@ -303,6 +303,13 @@ class SaleOrder(models.Model):
             if self.partner_child.x_es_marketplace:
                 self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
                 return self.action_confirm()
+
+        if self.warehouse_id.id == 30:
+            #Almacén por facturar no se valida. YA SALIÓ la mercancia
+            self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+            return self.action_confirm()
+
+
         lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra  - x.product_uom_qty) < 0 and x.x_validacion_precio == True)
         if lines:
             mensaje = '<h3>Se solicita aprobar la orden parcial.</h3><table class="table" style="width: 100%"><thead>' \
@@ -554,6 +561,11 @@ class SaleOrder(models.Model):
                 valid = True
             else:
                 valid, message = self.is_valid_order_sale()
+        if self.warehouse_id.id == 30:
+            #Almacén por facturar no se valida. YA SALIÓ la mercancia
+            self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+            valid = True
+            message = ''
         if valid:
             if self.solicito_validacion:
                 self.write({'state': 'sale_conf', 'solicito_validacion': False})
