@@ -14,7 +14,7 @@ class RequerimientClient(models.Model):
     x_link_sitio = fields.Char("Link producto")
     x_marca = fields.Char("Marca")
     x_modelo = fields.Char("Modelo")
-    x_name = fields.Char("Name")
+    x_name = fields.Char("Requerimiento")
     x_order_id = fields.Many2one("sale.order", 'Orden')
     x_precio_uni = fields.Float("Precio unitario")
     x_presupuesto = fields.Float("presupuesto")
