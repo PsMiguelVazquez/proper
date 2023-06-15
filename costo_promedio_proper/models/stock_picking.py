@@ -26,13 +26,19 @@ class StockPicking(models.Model):
                     cantidad_comprada_hecha = self.move_line_ids_without_package.filtered(lambda y: y.product_id == producto).qty_done
                     on_hand_qty_dic.update({producto.default_code:qty_on_hand - cantidad_comprada_hecha})
                 purchase_cost_dic = {x.product_id.default_code: x.price_unit for x in lineas_orden}
-                done_qtys_dic = {x.product_id.default_code: x.qty_done for x in  self.move_line_ids_without_package}
+                done_qtys_dic = {x.product_id.default_code: x.qty_done if x.qty_done else 0 for x in  self.move_line_ids_without_package}
                 std_price_dic = {}
                 for elem in old_price_dic:
-                    std_price_dic.update({elem: round((on_hand_qty_dic[elem] * old_price_dic[elem] + purchase_cost_dic[elem]* done_qtys_dic[elem])
-                                                /(on_hand_qty_dic[elem] + done_qtys_dic[elem]),2) })
+                    try:
+                        std_price_dic.update({elem: round((on_hand_qty_dic[elem] * old_price_dic[elem] + purchase_cost_dic[elem]* done_qtys_dic[elem])
+                                                    /(on_hand_qty_dic[elem] + done_qtys_dic[elem]),2) })
+                    except:
+                        pass
                 for elem2 in std_price_dic:
                     product = self.env['product.product'].search([('default_code','=',elem2)])
-                    product.product_tmpl_id.write({'standard_price': std_price_dic[elem2]})
+                    try:
+                        product.product_tmpl_id.write({'standard_price': std_price_dic[elem2]})
+                    except:
+                        pass
                 return r
         return r
