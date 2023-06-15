@@ -161,7 +161,7 @@ class SaleOrder(models.Model):
             , ('invoice_date_due', '<', fields.Datetime().now())
         ]).filtered(lambda x: not x.x_fecha_pago_pro or x.x_fecha_pago_pro < fields.Date.today())
         #facturas = self.partner_id.invoice_ids.filtered(lambda x: x.invoice_date_due != False).filtered(lambda x: x.invoice_date_due < fields.date.today() and x.state == 'posted' and x.payment_state in ('not_paid', 'partial')).mapped('id')
-        if (check or cliente) and not facturas_vencidas_cliente:
+        if check or (cliente and not facturas_vencidas_cliente):
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
             return self.action_confirm()
         else:
@@ -380,7 +380,7 @@ class SaleOrder(models.Model):
             , ('invoice_date_due', '<', fields.Datetime().now())
         ]).filtered(lambda x: not x.x_fecha_pago_pro or x.x_fecha_pago_pro < fields.Date.today())
         #Si es AAA o tiene crédito
-        if (cliente or check) and not facturas_vencidas_cliente:
+        if cliente or (check and not facturas_vencidas_cliente):
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
             return self.action_confirm()
         else:
