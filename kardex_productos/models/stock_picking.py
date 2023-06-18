@@ -12,6 +12,7 @@ class StockMoveLine(models.Model):
 
     def _compute_kardex(self):
         for index, record in enumerate(self ,start=0):
+
             entradas = 0.0
             salidas = 0.0
             saldo = 0.0
