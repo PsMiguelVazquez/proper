@@ -316,6 +316,7 @@
                     <field name="x_name"/>
                     <field name="x_studio_related_field_1eaGE"/>
                     <field name="x_studio_related_field_ap2ah"/>
+                    <filter name="date" string="Fecha" date="create_date"/>
                     <separator/>
                 </search>
             </field>

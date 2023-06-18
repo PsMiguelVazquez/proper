@@ -22,7 +22,7 @@ class RequerimientClient(models.Model):
     x_studio_estado = fields.Selection([('open', 'open'), ('closed', 'closed'), ('cancel', 'cancel')], "Estado")
     x_studio_related_field_1eaGE = fields.Char("Cliente", related='x_order_id.partner_id.name')
     x_studio_related_field_DGJgC = fields.Char("New Campo relacionado", related='x_order_id.company_id.display_name')
-    x_studio_related_field_ap2ah = fields.Char("Vendedor", related='x_order_id.user_id.display_name')
+    x_studio_related_field_ap2ah = fields.Char("Vendedor", related='x_order_id.user_id.display_name', store=True)
     cantidad = fields.Float("Cantidad")
 
     @api.onchange('x_modelo')
