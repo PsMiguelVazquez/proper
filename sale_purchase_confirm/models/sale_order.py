@@ -1005,10 +1005,11 @@ class ProductInherit(models.Model):
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
-    @api.depends_context('company')
-    @api.depends('product_variant_ids', 'product_variant_ids.standard_price')
-    def _compute_standard_price(self):
-        r = super(ProductTemplate, self)._compute_standard_price()
-        print(self)
+    ultimo_costo_compra = fields.Float(string='Último costo de compra', compute='_compute_ultimo_costo')
 
 
+    def _compute_ultimo_costo(self):
+        for record in self:
+            record.ultimo_costo_compra = 0.0
+            if record.seller_ids:
+                record.ultimo_costo_compra = record.seller_ids[-1].price
