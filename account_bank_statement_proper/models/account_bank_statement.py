@@ -55,7 +55,7 @@ class account_bank_statement(models.Model):
         if not self.name or self.name == '':
             if self.line_ids:
                 referencia = ''
-                inv_lines = self.line_ids[0].rel_payment.invoice_line_ids
+                inv_lines = self.line_ids[0].rel_payment.reconciled_invoice_ids
                 for invoice in inv_lines:
                     referencia += invoice.ref + ' '
                 self.name = referencia
@@ -79,8 +79,8 @@ class account_bank_statement_line(models.Model):
                 record.date = record.rel_payment.date
                 record.statement_id.date = record.rel_payment.date
                 inv_lines = record.rel_payment.invoice_line_ids
-                for invoice in inv_lines:
-                    referencia += invoice.ref + ' '
+                for invoice in record.rel_payment.reconciled_invoice_ids:
+                    referencia += invoice.name + ' '
                 record.rel_invoices_names = referencia
 
     @api.constrains('rel_payment')
