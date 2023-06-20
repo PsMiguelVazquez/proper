@@ -164,7 +164,10 @@ class ProposalPurchase(models.Model):
                  'x_studio_many2one_field_LZOP8': self.x_linea_id.id, 'image_1920': self.x_archivo,
                  'x_num_pro': self.x_name,
                  'x_producto_propuesta': self.x_new_prod_prop})
-        margen = marca['x_studio_margen_' + str(self.rel_id.x_order_id.x_studio_nivel)] if marca else 12
+        if self.rel_id.x_order_id.x_studio_nivel:
+            margen = marca['x_studio_margen_' + str(self.rel_id.x_order_id.x_studio_nivel)] if marca else 12
+        else:
+            margen = 12
         costo = self.x_costo / ((100 - margen) / 100)
         r = self.rel_id.x_order_id.write({'order_line': [(0, 0, {'x_studio_nuevo_costo': round(self.x_costo + .5),
                                                                  'product_id': self.x_product_id.id,
