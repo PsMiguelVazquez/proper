@@ -28,6 +28,7 @@
         'views/views.xml',
         'views/templates.xml',
         'views/views_requi.xml',
+        'views/product_template_view.xml',
         'views/account_move_view.xml'
     ],
 }
