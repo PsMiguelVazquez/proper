@@ -22,12 +22,14 @@ class StockPicking(models.Model):
                 lineas_orden = orden_compra.order_line
                 productos_orden = lineas_orden.mapped('product_id')
                 on_hand_qty_dic = {}
+                done_qtys_dic = {}
                 for producto in productos_orden:
                     qty_on_hand = sum(producto.stock_quant_ids.filtered(lambda x: x.location_id.id in (187, 115, 80, 97, 103, 121)).mapped('quantity'))
-                    cantidad_comprada_hecha = self.move_line_ids_without_package.filtered(lambda y: y.product_id == producto).qty_done
+                    cantidad_comprada_hecha = sum(self.move_line_ids_without_package.filtered(lambda y: y.product_id == producto).mapped('qty_done'))
                     on_hand_qty_dic.update({producto.default_code:qty_on_hand - cantidad_comprada_hecha})
+                    done_qtys_dic.update({producto.default_code: sum(self.move_line_ids_without_package.filtered(lambda y: y.product_id == producto).mapped('qty_done'))})
                 purchase_cost_dic = {x.product_id.default_code: x.price_unit for x in lineas_orden}
-                done_qtys_dic = {x.product_id.default_code: x.qty_done if x.qty_done else 0 for x in  self.move_line_ids_without_package}
+                # done_qtys_dic = {x.product_id.default_code: x.qty_done if x.qty_done else 0 for x in  self.move_line_ids_without_package}
                 std_price_dic = {}
                 for elem in old_price_dic:
                     try:
