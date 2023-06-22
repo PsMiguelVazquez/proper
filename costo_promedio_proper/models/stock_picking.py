@@ -9,6 +9,7 @@ from odoo.exceptions import UserError
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
+    fecha_recepcion_cliente = fields.Date(string='Fecha de recepción del cliente')
 
     def button_validate(self):
         old_price_dic = {x.default_code: x.product_tmpl_id.standard_price for x in self.move_line_ids_without_package.product_id}
