@@ -13,21 +13,22 @@ class AccountMove(models.Model):
                                                                                       ('04','04 - Operación nominativa relacionada en la factura global')])
     fecha_entrega_mercancia = fields.Date(string='Fecha de entrega de la mercancía', compute='_compute_fecha_entrega_mercancia')
     fecha_recepcion_credito = fields.Date(string='Fecha de recepción de evidencias')
+    fecha_recepcion_cliente = fields.Date(string='Fecha de recepción del cliente', compute='_compute_fecha_entrega_mercancia')
     fecha_confirmacion_cancelacion = fields.Date(string='Fecha de confirmación de cancelación ante el SAT')
     ejecutivo_cuenta = fields.Char(string='Ejecutivo de cuenta', related='partner_id.x_nom_corto_agente_venta')
     fecha_entrega_mercancia_html = fields.Html(string='Fechas de entrega', compute='_compute_fecha_entrega_mercancia')
-
     def _compute_fecha_entrega_mercancia(self):
         for record in self:
             fecha_entrega_mercancia_html = ''
             mov_out = self.env['stock.picking'].search([('x_studio_facturas','=',record.id),('state','=','done'),('picking_type_code','=','outgoing')])
             if mov_out and mov_out[0].date_done:
                 record.fecha_entrega_mercancia = mov_out[0].date_done
+                record.fecha_recepcion_cliente = mov_out[0].fecha_recepcion_cliente
             else:
                 record.fecha_entrega_mercancia = None
-            fecha_entrega_mercancia_html = "<table class='table' style='width: 100%'><thead><tr><th>OUT</th><th>Fecha</th><tr></thead><tbody>"
+            fecha_entrega_mercancia_html = "<table class='table' style='width: 100%'><thead><tr><th>OUT</th><th>Fecha OUT</th><th>Fecha recepción del cliente</th><tr></thead><tbody>"
             for mov in mov_out:
-                fecha_entrega_mercancia_html += "<tr><td>" + mov.name +"</td><td>" + mov.date_done.strftime("%d/%m/%Y") + "</td></tr>"
+                fecha_entrega_mercancia_html += "<tr><td>" + mov.name +"</td><td>" + mov.date_done.strftime("%d/%m/%Y")+"</td><td>" + (mov.fecha_recepcion_cliente.strftime("%d/%m/%Y") if mov.fecha_recepcion_cliente else '') + "</td></tr>"
             fecha_entrega_mercancia_html += "</tbody></table>"
             self.fecha_entrega_mercancia_html = fecha_entrega_mercancia_html
 
@@ -59,9 +60,29 @@ class AccountMove(models.Model):
         # if not account_move.:
         if not account_move.motivo_cancelacion or account_move.motivo_cancelacion not in ('03','04'):
             raise UserError('Para marcar esta factura como cancelada debe tener el motivo de cancelación 03 o 04')
-        print(account_move)
+        if account_move.motivo_cancelacion == '03':
+            movs_out = self.env['stock.picking'].search([('origin', '=', account_move.sale_id.name)]).filtered(
+                                    lambda x: x.picking_type_code == 'outgoing' and x.state == 'done')
+            if movs_out:
+                suma_productos_entregados = 0
+                suma_productos_retornados = 0
+                for move_out in movs_out:
+                    suma_productos_entregados += sum(move_out.move_line_ids_without_package.mapped('qty_done'))
+
+
+                movs_in = self.env['stock.picking'].search([('sale_id', '=', account_move.sale_id.id)]).filtered(
+                                    lambda x: x.picking_type_code == 'incoming' and x.state == 'done')
+                if movs_in:
+                    for mov_in in movs_in:
+                        suma_productos_retornados += sum(mov_in.move_line_ids_without_package.mapped('qty_done'))
+
+
+                if suma_productos_retornados <  suma_productos_entregados:
+                    raise UserError('No se puede marcar como cancelada esta factura si no se ha regresado toda la mercancia al almacén')
+
         account_move.write({
             'l10n_mx_edi_sat_status': 'cancelled',
+            'edi_web_services_to_process': '',
             'edi_state': 'cancelled',
             'state': 'cancel',
             'motivo_cancelacion': '04',
