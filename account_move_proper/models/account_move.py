@@ -17,7 +17,6 @@ class AccountMove(models.Model):
     fecha_confirmacion_cancelacion = fields.Date(string='Fecha de confirmación de cancelación ante el SAT')
     ejecutivo_cuenta = fields.Char(string='Ejecutivo de cuenta', related='partner_id.x_nom_corto_agente_venta')
     fecha_entrega_mercancia_html = fields.Html(string='Fechas de entrega', compute='_compute_fecha_entrega_mercancia')
-
     def _compute_fecha_entrega_mercancia(self):
         for record in self:
             fecha_entrega_mercancia_html = ''
@@ -61,9 +60,29 @@ class AccountMove(models.Model):
         # if not account_move.:
         if not account_move.motivo_cancelacion or account_move.motivo_cancelacion not in ('03','04'):
             raise UserError('Para marcar esta factura como cancelada debe tener el motivo de cancelación 03 o 04')
-        print(account_move)
+        if account_move.motivo_cancelacion == '03':
+            movs_out = self.env['stock.picking'].search([('origin', '=', account_move.sale_id.name)]).filtered(
+                                    lambda x: x.picking_type_code == 'outgoing' and x.state == 'done')
+            if movs_out:
+                suma_productos_entregados = 0
+                suma_productos_retornados = 0
+                for move_out in movs_out:
+                    suma_productos_entregados += sum(move_out.move_line_ids_without_package.mapped('qty_done'))
+
+
+                movs_in = self.env['stock.picking'].search([('sale_id', '=', account_move.sale_id.id)]).filtered(
+                                    lambda x: x.picking_type_code == 'incoming' and x.state == 'done')
+                if movs_in:
+                    for mov_in in movs_in:
+                        suma_productos_retornados += sum(mov_in.move_line_ids_without_package.mapped('qty_done'))
+
+
+                if suma_productos_retornados <  suma_productos_entregados:
+                    raise UserError('No se puede marcar como cancelada esta factura si no se ha regresado toda la mercancia al almacén')
+
         account_move.write({
             'l10n_mx_edi_sat_status': 'cancelled',
+            'edi_web_services_to_process': '',
             'edi_state': 'cancelled',
             'state': 'cancel',
             'motivo_cancelacion': '04',
