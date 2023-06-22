@@ -14,6 +14,9 @@
             <xpath expr="//field[@name='date_done']" position="after">
                 <field name="fecha_timbrado_carta" invisible="1"/>
             </xpath>
+            <xpath expr="//field[@name='location_dest_id']" position="after">
+                <field name="fecha_recepcion_cliente" attrs="{'invisible':['|',('state', 'not in', ['done']),('picking_type_code', '!=', 'outgoing')]}"/>
+            </xpath>
         </field>
     </record>
 </odoo>
