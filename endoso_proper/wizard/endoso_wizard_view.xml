@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="view_endoso_wizard_form" model="ir.ui.view">
+        <field name="name">endoso.wizard.form</field>
+        <field name="model">endoso.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Endosar factura">
+                <label for="factura"/>
+                <field name="factura" string="Factura"/>
+                <label for="cliente"/>
+                <field name="cliente" string="Cliente"/>
+                <label for="porcentaje"/>
+                <field name="porcentaje" widget="percentage" string="Porcentaje"/>
+                <footer>
+                    <button name="done_endoso" type="object" string="Confirmar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+
+
+</odoo>
