@@ -19,8 +19,18 @@ class StockMoveLine(models.Model):
 
     def _compute_kardex(self):
         movs_ant = self.env['stock.move.line']
+        for line in self:
+            line.tipo_mov = line.reference if line.reference else '/' + line.picking_type_id.sequence_code + '/'
+            line.entradas_origen = 0.0
+            line.salidas_origen = 0.0
+            line.saldo_origen = 0.0
+            line.entradas_destino = 0.0
+            line.salidas_destino = 0.0
+            line.saldo_destino = 0.0
         movs_producto = self.env['stock.move.line'].search([('product_id','=',self[0].product_id.id),('state','=','done')], order='date asc')
         for record in movs_producto:
+            if record.id == 98531:
+                print(record)
             record.tipo_mov = record.reference if record.reference else '/' +record.picking_type_id.sequence_code +'/'
             record.entradas_origen = 0.0
             record.salidas_origen = 0.0

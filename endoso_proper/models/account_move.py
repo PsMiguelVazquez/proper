@@ -10,7 +10,7 @@ class AccountMove(models.Model):
 
 
     def endosar_factura(self):
-        w = self.env['endoso.wizard'].sudo().create({'factura': self.id})
+        w = self.env['endoso.wizard'].sudo().create({'factura': self.id, 'cliente':self.partner_id.id})
         view = self.env.ref('endoso_proper.view_endoso_wizard_form')
         return {
             'name': _('Endosar Facturas'),

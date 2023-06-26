@@ -10,23 +10,16 @@ class EndosoWizard(models.TransientModel):
 
     factura = fields.Many2one('account.move', string='Factura a endosar', help='Factura que se va a endosar' )
     cliente = fields.Many2one('res.partner', string='Cliente', help='Nombre del cliente al que se le va a endosar la factura')
-    porcentaje = fields.Float(string='Porcentaje',help='Porcentaje de la factura que se va a endosar', default='70')
+    porcentaje = fields.Float(string='Porcentaje',help='Porcentaje de la factura que se va a endosar', default='0.70')
 
 
     def done_endoso(self):
         if self:
             invoice = self.env['account.move'].search([('id', '=', self.factura.id)])
-            # 'line_ids': [
-            #     Command.create({
-            #         'label': 'Due amount',
-            #         'account_id': self._get_demo_account(
-            #             'income',
-            #             'account.data_account_type_revenue',
-            #             self.env.company,
-            #         ).id,
-            #         'amount_type': 'regex',
-            #         'amount_string': r'BRT: ([\d,]+)',
-            #     }),
+            cliente = self.env['account.move'].search([('id', '=', self.factura.partner_id.id)])
+            # porcentaje = self.env['account.move'].search([('id', '=', )])
+            print(self.porcentaje)
+            total_porcentaje = round(self.porcentaje * invoice.amount_total,2)
             invoice_dict = {
                 'journal_id': 1,
                 'partner_id': self.cliente.id,
@@ -40,23 +33,16 @@ class EndosoWizard(models.TransientModel):
                         'name': 'Endoso',
                         'move_id': invoice_id.id,
                         'account_id': invoice.partner_id.property_account_receivable_id.id,
-                        'debit': 1000.0,
+                        'debit': total_porcentaje,
                     },
                     {
                         'name': 'Endoso',
                         'move_id': invoice_id.id,
                         'account_id': invoice.partner_id.property_account_receivable_id.id,
-                        'credit': 1000.0,
+                        'credit': total_porcentaje,
                     }
                 ]
                 lineas = self.env['account.move.line'].create(line_ids_list)
-                # self.env['account.move.line'].create({
-                #     'name': _('Automatic Balancing Line'),
-                #     'move_id': self.account_opening_move_id.id,
-                #     'account_id': balancing_account.id,
-                #     'debit': credit_diff,
-                #     'credit': debit_diff,
-                # })
                 return {
                     'name': _('Customer Invoice'),
                     'view_mode': 'form',
@@ -66,5 +52,6 @@ class EndosoWizard(models.TransientModel):
                     'type': 'ir.actions.act_window',
                     'nodestroy': True,
                     'res_id': invoice_id.id,
-                    'target': 'current'
+                    'target': 'current',
+                    'line_ids': lineas
                 }
