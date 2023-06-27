@@ -630,6 +630,23 @@ class SaleOrderLine(models.Model):
     existencia_alm_0 = fields.Float(related='product_id.stock_quant_warehouse_zero')
     existencia_html = fields.Char(string="", compute='_compute_existencia_html')
     cantidad_asignada = fields.Integer(string="Cantidad asignada",compute='_compute_cantidad_asignada')
+    facturas = fields.Char('Facturas', compute='_compute_facturas')
+
+    def _compute_facturas(self):
+        lista_fact = []
+        for record in self:
+            record['facturas'] = ''
+            if record.order_id:
+                if record.order_id.invoice_ids:
+                    for i, inv in enumerate(record.order_id.invoice_ids):
+                        if inv.name == '/':
+                            lista_fact.append('(* ' + str(inv.id) + ')')
+                        else:
+                            lista_fact.append(inv.name)
+                    record['facturas'] = ', '.join(lista_fact)
+                    lista_fact=[]
+
+
 
     @api.depends('product_uom_qty')
     def _compute_cantidad_asignada(self):

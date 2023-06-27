@@ -13,6 +13,7 @@
                 <field name="porcentaje" widget="percentage" string="Porcentaje"/>
                 <footer>
                     <button name="done_endoso" type="object" string="Confirmar"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
         </field>

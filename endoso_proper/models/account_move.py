@@ -6,11 +6,12 @@ from datetime import datetime
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
-    cliente_endoso = fields.Many2one('res_partner', string='Cliente de endoso')
+    cliente_endoso = fields.Many2one('res.partner', string='Cliente de endoso')
+    factura_endosada = fields.Many2one('account.move', string='Factura endosada')
 
 
     def endosar_factura(self):
-        w = self.env['endoso.wizard'].sudo().create({'factura': self.id, 'cliente':self.partner_id.id})
+        w = self.env['endoso.wizard'].sudo().create({'factura': self.id})
         view = self.env.ref('endoso_proper.view_endoso_wizard_form')
         return {
             'name': _('Endosar Facturas'),
