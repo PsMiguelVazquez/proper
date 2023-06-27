@@ -26,10 +26,11 @@ class AccountMove(models.Model):
                 record.fecha_recepcion_cliente = mov_out[0].fecha_recepcion_cliente
             else:
                 record.fecha_entrega_mercancia = None
+                record.fecha_recepcion_cliente = None
             fecha_entrega_mercancia_html = "<table class='table' style='width: 100%'><thead><tr><th>OUT</th><th>Fecha OUT</th><th>Fecha recepción del cliente</th><tr></thead><tbody>"
             for mov in mov_out:
                 # link = ("dd<a href=# data-oe-model=stock.picking data-oe-id=%d>%s</a>") % (mov.id, mov.name)
-                fecha_entrega_mercancia_html += "<tr><td>" + mov.name +"</td><td>" + mov.date_done.strftime("%d/%m/%Y")+"</td><td>" + (mov.fecha_recepcion_cliente.strftime("%d/%m/%Y") if mov.fecha_recepcion_cliente else '') + "</td></tr>"
+                fecha_entrega_mercancia_html += "<tr><td>" + mov.name +"</td><td>" + (mov.date_done.strftime("%d/%m/%Y") if mov.date_done else '')+"</td><td>" + (mov.fecha_recepcion_cliente.strftime("%d/%m/%Y") if mov.fecha_recepcion_cliente else '') + "</td></tr>"
             fecha_entrega_mercancia_html += "</tbody></table>"
             self.fecha_entrega_mercancia_html = fecha_entrega_mercancia_html
 
