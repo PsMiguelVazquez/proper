@@ -11,6 +11,7 @@ class StockPicking(models.Model):
     code_vehicle = fields.Char(compute='get_xml_data_edi', string='Codigo Vehicular')
     rfc_figura = fields.Char(compute='get_xml_data_edi', string='RFC Figura')
     fecha_timbrado_carta = fields.Datetime('Fecha de timbrado de Carta Porte')
+    nombre_receptor = fields.Char(string='Persona que recibe')
 
     def l10n_mx_edi_action_send_delivery_guide(self):
         date_done_original = self.date_done
