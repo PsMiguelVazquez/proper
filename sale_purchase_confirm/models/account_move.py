@@ -20,6 +20,15 @@ class AccountMove(models.Model):
     x_estado_actuali_cli = fields.Selection(string='Estado de actualizacion del cliente',selection=[('3.3','3.3'),('4.0','4.0')], related='partner_id.x_estado_cli_actua')
     supervisor_credito = fields.Many2one(string='Supervisor de crédito',related='partner_id.x_nombre_supervisor_credito', store=True)
     documento_entrega_venta = fields.Selection(string='Documento de entrega',related='sale_id.x_doc_entrega')
+    invoice_datetime_date = fields.Date('Fecha de timbrado', compute="_compute_invoice_datetime_date", store=True)
+
+    @api.depends('invoice_datetime')
+    def _compute_invoice_datetime_date(self):
+        for record in self:
+            if record.invoice_datetime:
+                record.invoice_datetime_date = datetime.strptime(record.invoice_datetime, "%d/%m/%Y %H:%M:%S").date()
+            else:
+                record.invoice_datetime_date = None
 
     def _compute_invoice_datetime(self):
         for record in self:
