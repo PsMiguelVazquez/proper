@@ -23,7 +23,7 @@ class AccountMove(models.Model):
 
     def _compute_invoice_datetime(self):
         for record in self:
-            self.invoice_datetime = ''
+            record.invoice_datetime = ''
             user_tz = self.env.user.tz if self.env.user.tz else 'America/Mexico_City'
             user_local = pytz.timezone(user_tz)
             att_xml = self.env['ir.attachment'].search([('res_model','=','account.move'),('res_id','=',record.id),('mimetype','=','application/xml')])
@@ -35,7 +35,7 @@ class AccountMove(models.Model):
                     for element in elements:
                         if 'TimbreFiscalDigital' in element.tag:
                             local_date = user_local.localize(datetime.strptime(element.attrib['FechaTimbrado'], '%Y-%m-%dT%H:%M:%S'), is_dst=None)
-                            self.invoice_datetime = local_date.strftime("%d/%m/%Y %H:%M:%S")
+                            record.invoice_datetime = local_date.strftime("%d/%m/%Y %H:%M:%S")
                 except:
                     continue
 
