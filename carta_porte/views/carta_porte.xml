@@ -16,6 +16,7 @@
             </xpath>
             <xpath expr="//field[@name='location_dest_id']" position="after">
                 <field name="fecha_recepcion_cliente" attrs="{'invisible':['|',('state', 'not in', ['done']),('picking_type_code', '!=', 'outgoing')]}"/>
+                <field name="nombre_receptor" attrs="{'invisible':['|',('state', 'not in', ['done']),('picking_type_code', '!=', 'outgoing')]}"/>
             </xpath>
         </field>
     </record>
