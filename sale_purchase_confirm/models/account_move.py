@@ -22,6 +22,7 @@ class AccountMove(models.Model):
     documento_entrega_venta = fields.Selection(string='Documento de entrega',related='sale_id.x_doc_entrega')
     invoice_datetime_date = fields.Date('Fecha de timbrado', compute="_compute_invoice_datetime_date", store=True)
 
+    @api.depends('invoice_datetime')
     def _compute_invoice_datetime_date(self):
         for record in self:
             if record.invoice_datetime:
