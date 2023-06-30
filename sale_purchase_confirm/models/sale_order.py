@@ -191,11 +191,12 @@ class SaleOrder(models.Model):
             message = ''
             return valid, message
         if self.order_line.filtered(lambda x: x.check_price_reduce):
-            message += 'No ha solicitado la reducción de precios para los siguientes productos:'
-            for order_line in self.order_line:
-                if order_line.check_price_reduce:
-                    valid = False
-                    message += '\n- ' + order_line.product_id.name
+            if self.partner_id.team_id.id != 6:
+                message += 'No ha solicitado la reducción de precios para los siguientes productos:'
+                for order_line in self.order_line:
+                    if order_line.check_price_reduce:
+                        valid = False
+                        message += '\n- ' + order_line.product_id.name
 
         if not self.x_doc_entrega:
             valid = False
@@ -248,18 +249,35 @@ class SaleOrder(models.Model):
                 message += '\n- No se ha establecido el nuevo costo para el producto' + line.name.replace('\n','') + ' línea(' + str(i) + ')'
 
             '''
-                Validación de cantidades.
-                Primero Valida cantidades del valor product.id.virtual_available
-                Despues de una validación de parte de compras toma ese valor ingresado por compras en cantidad disponible (Cant. Disponible)
-                como producto adicional para surtir productos
+                Validación de stock en almacenes market place            
             '''
-            disponibles_total = line.product_id.stock_quant_warehouse_zero - line.product_uom_qty
-            if line.product_id.id in dic_cantidades_disponibles:
-                disponibles_total += dic_cantidades_disponibles[line.product_id.id]
-            if disponibles_total < 0.0:
-                if line.product_id.detailed_type != 'service':
-                    message += '\n- No hay stock suficiente para el producto: ' + line.name.replace('\n', ' ') + '. Requiere ' + str(abs(disponibles_total))+ ' producto(s) más. línea(' + str(i) + ')'
-                    valid = False
+
+            if line.order_id.partner_id.team_id and line.order_id.partner_id.team_id.id == 6:
+                wh  = line.order_id.warehouse_id.lot_stock_id
+                disponibles_total = sum(line.product_id.stock_quant_ids.filtered(lambda x: x.location_id == wh).mapped('available_quantity'))
+                disponibles_total = disponibles_total - line.product_uom_qty
+                if disponibles_total< 0.0:
+                    if line.product_id.detailed_type != 'service':
+                        message += '\n- No hay stock suficiente en el almacén '+ line.order_id.warehouse_id.name + ' para el producto: ' +\
+                                   line.name.replace('\n', ' ') + '. Requiere ' + str(abs(disponibles_total))\
+                                   + ' producto(s) más. línea(' + str(i) + ')'
+                        valid = False
+                #linio es el 115 en location_id
+            else:
+
+                '''
+                    Validación de cantidades.
+                    Primero Valida cantidades del valor product.id.virtual_available
+                    Despues de una validación de parte de compras toma ese valor ingresado por compras en cantidad disponible (Cant. Disponible)
+                    como producto adicional para surtir productos
+                '''
+                disponibles_total = line.product_id.stock_quant_warehouse_zero - line.product_uom_qty
+                if line.product_id.id in dic_cantidades_disponibles:
+                    disponibles_total += dic_cantidades_disponibles[line.product_id.id]
+                if disponibles_total < 0.0:
+                    if line.product_id.detailed_type != 'service':
+                        message += '\n- No hay stock suficiente para el producto: ' + line.name.replace('\n', ' ') + '. Requiere ' + str(abs(disponibles_total))+ ' producto(s) más. línea(' + str(i) + ')'
+                        valid = False
 
             # else:
             #     line.product_id.virtual_available-=line.product_uom_qty
@@ -299,10 +317,10 @@ class SaleOrder(models.Model):
             MARKETPLACE NO SE VALIDA
         """
 
-        if self.partner_child:
-            if self.partner_child.x_es_marketplace:
-                self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-                return self.action_confirm()
+        # if self.partner_child:
+        #     if self.partner_child.x_es_marketplace:
+        #         self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+        #         return self.action_confirm()
 
         if self.warehouse_id.id == 30:
             #Almacén por facturar no se valida. YA SALIÓ la mercancia
@@ -414,23 +432,7 @@ class SaleOrder(models.Model):
             partner_ids = partner.ids+partner.mapped('child_ids').ids+partner_general.ids+partner_general.mapped('child_ids').ids
             record.partner_loc_ids = [(6,0, partner_ids)]
 
-            # busca un almacén con el mismo nombre del cliente
-            # if record.partner_child and record.partner_child.x_es_marketplace:
-            #     warehouse_ids = self.env['stock.warehouse'].search([('name', '=', record.partner_child.name)])
-            #     if warehouse_ids:
-            #         # Si hay un almacén que coincide
-            #         record.warehouse_id = warehouse_ids[0].id
-            #     else:
-            #         default_warehouse = self.env['stock.warehouse'].search([('name', '=', 'MARKETPLACE')])
-            #         if default_warehouse:
-            #             record.warehouse_id = default_warehouse[0].id
 
-    # def action_quotation_send(self):
-    #     registro = self.order_line.filtered(lambda x: x.product_id.virtual_available <= 0).mapped('id')
-    #     if registro:
-    #         raise UserError("No hay stock")
-    #     else:
-    #         return super(SaleOrder, self).action_quotation_send()
 
     def solicitud_reduccion(self):
         for record in self:
@@ -555,12 +557,12 @@ class SaleOrder(models.Model):
                     MARKETPLACE NO SE VALIDA
         """
 
-        if self.partner_child:
-            if self.partner_child.x_es_marketplace:
-                self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-                valid = True
-            else:
-                valid, message = self.is_valid_order_sale()
+        # if self.partner_child:
+        #     if self.partner_child.x_es_marketplace:
+        #         self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
+        #         valid = True
+        #     else:
+        valid, message = self.is_valid_order_sale()
         if self.warehouse_id.id == 30:
             #Almacén por facturar no se valida. YA SALIÓ la mercancia
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
