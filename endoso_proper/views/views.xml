@@ -5,7 +5,7 @@
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
             <header >
-                <button string="Endosar factura" name="endosar_factura" type="object"/>
+                <button string="Endosar factura" name="endosar_factura" type="object" attrs="{'invisible': ['|', ('state', '=', 'draft'), ('move_type', '!=', 'out_invoice')]}"/>
             </header>
         </field>
     </record>

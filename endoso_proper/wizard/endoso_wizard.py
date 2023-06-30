@@ -10,7 +10,7 @@ class EndosoWizard(models.TransientModel):
 
     factura = fields.Many2one('account.move', string='Factura a endosar', help='Factura que se va a endosar' )
     cliente = fields.Many2one('res.partner', string='Cliente', help='Nombre del cliente al que se le va a endosar la factura')
-    porcentaje = fields.Float(string='Porcentaje',help='Porcentaje de la factura que se va a endosar', default='0.70')
+    porcentaje = fields.Float(string='Porcentaje',help='Porcentaje de la factura que se va a endosar', default='1')
 
 
     def done_endoso(self):
@@ -28,15 +28,16 @@ class EndosoWizard(models.TransientModel):
             if self.porcentaje <=0.0:
                 raise ValidationError('Valor inválido para el porcentaje. El porcentaje de endoso debe ser mayor a 0')
             total_porcentaje = round(self.porcentaje * invoice.amount_total,2)
-            invoice_dict = {
+            endoso_dict = {
                 'journal_id': 1,
                 'partner_id': self.cliente.id,
                 'sale_id': invoice.sale_id,
                 'cliente_endoso': invoice.partner_id.id,
                 'name': self.env['ir.sequence'].next_by_code('account.move.endoso'),
-                'factura_endosada': invoice.id
+                'factura_endosada': invoice.id,
+                'es_endoso': True
             }
-            endoso = self.env['account.move'].create(invoice_dict)
+            endoso = self.env['account.move'].create(endoso_dict)
             invoice_msg = (
                               "Se generó el endoso: <a href=# data-oe-model=account.move data-oe-id=%d>%s</a> a partir de esta factura") % (
                               endoso.id, endoso.name)
