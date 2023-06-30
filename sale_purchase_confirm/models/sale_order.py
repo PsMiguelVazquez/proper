@@ -12,7 +12,7 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
     total_in_text = fields.Char(compute='set_amount_text', string='Total en letra')
     # state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('purchase_conf', 'Validación compras'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
-    state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
+    state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('purchase_conf', 'Validación compras'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
     purchase_ids = fields.Many2many('purchase.order', string='OC', readonly=True)
     check_solicitudes = fields.Boolean(default=False, compute='solicitud_reduccion')
     albaran = fields.Many2one('stock.picking', 'Albaran')
@@ -33,6 +33,14 @@ class SaleOrder(models.Model):
     solicito_validacion = fields.Boolean(default=False)
     es_orden_parcial = fields.Boolean(compute='_compute_es_orden_parcial')
     sales_agent = fields.Many2one(related='partner_id.sales_agent')
+    numero_ordenes_compra_activas = fields.Integer('Númerode órdenes de compra activas', compute='_compute_num_ordenes_compra')
+
+    def _compute_num_ordenes_compra(self):
+        for record in self:
+            if record.purchase_ids:
+                record['numero_ordenes_compra_activas'] = len(record.mapped('purchase_ids').filtered(lambda y: y.state != 'cancel'))
+            else:
+                record['numero_ordenes_compra_activas'] = 0
 
     @api.constrains('x_studio_n_orden_de_compra')
     def _check_orden_compra(self):
