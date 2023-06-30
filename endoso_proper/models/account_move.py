@@ -8,6 +8,7 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
     cliente_endoso = fields.Many2one('res.partner', string='Cliente de endoso')
     factura_endosada = fields.Many2one('account.move', string='Factura endosada')
+    es_endoso = fields.Boolean('Es endoso', default=False)
 
 
     def endosar_factura(self):

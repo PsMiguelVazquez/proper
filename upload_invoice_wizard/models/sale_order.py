@@ -11,6 +11,8 @@ class SaleOrder(models.Model):
     def upload_invoice(self):
         if self.env['account.move'].search([('sale_id','in',self.ids)]).filtered(lambda x: x.state == 'posted'):
             raise UserError(_('No se puede subir una factura externa si la orden ya tiene una factura publicada'))
+        if self.filtered(lambda x: x.state != 'order'):
+            raise UserError(_('No se puede subir una factura si el pedido no esta en el estado "Orden de venta"'))
         w = self.env['upload.invoice.wizard'].create({'subtotal': 0.0, 'monto': 0.0})
         view = self.env.ref('upload_invoice_wizard.view_upload_invoice_sale_form')
         return {
