@@ -173,11 +173,20 @@
                     </field>
                 </record>
 
+
+
+
         <record id="sale_stock_view_order_form_inherith_available_qty" model="ir.ui.view">
             <field name="name">sale.order.line.tree.sale.stock.qty</field>
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="numero_ordenes_compra_activas"  invisible="1"/>
+                </xpath>
+                <xpath expr="//button[@name='action_cancel']" position="attributes">
+                    <attribute name="attrs">{'invisible': ['|', '|',('state', 'not in', ['draft', 'sent','sale']), ('id', '=', False),('numero_ordenes_compra_activas', '>', 0)]}</attribute>
+                </xpath>
                 <xpath expr="//page/field[@name='order_line']/tree/field[@name='product_uom_qty']" position="after">
                     <field name="existencia_alm_0" invisible="1"/>
                     <field name="existencia_html" string=" "  widget="html" readonly="1"/>
