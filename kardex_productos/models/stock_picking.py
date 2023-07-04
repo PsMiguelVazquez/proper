@@ -15,6 +15,15 @@ class StockMoveLine(models.Model):
     localidad_origen = fields.Char(string='Localidad de Origen',related='location_id.location_id.name')
     localidad_destino = fields.Char(string='Localidad de Destino',related='location_dest_id.location_id.name')
     tipo_mov = fields.Char(string='Tipo de movimiento', compute='_compute_kardex')
+    referencia_proveedor = fields.Char(string="Referencia del proveedor", compute="get_referencia_proveedor")
+
+    def get_referencia_proveedor(self):
+        for record in self:
+            record.referencia_proveedor = ''
+            if record.origin:
+                compra = self.env['purchase.order'].search([('name','=',record.origin)])
+                if compra:
+                    record.referencia_proveedor = compra[0].partner_ref
 
 
     def _compute_kardex(self):
