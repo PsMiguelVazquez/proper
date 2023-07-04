@@ -646,11 +646,14 @@ class SaleOrderLine(models.Model):
     facturas = fields.Char('Facturas', compute='_compute_facturas')
     existencias_mkp = fields.Html(compute='get_stock')
     valor_utilidad = fields.Monetary('Valor de la utilidad', compute='_compute_valor_utilidad')
+    valor_utilidad_por_producto = fields.Monetary('Utilidad por producto', compute='_compute_valor_utilidad')
 
     def _compute_valor_utilidad(self):
         for record in self:
-            valor_utilidad = record.product_uom_qty * (record.price_unit  - record.x_studio_costo_promedio)
+            utilidad_x_producto = record.price_unit  - record.x_studio_costo_promedio
+            valor_utilidad = record.product_uom_qty * (utilidad_x_producto)
             record.valor_utilidad = valor_utilidad
+            record.valor_utilidad_por_producto = utilidad_x_producto
 
     def _compute_facturas(self):
         lista_fact = []
