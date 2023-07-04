@@ -644,6 +644,13 @@ class SaleOrderLine(models.Model):
     existencia_html = fields.Char(string="", compute='_compute_existencia_html')
     cantidad_asignada = fields.Integer(string="Cantidad asignada",compute='_compute_cantidad_asignada')
     facturas = fields.Char('Facturas', compute='_compute_facturas')
+    existencias_mkp = fields.Html(compute='get_stock')
+    valor_utilidad = fields.Monetary('Valor de la utilidad', compute='_compute_valor_utilidad')
+
+    def _compute_valor_utilidad(self):
+        for record in self:
+            valor_utilidad = record.product_uom_qty * (record.price_unit  - record.x_studio_costo_promedio)
+            record.valor_utilidad = valor_utilidad
 
     def _compute_facturas(self):
         lista_fact = []
@@ -793,6 +800,8 @@ class SaleOrderLine(models.Model):
     def get_stock(self):
         for record in self:
             existencia = ""
+            existencia_mkp =""
+            nombre = ""
             if record.product_id:
                 zero = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 187).mapped('available_quantity'))
                 zero1 = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 187).mapped('reserved_quantity'))
@@ -800,6 +809,21 @@ class SaleOrderLine(models.Model):
                 market = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 80).mapped('available_quantity'))
                 market1 = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 80).mapped('reserved_quantity'))
                 existencia = "<table><thead><tr><th>A-0</th><th>A14</th></tr><tr><th>D/R</th><th>D/R</th></tr></thead><tbody><tr><td>" + str(int(zero)) + "/" + str(int(zero1)) + "</td><td>" + str(int(market)) + "/" + str(int(market1)) + "</td></tr></tbody>"
+                nombre = record.warehouse_id.name
+                wh = record.order_id.warehouse_id.lot_stock_id
+                disponible = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id == wh).mapped(
+                    'available_quantity'))
+                reservado = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id == wh).mapped(
+                    'reserved_quantity'))
+
+                existencia_mkp = '<table><thead style="width: 100%; text-align: center;font-size: 10px;"><tr><th>' + nombre + '</th></tr></thead>' \
+                                                                                                                              '<tbody>' \
+                                                                                                                              '<tr style="width: 100%; text-align: center;"><td >D/R</td></tr>' \
+                                                                                                                              '<tr style="width: 100%; text-align: center;"><td>' + str(
+                                                                                                                                int(disponible)) + '/' + str(int(reservado)) + '</td></tr>' \
+                                                                                                                                '</tbody>' \
+                                                                                                                                '</table>'
+            record.existencias_mkp = existencia_mkp
             record.existencia = existencia
 
 
