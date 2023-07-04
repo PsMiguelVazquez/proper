@@ -67,14 +67,14 @@ class SaleOrder(models.Model):
         vals.update({'l10n_mx_edi_payment_method_id':self.partner_id.x_studio_mtodo_de_pago})
         return vals
 
-    @api.onchange('requirements_line_ids')
-    def onchange_requirements_line_ids(self):
-        for record in self:
-            for req_line in record.requirements_line_ids:
-                if req_line.x_modelo:
-                    prod = self.env['product.product'].search([('default_code','ilike',req_line.x_modelo)]).filtered(lambda x: x.default_code.lower() == req_line.x_modelo.lower())
-                    if prod:
-                        raise UserError('Ya existe un producto dado de alta con ese código.' + str(req_line.x_modelo) + '\n la siguiente descripcion: ' + prod.name)
+    # @api.onchange('requirements_line_ids')
+    # def onchange_requirements_line_ids(self):
+    #     for record in self:
+    #         for req_line in record.requirements_line_ids:
+    #             if req_line.x_modelo:
+    #                 prod = self.env['product.product'].search([('default_code','ilike',req_line.x_modelo)]).filtered(lambda x: x.default_code.lower() == req_line.x_modelo.lower())
+    #                 if prod:
+    #                     raise UserError('Ya existe un producto dado de alta con ese código.' + str(req_line.x_modelo) + '\n la siguiente descripcion: ' + prod.name)
 
     @api.depends('requirements_line_ids')
     def get_proposals(self):
