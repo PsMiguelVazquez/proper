@@ -415,6 +415,9 @@ class SaleOrder(models.Model):
         ]).filtered(lambda x: not x.x_fecha_pago_pro or x.x_fecha_pago_pro < fields.Date.today())
         #Si es AAA o tiene crédito
         if cliente or (check and not facturas_vencidas_cliente):
+            # Si es del grupo MARKET PLACE pasa a validación de crédito
+            if self.partner_id.team_id.id == 6:
+                self.write({'state': 'credito_conf'})
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
             return self.action_confirm()
         else:
