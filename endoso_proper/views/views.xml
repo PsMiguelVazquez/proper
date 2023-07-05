@@ -11,42 +11,38 @@
     </record>
 
     <record id="endoso_tree_view" model="ir.ui.view">
-        <field name="model">account.move</field>
-        <field name="inherit_id" ref="account.view_move_tree"/>
+        <field name="model">endoso.move</field>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='name']" position="replace">
-                <field name="name"/>
-                <field name="cliente_endoso"/>
-            </xpath>
+            <form>
+                <field name="partner_id"/>
+<!--                <field name="cliente_endoso"/>-->
+            </form>
         </field>
     </record>
 
     <record id="endoso_form_view" model="ir.ui.view">
-        <field name="model">account.move</field>
-        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="model">endoso.move</field>
         <field name="arch" type="xml">
-            <xpath expr="//button[@name='action_post']" position="replace">
-                    <button string="Confirmar" name="action_post" type="object"
-                    attrs="{'invisible': ['|', '|', ('state', '!=', 'draft'), ('auto_post', '=', True), ('move_type', '!=', 'entry')]}"/>
-            </xpath>
-            <xpath expr="//button[@name='button_cancel']" position="replace">
-                    <button string="Cancelar" name="button_cancel" type="object"
-                    attrs="{'invisible' : ['|', '|', ('id', '=', False), ('state', '!=', 'draft'),('move_type', '!=', 'entry')]}"/>
-            </xpath>
-            <xpath expr="//field[@name='partner_id']" position="after">
-                    <field name="partner_id" string="Endosado a"/>
-                    <field name="cliente_endoso" string="Endosado de" />
-                    <field name="factura_endosada" attrs="{'readonly': True}"/>
-            </xpath>
+            <tree>
+                <header>
+                    <button string="Confirmar" name="action_post" type="object"/>
+<!--                    attrs="{'invisible': ['|', '|', ('state', '!=', 'draft'), ('auto_post', '=', True), ('move_type', '!=', 'entry')]}"/>-->
+                    <button string="Cancelar" name="action_cancel" type="object"/>
+<!--                    attrs="{'invisible' : ['|', '|', ('id', '=', False), ('state', '!=', 'draft'),('move_type', '!=', 'entry')]}"/>-->
+                </header>
+                        <field name="partner_id" string="Endosado a"/>
+<!--                        <field name="cliente_endoso" string="Endosado de" />-->
+<!--                        <field name="factura_endosada" attrs="{'readonly': True}"/>-->
+            </tree>
         </field>
     </record>
 
     <record id="action_view_endoso" model="ir.actions.act_window">
         <field name="name">Endosos</field>
         <field name="type">ir.actions.act_window</field>
-        <field name="res_model">account.move</field>
+        <field name="res_model">endoso.move</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('name','ilike', 'END')]</field>
+<!--        <field name="domain">[('name','ilike', 'END')]</field>-->
         <field name="view_ids" eval="[(5, 0, 0),
                 (0,0, {'view_mode': 'tree', 'view_id': ref('endoso_proper.endoso_tree_view')}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('endoso_proper.endoso_form_view')})]"/>
