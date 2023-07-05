@@ -31,13 +31,11 @@ class EndosoWizard(models.TransientModel):
             endoso_dict = {
                 'journal_id': 1,
                 'partner_id': self.cliente.id,
-                'sale_id': invoice.sale_id,
-                'cliente_endoso': invoice.partner_id.id,
-                'name': self.env['ir.sequence'].next_by_code('account.move.endoso'),
-                'factura_endosada': invoice.id,
-                'es_endoso': True
+                'origin_partner_id': invoice.partner_id.id,
+                'name': self.env['ir.sequence'].next_by_code('account.move.endoso') or _('New'),
+                'origin_invoice': invoice.id,
             }
-            endoso = self.env['account.move'].create(endoso_dict)
+            endoso = self.env['endoso.move'].sudo().create(endoso_dict)
             invoice_msg = (
                               "Se generó el endoso: <a href=# data-oe-model=account.move data-oe-id=%d>%s</a> a partir de esta factura") % (
                               endoso.id, endoso.name)
@@ -50,14 +48,14 @@ class EndosoWizard(models.TransientModel):
                 line_ids_list = [
                     {
                         'name': 'Endoso ' + invoice.partner_id.name,
-                        'move_id': endoso.id,
+                        'move_id': endoso.move_id.id,
                         'partner_id': invoice.partner_id.id,
                         'account_id': invoice.partner_id.property_account_receivable_id.id,
                         'credit': total_porcentaje,
                     },
                     {
                         'name': 'Endoso ' + cliente.name,
-                        'move_id': endoso.id,
+                        'move_id': endoso.move_id.id,
                         'partner_id': cliente.id,
                         'account_id': cliente.property_account_receivable_id.id,
                         'debit': total_porcentaje,
@@ -68,8 +66,7 @@ class EndosoWizard(models.TransientModel):
                     'name': _('Customer Invoice'),
                     'view_mode': 'form',
                     'view_id': self.env.ref('account.view_move_form').id,
-                    'res_model': 'account.move',
-                    'context': "{'move_type':'out_invoice'}",
+                    'res_model': 'endoso.move',
                     'type': 'ir.actions.act_window',
                     'nodestroy': True,
                     'res_id': endoso.id,
