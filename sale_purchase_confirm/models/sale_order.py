@@ -321,14 +321,6 @@ class SaleOrder(models.Model):
         # lines = self.order_line.filtered(lambda x: x.check_price_reduce and not x.price_reduce_solicit)
         # if lines != []:
         #     raise UserError('No se ha enviado la peticion de reducción de precio')
-        """
-            MARKETPLACE NO SE VALIDA
-        """
-
-        # if self.partner_child:
-        #     if self.partner_child.x_es_marketplace:
-        #         self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-        #         return self.action_confirm()
 
         if self.warehouse_id.id == 30:
             #Almacén por facturar no se valida. YA SALIÓ la mercancia
@@ -564,15 +556,7 @@ class SaleOrder(models.Model):
             }
 
     def action_confirm(self):
-        """
-                    MARKETPLACE NO SE VALIDA
-        """
 
-        # if self.partner_child:
-        #     if self.partner_child.x_es_marketplace:
-        #         self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
-        #         valid = True
-        #     else:
         valid, message = self.is_valid_order_sale()
         if self.warehouse_id.id == 30:
             #Almacén por facturar no se valida. YA SALIÓ la mercancia
