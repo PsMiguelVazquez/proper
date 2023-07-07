@@ -90,6 +90,14 @@ class AccountMove(models.Model):
             'motivo_cancelacion': '04',
             'show_reset_to_draft_button': True
         })
+        documents = self.env['account.edi.document']
+        for move in account_move:
+            for doc in move.edi_document_ids:
+                if doc.state == 'to_cancel' \
+                        and move.is_invoice(include_receipts=True) \
+                        and doc.edi_format_id._is_required_for_invoice(move):
+                    documents |= doc
+        documents.write({'state': 'sent'})
 
     def duplicate_invoice(self):
         product_list = []
