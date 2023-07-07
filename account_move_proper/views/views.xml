@@ -5,8 +5,9 @@
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='payment_reference']" position="before">
-                <field name="motivo_cancelacion" attrs="{'invisible':[('edi_state', '!=', 'to_cancel')], 'required':[('edi_state','=','to_cancel')]}"/>
-                <field name="fecha_confirmacion_cancelacion" attrs="{'invisible':[('edi_state', '!=', 'to_cancel')], 'required':[('edi_state','=','to_cancel')]}"/>
+                <field name="motivo_cancelacion" attrs="{'invisible':[('state', '!=', 'cancel'),('edi_show_abandon_cancel_button','=',False)]
+                , 'required': [('edi_state','=','to_cancel')]}"/>
+                <field name="fecha_confirmacion_cancelacion" attrs="{'invisible':[('state', '!=', 'cancel'),('edi_show_abandon_cancel_button','=',False)]}"/>
             </xpath>
         </field>
     </record>
