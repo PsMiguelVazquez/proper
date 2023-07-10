@@ -34,6 +34,15 @@ class SaleOrder(models.Model):
     es_orden_parcial = fields.Boolean(compute='_compute_es_orden_parcial')
     sales_agent = fields.Many2one(related='partner_id.sales_agent')
     numero_ordenes_compra_activas = fields.Integer('Númerode órdenes de compra activas', compute='_compute_num_ordenes_compra')
+    fecha_factura = fields.Date(string='Fecha de la factura', compute='_compute_fecha_factura', store=True)
+
+    def _compute_fecha_factura(self):
+        for record in self:
+            invs = record.invoice_ids.filtered(lambda x: x.state == 'posted' and x.move_type == 'out_invoice')
+            if invs:
+                record.fecha_factura = invs[0].invoice_date
+            else:
+                record.fecha_factura = None
 
     def _compute_num_ordenes_compra(self):
         for record in self:
