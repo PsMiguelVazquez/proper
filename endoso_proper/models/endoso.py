@@ -9,51 +9,38 @@ class Endoso(models.Model):
     _inherits = {'account.move': 'move_id'}
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Endosos"
-    _order = "date desc, name desc"
-    name = fields.Char()
-    outstanding_account_id = fields.Many2one(
-        comodel_name='account.account',
-        string="Outstanding Account",
-        check_company=True)
-    destination_account_id = fields.Many2one(
-        comodel_name='account.account',
-        string='Destination Account',
-        store=True,
-        check_company=True)
-    journal_id = fields.Many2one(
-        comodel_name='account.journal',
-        string='Destination Journal',
-        check_company=True,
-    )
+
     origin_invoice = fields.Many2one('account.move', string='Factura endosada')
     origin_partner_id = fields.Many2one('res.partner', string="Cliente de la factura")
-    partner_id = fields.Many2one('res.partner', string="Cliente del endoso")
-    move_id = fields.Many2one(
-        comodel_name='account.move',
-        string='Journal Entry', required=True, readonly=True, ondelete='cascade',
-        check_company=True)
+    # partner_id = fields.Many2one('res.partner', string="Cliente del endoso")
     amount = fields.Monetary(currency_field='currency_id')
+    origin_invoice_sale_id = fields.Many2one('sale.order', compute='_compute_invoice_fields', string='Venta')
+    origin_invoice_date = fields.Date(compute='_compute_invoice_fields', string='Fecha de la factura')
+    origin_invoice_payment_term_id = fields.Many2one('account.payment.term', compute='_compute_invoice_fields', string='Términos de pago de la factura')
+    origin_invoice_warehouse_id = fields.Char(compute='_compute_invoice_fields', string='Almacén')
+    origin_invoice_orden_compra = fields.Char(compute='_compute_invoice_fields', string='Orden de compra')
+    origin_invoice_referencia = fields.Char(compute='_compute_invoice_fields', string='Referencia')
+    origin_invoice_cfdi_uuid = fields.Char(string='Folio fiscal de la factura', related='origin_invoice.l10n_mx_edi_cfdi_uuid')
 
-    # sale_id = fields.Many2one('sale_order', related='origin_invoice.sale_id')
-    # cfdi_uuid = fields.Char(related='origin_invoice.l10n_mx_edi_cfdi_uuid')
-    # invoice_date = fields.Date(related='origin_invoice.invoice_date')
-    # invoice_payment_term_id = fields.Many2one('account.payment.term', related='origin_invoice.invoice_payment_term_id')
-    # warehouse_id = fields.Char(related='origin_invoice.x_studio_almacn')
-    # orden_compra = fields.Char(related='origin_invoice.x_studio_n_orden_de_compra')
-    # referencia = fields.Char(related='origin_invoice.x_referencia')
+    def _compute_invoice_fields(self):
+        for record in self:
+            record.origin_invoice_sale_id = record.origin_invoice.sale_id
+            record.origin_invoice_date = record.origin_invoice.invoice_date
+            record.origin_invoice_payment_term_id = record.origin_invoice.invoice_payment_term_id
+            record.origin_invoice_warehouse_id = record.origin_invoice.x_studio_almacn
+            record.origin_invoice_orden_compra = record.origin_invoice.x_studio_n_orden_de_compra
+            record.origin_invoice_referencia = record.origin_invoice.x_referencia
 
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             vals['move_type'] = 'entry'
-            if 'journal_id' not in vals:
-                vals['journal_id'] = self.move_id._get_default_journal().id
-
+            # if 'journal_id' not in vals:
+            #     vals['journal_id'] = self.move_id._get_default_journal().id
             if 'currency_id' not in vals:
                 journal = self.env['account.journal'].browse(vals['journal_id'])
                 vals['currency_id'] = journal.currency_id.id or journal.company_id.currency_id.id
         endosos = super().create(vals_list)
-        endosos.move_id.name = endosos.name
         return endosos
 
     def write(self, vals):
@@ -75,7 +62,10 @@ class Endoso(models.Model):
 
     @api.depends('move_id.name')
     def name_get(self):
-        return [(endoso.id, endoso.move_id.name != '/' and endoso.move_id.name or _('Draft Payment')) for endoso in
+        return [(endoso.id, endoso.move_id.name != '/' and endoso.move_id.name or _('Borrador de endoso')) for endoso in
                 self]
 
+
+    def button_open_invoices(self):
+        print(self)
 

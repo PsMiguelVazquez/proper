@@ -28,22 +28,19 @@ class EndosoWizard(models.TransientModel):
             if self.porcentaje <=0.0:
                 raise ValidationError('Valor inválido para el porcentaje. El porcentaje de endoso debe ser mayor a 0')
             total_porcentaje = round(self.porcentaje * invoice.amount_total,2)
+            journal = self.env['account.journal'].search([('name','ilike','endoso')])
+            if not journal:
+                raise ValidationError('No hay diario para llevar a cabo la operación Endoso')
             endoso_dict = {
-                'journal_id': 1,
+                'journal_id': journal.id,
                 'partner_id': self.cliente.id,
                 'origin_partner_id': invoice.partner_id.id,
-                'name': self.env['ir.sequence'].next_by_code('account.move.endoso') or _('New'),
+                # 'name': self.env['ir.sequence'].next_by_code('account.move.endoso') or _('New'),
                 'origin_invoice': invoice.id,
+                'amount': total_porcentaje,
+                'posted_before': True,
             }
-            endoso = self.env['endoso.move'].sudo().create(endoso_dict)
-            invoice_msg = (
-                              "Se generó el endoso: <a href=# data-oe-model=account.move data-oe-id=%d>%s</a> a partir de esta factura") % (
-                              endoso.id, endoso.name)
-            endoso_msg = (
-                              "Este endoso fue creado desde: <a href=# data-oe-model=account.move data-oe-id=%d>%s</a>") % (
-                              invoice.id, invoice.name)
-            invoice.message_post(body=invoice_msg, type="notification")
-            endoso.message_post(body=endoso_msg, type="notification")
+            endoso = self.env['endoso.move'].create(endoso_dict)
             if endoso:
                 line_ids_list = [
                     {
@@ -62,14 +59,22 @@ class EndosoWizard(models.TransientModel):
                     }
                 ]
                 lineas = self.env['account.move.line'].create(line_ids_list)
+                endoso.action_post()
+                invoice_msg = (
+                                  "Se generó el endoso: <a href=# data-oe-model=endoso.move data-oe-id=%d>%s</a> a partir de esta factura") % (
+                                  endoso.id, endoso.name)
+                endoso_msg = (
+                                 "Este endoso fue creado desde: <a href=# data-oe-model=account.move data-oe-id=%d>%s</a>") % (
+                                 invoice.id, invoice.name)
+                invoice.message_post(body=invoice_msg, type="notification")
+                endoso.message_post(body=endoso_msg, type="notification")
                 return {
-                    'name': _('Customer Invoice'),
+                    'name': _('Endoso'),
                     'view_mode': 'form',
-                    'view_id': self.env.ref('account.view_move_form').id,
+                    'view_id': self.env.ref('endoso_proper.endoso_form_view').id,
                     'res_model': 'endoso.move',
                     'type': 'ir.actions.act_window',
                     'nodestroy': True,
                     'res_id': endoso.id,
                     'target': 'current',
-                    'line_ids': lineas
                 }
