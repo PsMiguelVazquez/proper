@@ -21,6 +21,19 @@ class AccountMove(models.Model):
     supervisor_credito = fields.Many2one(string='Supervisor de crédito',related='partner_id.x_nombre_supervisor_credito', store=True)
     documento_entrega_venta = fields.Selection(string='Documento de entrega',related='sale_id.x_doc_entrega')
     invoice_datetime_date = fields.Date('Fecha de timbrado', compute="_compute_invoice_datetime_date", store=True)
+    orden_compra_relacionada = fields.Char(compute='_compute_orden_compra')
+
+    def _compute_orden_compra(self):
+        for record in self:
+            record['orden_compra_relacionada'] = ''
+            if not record.sale_id:
+                if record.invoice_origin:
+                    sale = self.env['sale.order'].search([('name','=',record.invoice_origin.split(',')[0])])
+                    if sale:
+                        record['orden_compra_relacionada'] = sale.x_studio_n_orden_de_compra
+                        record.sale_id = sale
+            else:
+                record['orden_compra_relacionada'] = record.sale_id.x_studio_n_orden_de_compra
 
     @api.depends('invoice_datetime')
     def _compute_invoice_datetime_date(self):
