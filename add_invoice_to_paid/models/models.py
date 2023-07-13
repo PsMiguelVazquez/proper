@@ -72,8 +72,18 @@ class AccountPaymentWidget(models.TransientModel):
         else:
             if move_line:
                 for move in self.invoices_ids:
-                    amount = move.porcent_assign
-                    r = move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
+                    if 'END/' in move.name:
+                        invoice_end = self.env['endoso.move'].search(
+                                [('name', '=', self.invoices_ids.name)]).origin_invoice
+                        invoice_end.porcent_assign = move.porcent_assign
+                        amount = invoice_end.porcent_assign
+                        r = move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
+                        r2 = invoice_end.with_context({'paid_amount': amount}).js_assign_outstanding_line(move.invoice_line_ids[0].id)
+                    elif move.move_type == 'out_refund':
+                        print(move)
+                    else:
+                        amount = move.porcent_assign
+                        move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
             else:
                 raise odoo.exceptions.UserError("No hay asiento disponible para el movimiento")
         return True

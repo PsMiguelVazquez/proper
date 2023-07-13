@@ -6,10 +6,16 @@ from datetime import datetime
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
-    cliente_endoso = fields.Many2one('res.partner', string='Cliente de endoso')
-    factura_endosada = fields.Many2one('account.move', string='Factura endosada')
-    es_endoso = fields.Boolean('Es endoso', default=False)
+    ocultar_endoso = fields.Boolean(string='Ocultar endoso',
+                                    help='Oculta el botón Endosar factura si ya está endosada',
+                                    compute='_compute_ocultar_endoso')
 
+    def _compute_ocultar_endoso(self):
+        for record in self:
+            if self.env['endoso.move'].search([('origin_invoice','=',record.id)]).filtered(lambda x: x.state != 'cancel'):
+                record['ocultar_endoso'] = True
+            else:
+                record['ocultar_endoso'] = False
 
     def endosar_factura(self):
         w = self.env['endoso.wizard'].sudo().create({'factura': self.id})

@@ -5,15 +5,14 @@ from odoo import models, fields, _
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
 class EndosoWizard(models.TransientModel):
-    _name = 'endoso.wizard'
-    _description = 'Muestra un wizard para el proceso de endoso de facturas'
+    _name = 'neteo.wizard'
+    _description = 'Muestra un wizard para el proceso de neteo (Pago por compensación) de facturas'
 
     factura = fields.Many2one('account.move', string='Factura a endosar', help='Factura que se va a endosar' )
     cliente = fields.Many2one('res.partner', string='Cliente', help='Nombre del cliente al que se le va a endosar la factura')
-    porcentaje = fields.Float(string='Porcentaje',help='Porcentaje de la factura que se va a endosar', default='1')
+    monto = fields.Float('Monto',help='Monto que se va a pagar por compensación')
 
-
-    def done_endoso(self):
+    def done_neteo(self):
         if self:
             invoice = self.env['account.move'].search([('id', '=', self.factura.id)])
             cliente = self.cliente
@@ -21,13 +20,6 @@ class EndosoWizard(models.TransientModel):
                 raise ValidationError('No se ha seleccionado un cliente')
             if not cliente.property_account_receivable_id.id:
                 raise ValidationError('No se ha definido la cuenta por cobrar del cliente')
-            if invoice.partner_id == cliente:
-                raise ValidationError('No se puede endosar una factura al mismo cliente')
-            if self.porcentaje > 1:
-                raise ValidationError('Valor inválido para el porcentaje. El valor máximo es 100')
-            if self.porcentaje <=0.0:
-                raise ValidationError('Valor inválido para el porcentaje. El porcentaje de endoso debe ser mayor a 0')
-            total_porcentaje = round(self.porcentaje * invoice.amount_total,2)
             journal = self.env['account.journal'].search([('name','ilike','endoso')])
             if not journal:
                 raise ValidationError('No hay diario para llevar a cabo la operación Endoso')
