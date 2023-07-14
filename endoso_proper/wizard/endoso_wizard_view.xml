@@ -9,8 +9,8 @@
                 <field name="factura" string="Factura"/>
                 <label for="cliente"/>
                 <field name="cliente" string="Cliente"/>
-                <label for="porcentaje"/>
-                <field name="porcentaje" widget="percentage" string="Porcentaje"/>
+                <label for="amount"/>
+                <field name="amount" widget="monetary"/>
                 <footer>
                     <button name="done_endoso" type="object" string="Confirmar"/>
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>

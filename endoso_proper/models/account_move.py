@@ -12,7 +12,8 @@ class AccountMove(models.Model):
 
     def _compute_ocultar_endoso(self):
         for record in self:
-            if self.env['endoso.move'].search([('origin_invoice','=',record.id)]).filtered(lambda x: x.state != 'cancel'):
+            if self.env['endoso.move'].search([('origin_invoice','=',record.id)]).filtered(lambda x: x.state != 'cancel')\
+                    or self.amount_residual == 0.0 or not self.l10n_mx_edi_cfdi_uuid:
                 record['ocultar_endoso'] = True
             else:
                 record['ocultar_endoso'] = False

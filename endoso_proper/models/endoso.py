@@ -35,8 +35,6 @@ class Endoso(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             vals['move_type'] = 'entry'
-            # if 'journal_id' not in vals:
-            #     vals['journal_id'] = self.move_id._get_default_journal().id
             if 'currency_id' not in vals:
                 journal = self.env['account.journal'].browse(vals['journal_id'])
                 vals['currency_id'] = journal.currency_id.id or journal.company_id.currency_id.id
@@ -51,6 +49,7 @@ class Endoso(models.Model):
     def action_post(self):
         ''' draft -> posted '''
         self.move_id._post(soft=False)
+        print(self)
 
     def action_cancel(self):
         ''' draft -> cancelled '''
