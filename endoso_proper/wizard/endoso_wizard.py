@@ -11,6 +11,11 @@ class EndosoWizard(models.TransientModel):
     factura = fields.Many2one('account.move', string='Factura a endosar', help='Factura que se va a endosar' )
     cliente = fields.Many2one('res.partner', string='Cliente', help='Nombre del cliente al que se le va a endosar la factura')
     porcentaje = fields.Float(string='Porcentaje',help='Porcentaje de la factura que se va a endosar', default='1')
+    amount = fields.Float(string='Total endosado',help='Monto del endoso', compute='_compute_amount')
+
+    def _compute_amount(self):
+        for record in self:
+            record.amount = record.factura.amount_residual
 
 
     def done_endoso(self):
@@ -27,6 +32,10 @@ class EndosoWizard(models.TransientModel):
                 raise ValidationError('Valor inválido para el porcentaje. El valor máximo es 100')
             if self.porcentaje <=0.0:
                 raise ValidationError('Valor inválido para el porcentaje. El porcentaje de endoso debe ser mayor a 0')
+            if self.env['endoso.move'].search([('origin_invoice','=',invoice.id)]).filtered(lambda x: x.state in ('posted', 'draft')):
+                raise ValidationError('Esta factura ya está endosada. Cancele el endoso relacionado')
+            if not invoice.l10n_mx_edi_cfdi_uuid:
+                raise ValidationError('La factura debe estar timbrada para endosarse')
             total_porcentaje = round(self.porcentaje * invoice.amount_total,2)
             journal = self.env['account.journal'].search([('name','ilike','endoso')])
             if not journal:
@@ -59,7 +68,11 @@ class EndosoWizard(models.TransientModel):
                     }
                 ]
                 lineas = self.env['account.move.line'].create(line_ids_list)
+                if not lineas:
+                    raise UserError('No se pudo crear el movimiento')
                 endoso.action_post()
+                endoso.move_id.invoice_origin = invoice.name
+                invoice.js_assign_outstanding_line(lineas[0].id)
                 invoice_msg = (
                                   "Se generó el endoso: <a href=# data-oe-model=endoso.move data-oe-id=%d>%s</a> a partir de esta factura") % (
                                   endoso.id, endoso.name)
