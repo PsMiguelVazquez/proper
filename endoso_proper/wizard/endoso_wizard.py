@@ -46,7 +46,7 @@ class EndosoWizard(models.TransientModel):
                 'origin_partner_id': invoice.partner_id.id,
                 # 'name': self.env['ir.sequence'].next_by_code('account.move.endoso') or _('New'),
                 'origin_invoice': invoice.id,
-                'amount': total_porcentaje,
+                'amount': invoice.amount_residual,
                 'posted_before': True,
             }
             endoso = self.env['endoso.move'].create(endoso_dict)
@@ -57,14 +57,14 @@ class EndosoWizard(models.TransientModel):
                         'move_id': endoso.move_id.id,
                         'partner_id': invoice.partner_id.id,
                         'account_id': invoice.partner_id.property_account_receivable_id.id,
-                        'credit': total_porcentaje,
+                        'credit': invoice.amount_residual,
                     },
                     {
                         'name': 'Endoso ' + cliente.name,
                         'move_id': endoso.move_id.id,
                         'partner_id': cliente.id,
                         'account_id': cliente.property_account_receivable_id.id,
-                        'debit': total_porcentaje,
+                        'debit': invoice.amount_residual,
                     }
                 ]
                 lineas = self.env['account.move.line'].create(line_ids_list)
