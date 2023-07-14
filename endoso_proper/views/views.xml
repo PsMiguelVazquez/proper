@@ -7,7 +7,6 @@
             <xpath expr="//form/sheet/field[@name='move_type']" position="after">
                 <field name="ocultar_endoso" invisible="1"/>
             </xpath>
-<!--            <field name="ocultar_endoso" invisible="1"/>-->
             <header>
                 <button string="Endosar factura" name="endosar_factura" type="object"
                         attrs="{'invisible': ['|','|', ('state', '=', 'draft'), ('move_type', '!=', 'out_invoice'),('ocultar_endoso','=',True)]}"/>
@@ -18,15 +17,15 @@
     <record id="endoso_tree_view" model="ir.ui.view">
         <field name="model">endoso.move</field>
         <field name="arch" type="xml">
-            <form>
+            <tree>
                 <field name="name"/>
                 <field name="origin_invoice"/>
-                <field name="partner_id"/>
+                <field name="partner_id" string="Cliente del endoso"/>
                 <field name="origin_partner_id"/>
-                <field name="amount"/>
-                <field name="create_date"/>
+                <field name="amount" string="Monto"/>
+                <field name="create_date" string="Fecha del endoso"/>
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'"/>
-            </form>
+            </tree>
         </field>
     </record>
 
@@ -64,8 +63,9 @@
                     </div>
                     <group>
                         <group id="left_group">
-                            <field name="partner_id" widget="res_partner_many2one" readonly="1"/>
+                            <field name="partner_id" string="Cliente del endoso" widget="res_partner_many2one" readonly="1"/>
                             <field name="origin_partner_id" widget="res_partner_many2one" readonly="1"/>
+                            <field name="create_date" string="Fecha" readonly="1"/>
                         </group>
                         <group id="right_group">
                             <field name="origin_invoice" readonly="1"/>
