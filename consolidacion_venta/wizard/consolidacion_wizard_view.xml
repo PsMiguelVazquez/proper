@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="view_consolidacion_wizard_form" model="ir.ui.view">
+        <field name="name">consolidacion.wizard.form</field>
+        <field name="model">consolidacion.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Consolidar Pedidos">
+                <label for="sale_orders"/>
+                <field name="sale_orders" widget="many2many"/>
+                <label for="lines"/>
+                <field name="lines"  widget="many2many" mode="form,tree">
+                        <form>
+                            <field name="product_id" invisible="1"/>
+                            <field name="quantity" invisible="1"/>
+                            <field name="price_unit" invisible="1"/>
+                        </form>
+                        <tree string="Sales Order Lines">
+                            <field name="sequence" widget="handle"/>
+                            <field name="product_id"/>
+                            <field name="quantity"/>
+                            <field name="price_unit"/>
+                        </tree>
+                </field>
+                <footer>
+                    <button name="done_consolidar" type="object" string="Confirmar"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+
+
+</odoo>

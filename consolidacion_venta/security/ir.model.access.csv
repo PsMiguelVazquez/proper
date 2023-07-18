@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_consolidacion_wizard,consolidacion.wizard,model_consolidacion_wizard,base.group_user,1,1,1,1
+access_wizard_consolidation_line,wizard.consolidation.line,model_wizard_consolidation_line,base.group_user,1,1,1,1
