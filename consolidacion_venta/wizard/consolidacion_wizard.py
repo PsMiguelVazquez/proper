@@ -37,22 +37,11 @@ class ConsolidacionWizard(models.Model):
                     , 'sequence': 10
                     , 'wizard_id': record.id
                 })
-
-            # for line in order_lines:
-            #     consolidacion_lines.append({
-            #         'product_id': line.product_id.id
-            #         , 'quantity': line.product_uom_qty
-            #         , 'price_unit': line.price_unit
-            #         , 'sequence': 10
-            #         , 'wizard_id': record.id
-            #         , 'sale_order':line.order_id.id
-            #         , 'orden_compra': line.order_id.x_studio_n_orden_de_compra
-            #     })
-
             lines = self.env['wizard.consolidation.line'].create(lista_productos)
             if lines:
                 record['lines'] = lines
-            print()
+            else:
+                record['lines'] = None
 
     def create(self, vals_list):
         r = super(ConsolidacionWizard, self).create(vals_list)
@@ -63,6 +52,23 @@ class ConsolidacionWizard(models.Model):
 
     def done_consolidar(self):
         print(self)
+        partner = self.sale_orders[0].partner_id
+        invoice_dict = {
+            'ref': ', '.join(self.sale_orders.mapped('name')),
+            'x_referencia': ', '.join(self.sale_orders.mapped('name')),
+            'journal_id': 1,
+            'move_type': 'out_invoice',
+            'posted_before': False,
+            'invoice_payment_term_id': partner.property_payment_term_id.id,
+            'partner_id': partner.id,
+            'l10n_mx_edi_payment_method_id': partner.x_studio_mtodo_de_pago,
+            'l10n_mx_edi_payment_policy': partner.x_nombre_corto_tpago,
+            'l10n_mx_edi_usage': partner.x_studio_uso_de_cfdi,
+            'invoice_origin': ', '.join(self.sale_orders.mapped('name'))
+        }
+        invoice_id = self.env['account.move'].create(invoice_dict)
+        print(invoice_id)
+        return invoice_id
 
 class ConsolidacionWizardLine(models.Model):
     _name= 'wizard.consolidation.line'
