@@ -23,7 +23,7 @@ class StockMoveLine(models.Model):
             record.costo_orden_compra = 0.0
             purchase_order = self.env['purchase.order'].search([('name','=',record.origin)])
             purchase_lines = purchase_order.order_line.filtered(lambda x: x.product_id == record.product_id)
-            record.costo_orden_compra= purchase_lines.mapped('price_unit')
+            record.costo_orden_compra= purchase_lines.mapped('price_unit')[0]
 
     def get_referencia_proveedor(self):
         for record in self:
