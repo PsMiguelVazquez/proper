@@ -21,6 +21,7 @@ class ConsolidacionWizard(models.Model):
             for producto in productos:
                 tot = 0.0
                 cantidades_productos = order_lines.filtered(lambda x: x.product_id == producto).mapped('product_uom_qty')
+                tax_id = order_lines.filtered(lambda x: x.product_id == producto).mapped('tax_id')
                 precios_unitarios = order_lines.filtered(lambda x: x.product_id == producto).mapped('price_unit')
                 for i,c in enumerate(cantidades_productos):
                     tot += cantidades_productos[i] *  precios_unitarios[i]
@@ -36,6 +37,7 @@ class ConsolidacionWizard(models.Model):
                     , 'sale_order_char': sale_order_char
                     , 'sequence': 10
                     , 'wizard_id': record.id
+                    , 'tax_id': tax_id
                 })
             lines = self.env['wizard.consolidation.line'].create(lista_productos)
             if lines:
@@ -52,6 +54,20 @@ class ConsolidacionWizard(models.Model):
 
     def done_consolidar(self):
         print(self)
+        product_list = []
+        for line in self.lines:
+            if line.quantity > 0:
+                product_dict = {
+                    'sequence': line.sequence,
+                    'name': line.product_id.name,
+                    'quantity': line.quantity,
+                    'product_id': line.product_id,
+                    'price_unit': line.price_unit,
+                    'tax_ids': line.tax_id,
+                    'product_uom_id': line.product_id.uom_id.id
+                }
+                product_list.append(product_dict)
+
         partner = self.sale_orders[0].partner_id
         invoice_dict = {
             'ref': ', '.join(self.sale_orders.mapped('name')),
@@ -64,7 +80,8 @@ class ConsolidacionWizard(models.Model):
             'l10n_mx_edi_payment_method_id': partner.x_studio_mtodo_de_pago,
             'l10n_mx_edi_payment_policy': partner.x_nombre_corto_tpago,
             'l10n_mx_edi_usage': partner.x_studio_uso_de_cfdi,
-            'invoice_origin': ', '.join(self.sale_orders.mapped('name'))
+            'invoice_origin': ', '.join(self.sale_orders.mapped('name')),
+            'invoice_line_ids': product_list,
         }
         invoice_id = self.env['account.move'].create(invoice_dict)
         print(invoice_id)
@@ -81,6 +98,7 @@ class ConsolidacionWizardLine(models.Model):
     sale_order = fields.Many2one('sale.order')
     sale_order_char = fields.Char(string='Órdenes de venta')
     orden_compra = fields.Char(string='Orden de compra')
+    tax_id = fields.Many2many('account.tax', string='Impuestos')
     subtotal = fields.Float(string='Subtotal', compute='_compute_totals')
     taxes = fields.Float(string='Impuestos', compute='_compute_totals')
     total = fields.Float(string='Total', compute='_compute_totals')

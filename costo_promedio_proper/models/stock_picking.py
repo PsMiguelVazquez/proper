@@ -12,14 +12,17 @@ class StockPicking(models.Model):
     fecha_recepcion_cliente = fields.Date(string='Fecha de recepción del cliente')
     related_sale_id = fields.Many2one('sale.order', string='Orden de venta relacionada', compute='_compute_origin')
     related_purchase_id = fields.Many2one('purchase.order', string='Orden de compra relacionada',compute='_compute_origin')
+    related_sale_id_lines = fields.Many2many('sale.order.line', string='Líneas de la orden relacionada' ,compute='_compute_origin')
 
     def _compute_origin(self):
         for record in self:
             record.related_purchase_id = self.env['purchase.order'].search([('name','=',record.origin)])
             if record.related_purchase_id:
                 record.related_sale_id = record.related_purchase_id.sale_ids
+                record.related_sale_id_lines = record.related_purchase_id.sale_ids.order_line
             else:
                 record.related_sale_id = None
+                record.related_sale_id_lines = None
 
     def button_validate(self):
         old_price_dic = {x.default_code: x.product_tmpl_id.standard_price for x in self.move_line_ids_without_package.product_id}
