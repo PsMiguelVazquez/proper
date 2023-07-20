@@ -188,6 +188,7 @@ class UploadInvoice(models.TransientModel):
                         for sale_order_line_id in sale_order_id.order_line:
                             if sale_order_line_id.product_uom_qty > 0:
                                 sale_order_line_id.write({'invoice_lines': invoice_id.line_ids})
+                                sale_order_line_id.write({'qty_invoiced': sale_order_line_id.product_uom_qty})
                         sale_order_id.write(sale_order_dict)
                         invoice_msg = (
                                               "This invoice has been created from: <a href=# data-oe-model=sale.order data-oe-id=%d>%s</a>") % (
