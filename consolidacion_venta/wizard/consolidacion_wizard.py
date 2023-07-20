@@ -69,9 +69,22 @@ class ConsolidacionWizard(models.Model):
                 product_list.append(product_dict)
 
         partner = self.sale_orders[0].partner_id
+        partner_shipping = self.sale_orders[0].partner_shipping_id
+        referencia_f = ', '.join(self.sale_orders.mapped('name'))
+        if len(referencia_f) > 45:
+            referencia_f = referencia_f[:42] + '...'
+        invoice_origin_f = ', '.join(self.sale_orders.mapped('name'))
+        if len(invoice_origin_f) > 45:
+            invoice_origin_f = invoice_origin_f[:42] + '...'
+        n_orden_compra = ', '.join(self.sale_orders.mapped('x_studio_n_orden_de_compra'))
+        if len(n_orden_compra) > 45:
+            n_orden_compra = n_orden_compra[:42] + '...'
+        almacen = ', '.join(self.sale_orders.mapped('warehouse_id.name'))
+        if len(almacen) > 45:
+            almacen = almacen[:42] + '...'
         invoice_dict = {
-            'ref': ', '.join(self.sale_orders.mapped('name')),
-            'x_referencia': ', '.join(self.sale_orders.mapped('name')),
+            'ref': referencia_f,
+            'x_referencia': referencia_f,
             'journal_id': 1,
             'move_type': 'out_invoice',
             'posted_before': False,
@@ -80,11 +93,29 @@ class ConsolidacionWizard(models.Model):
             'l10n_mx_edi_payment_method_id': partner.x_studio_mtodo_de_pago,
             'l10n_mx_edi_payment_policy': partner.x_nombre_corto_tpago,
             'l10n_mx_edi_usage': partner.x_studio_uso_de_cfdi,
-            'invoice_origin': ', '.join(self.sale_orders.mapped('name')),
+            'invoice_origin': invoice_origin_f,
             'invoice_line_ids': product_list,
+            'partner_shipping_id': partner_shipping.id,
+            'x_studio_orden_de_compra': n_orden_compra,
+            'x_studio_almacn': almacen
         }
         invoice_id = self.env['account.move'].create(invoice_dict)
-        print(invoice_id)
+        if invoice_id:
+            for sale_order_id in self.sale_orders:
+                sale_order_id.invoice_ids |= invoice_id
+                sale_order_dict = {
+                    'invoice_ids': sale_order_id.invoice_ids,
+                    'invoice_status': 'invoiced',
+                }
+                for sale_order_line_id in sale_order_id.order_line:
+                    if sale_order_line_id.product_uom_qty > 0:
+                        sale_order_line_id.write({'invoice_lines': invoice_id.line_ids.filtered(lambda x: x.product_id == sale_order_line_id.product_id)})
+                        sale_order_line_id.write({'qty_invoiced': sale_order_line_id.product_uom_qty})
+                sale_order_id.write(sale_order_dict)
+                invoice_msg = (
+                                  "This invoice has been created from: <a href=# data-oe-model=sale.order data-oe-id=%d>%s</a>") % (
+                                  sale_order_id.id, sale_order_id.name)
+                invoice_id.message_post(body=invoice_msg, type="notification")
         return invoice_id
 
 class ConsolidacionWizardLine(models.Model):
