@@ -16,6 +16,15 @@ class StockMoveLine(models.Model):
     localidad_destino = fields.Char(string='Localidad de Destino',related='location_dest_id.location_id.name')
     tipo_mov = fields.Char(string='Tipo de movimiento', compute='_compute_kardex')
     referencia_proveedor = fields.Char(string="Referencia del proveedor", compute="get_referencia_proveedor")
+    costo_orden_compra = fields.Float(string='Costo de compra', compute='_compute_costo_compra')
+
+    def _compute_costo_compra(self):
+        for record in self:
+            record.costo_orden_compra = 0.0
+            purchase_order = self.env['purchase.order'].search([('name','=',record.origin)])
+            purchase_lines = purchase_order.order_line.filtered(lambda x: x.product_id == record.product_id)
+            if purchase_lines:
+                record.costo_orden_compra= purchase_lines.mapped('price_unit')[0]
 
     def get_referencia_proveedor(self):
         for record in self:
