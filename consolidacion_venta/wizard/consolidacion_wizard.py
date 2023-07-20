@@ -116,6 +116,16 @@ class ConsolidacionWizard(models.Model):
                                   "This invoice has been created from: <a href=# data-oe-model=sale.order data-oe-id=%d>%s</a>") % (
                                   sale_order_id.id, sale_order_id.name)
                 invoice_id.message_post(body=invoice_msg, type="notification")
+            return {
+                'name': _('Factura'),
+                'view_mode': 'form',
+                'view_id': self.env.ref('account.view_move_form').id,
+                'res_model': 'account.move',
+                'type': 'ir.actions.act_window',
+                'nodestroy': True,
+                'res_id': invoice_id.id,
+                'target': 'current',
+            }
         return invoice_id
 
 class ConsolidacionWizardLine(models.Model):
