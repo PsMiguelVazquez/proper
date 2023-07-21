@@ -18,6 +18,8 @@ class SaleOrder(models.Model):
                 ,'quantity': line.product_uom_qty
                 , 'price_unit': line.price_unit
             })
+        if len(sale_orders.mapped('partner_id')) > 1:
+            raise UserError(_('No se puede  puede consolidar a diferentes clientes.'))
         for s_o in sale_orders:
             if s_o.invoice_ids.filtered(lambda x: x.state == 'posted'):
                 raise UserError(_('No se puede  puede consolidar si la orden ya tiene una factura.'))
@@ -41,3 +43,8 @@ class SaleOrder(models.Model):
             'target': 'new',
             'context': context
         }
+
+
+class SaleOrderLine(models.Model):
+    _inherit = 'sale.order.line'
+    qty_invoiced_on_cons = fields.Float(string='Cantidad facturada en consolidación')
