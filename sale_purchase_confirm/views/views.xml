@@ -51,6 +51,8 @@
                         <field name="order_id"/>
                         <field name="product_id" readonly="1"/>
                         <field name="qty" readonly="1"/>
+                        <field name="cantidad_asignada" readonly="1"/>
+                        <field name="cantidad_entregada" readonly="1"/>
                         <field name="qty_sale_invoice" readonly="1"/>
                         <field name="qty_invoice"/>
                         <field name="check" />
