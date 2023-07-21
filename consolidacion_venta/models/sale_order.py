@@ -18,6 +18,13 @@ class SaleOrder(models.Model):
                 ,'quantity': line.product_uom_qty
                 , 'price_unit': line.price_unit
             })
+        for s_o in sale_orders:
+            if s_o.invoice_ids.filtered(lambda x: x.state == 'posted'):
+                raise UserError(_('No se puede  puede consolidar si la orden ya tiene una factura.'))
+            if s_o.invoice_ids.filtered(lambda x: x.state == 'draft'):
+                raise UserError(_('No se puede  puede consolidar si la orden si tiene borrador de factura o remisión'))
+        if self.filtered(lambda x: x.state != 'sale'):
+            raise UserError(_('No se puede consolidar si el pedido no esta en el estado "Orden de venta"'))
         w = self.env['consolidacion.wizard'].sudo().create({'sale_orders': sale_orders})
         view = self.env.ref('consolidacion_venta.view_consolidacion_wizard_form')
         context = dict(self.env.context)

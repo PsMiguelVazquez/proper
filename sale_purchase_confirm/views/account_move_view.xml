@@ -28,5 +28,18 @@
                 </xpath>
             </field>
         </record>
+        <record id="res_partner_view_search_inherit" model="ir.ui.view">
+            <field name="name">res.partner.view.search.inherited</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_res_partner_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='parent_id']" position="after">
+                    <field name="x_grupo_cliente"/>
+                </xpath>
+                <xpath expr="//filter[@name='salesperson']" position="before">
+                    <filter name="x_grupo_cliente" string="Grupo" context="{'group_by': 'x_grupo_cliente'}"/>
+                </xpath>
+            </field>
+        </record>
     </data>
 </odoo>

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "Consolidación de facturas",
+    'name': "Consolidación de ventas",
 
     'summary': """
-        Consolida las líneas de la orden de venta""",
+        Consolida las líneas de la orden de venta para crear una factura""",
 
     'description': """
         Permite consolidar las líneas de la orden de venta y crear una factura a partir de esta
+        en el orden seleccionado en el wizard
     """,
 
     'author': "Jonathan Alfaro",
