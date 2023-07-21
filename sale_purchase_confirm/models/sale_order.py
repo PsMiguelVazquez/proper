@@ -1035,6 +1035,8 @@ class SaleInvoiceWizard(models.TransientModel):
     product_id = fields.Many2one(related='sale_line_id.product_id')
     qty = fields.Float(related='sale_line_id.product_uom_qty', string='Cantidad Solicitada')
     qty_sale_invoice = fields.Float(related='sale_line_id.qty_invoiced', string='Cantidad Facturada')
+    cantidad_asignada = fields.Integer(related='sale_line_id.cantidad_asignada', string='Cantidad Asignada')
+    cantidad_entregada = fields.Float(related='sale_line_id.qty_delivered', string='Cantidad Entregada')
     qty_invoice = fields.Float('Cantidad a Facturar')
     rel_id = fields.Many2one('sale.orders.invoice')
     check = fields.Boolean('Facturar', default=False)
