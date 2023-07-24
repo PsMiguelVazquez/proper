@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="account_view_move_form_neteo" model="ir.ui.view">
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <header>
+                <button string="Neteo" name="compensar_factura" type="object"
+                        attrs="{'invisible': ['|', ('state', '=', 'draft'), ('move_type', 'not in', ['out_invoice', 'in_invoice'])]}"/>
+            </header>
+        </field>
+    </record>
+
+    <record id="neteo_tree_view" model="ir.ui.view">
+        <field name="model">neteo.move</field>
+        <field name="name">neteo.tree.view</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="neteo_form_view" model="ir.ui.view">
+        <field name="model">neteo.move</field>
+        <field name="name">neteo.form.view</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                        <button name="action_post" string="Confirmar" type="object" class="oe_highlight"
+                                attrs="{'invisible': [('state', '!=', 'draft')]}" data-hotkey="v"/>
+                        <button name="action_draft" string="Restablecer a borrador" type="object" class="btn btn-secondary"
+                                attrs="{'invisible': [('state', 'not in', ('posted', 'cancel'))]}"
+                                groups="account.group_account_invoice" data-hotkey="w"/>
+                        <button name="action_cancel" string="Cancelar" type="object"
+                                attrs="{'invisible': [('state', '!=', 'draft')]}" data-hotkey="z"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="button_open_invoices" type="object" class="oe_stat_button" icon="fa-bars" >
+
+                        </button>
+                    </div>
+                    <field name="name" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="create_date" invisible="1"/>
+                    <field name="move_type" invisible="1"/>
+                    <field name="auto_post" invisible="1"/>
+                    <div class="oe_title">
+                            <h1 attrs="{'invisible': [('state', '!=', 'draft')]}"><span>Draft</span></h1>
+                            <h1 attrs="{'invisible': [('state', '=', 'draft')]}"><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group id="left_group">
+                            <field name="partner_id" string="Cliente" widget="res_partner_many2one" readonly="1"/>
+                            <field name="create_date" string="Fecha" readonly="1"/>
+                        </group>
+                        <group id="right_group">
+                            <field name="factura_cliente" readonly="1"/>
+                            <field name="facturas_proveedor" readonly="1">
+                                <tree editable="bottom" string="Journal Items">
+                                    <field name="name"/>
+                                    <field name="amount_total"/>
+                                </tree>
+                            </field>
+                            <field name="amount" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page id="invoice_tab" string="Invoice Lines">
+                            <field name="invoice_line_ids" widget="section_and_note_one2many" mode="tree">
+                                <tree editable="bottom" string="Journal Items">
+                                    <control>
+                                        <create name="add_line_control" string="Add a line"/>
+                                        <create name="add_section_control" string="Add a section"
+                                                context="{'default_display_type': 'line_section'}"/>
+                                        <create name="add_note_control" string="Add a note"
+                                                context="{'default_display_type': 'line_note'}"/>
+                                    </control>
+                                    <field name="account_id"/>
+                                    <field name="name"/>
+                                    <field name="debit"/>
+                                    <field name="credit"/>
+                                </tree>
+
+                            </field>
+
+                        </page>
+                    </notebook>
+
+                </sheet>
+                <div class="o_attachment_preview"/>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_view_neteo" model="ir.actions.act_window">
+        <field name="name">Neteos</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">neteo.move</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+                (0,0, {'view_mode': 'tree', 'view_id': ref('neteo_proper.neteo_tree_view')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('neteo_proper.neteo_form_view')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Neteos
+            </p>
+        </field>
+    </record>
+
+    <menuitem name="Neteos"
+              id="neteo_menu"
+              sequence="10"
+              parent="account.menu_finance_receivables"
+              action="neteo_proper.action_view_neteo"/>
+
+
+</odoo>
