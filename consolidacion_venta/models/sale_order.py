@@ -27,7 +27,7 @@ class SaleOrder(models.Model):
                 raise UserError(_('No se puede  puede consolidar si la orden si tiene borrador de factura o remisión'))
         if self.filtered(lambda x: x.state != 'sale'):
             raise UserError(_('No se puede consolidar si el pedido no esta en el estado "Orden de venta"'))
-        w = self.env['consolidacion.wizard'].sudo().create({'sale_orders': sale_orders})
+        w = self.env['consolidacion.wizard'].sudo().create({'sale_orders': sale_orders, 'orden_compra': sale_orders[0].x_studio_n_orden_de_compra})
         view = self.env.ref('consolidacion_venta.view_consolidacion_wizard_form')
         context = dict(self.env.context)
         context['form_view_initial_mode'] = 'edit'
