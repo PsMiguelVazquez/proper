@@ -9,8 +9,8 @@ class AccountPayment(models.Model):
     amount_rest = fields.Float(compute='get_invoices')
 
     def action_process_edi_web_services(self):
-        if round(self.amount_rest,2) > 5.0:
-            raise UserError('No se puede timbrar un pago que no está totalmente aplicado. Falta aplicar: $' +str(round(self.amount_rest,2)))
+        # if round(self.amount_rest,2) > 5.0:
+        #     raise UserError('No se puede timbrar un pago que no está totalmente aplicado. Falta aplicar: $' +str(round(self.amount_rest,2)))
         r = super(AccountPayment, self).action_process_edi_web_services()
         return r
 
@@ -73,14 +73,11 @@ class AccountPaymentWidget(models.TransientModel):
             if move_line:
                 for move in self.invoices_ids:
                     if 'END/' in move.name:
-                        invoice_end = self.env['endoso.move'].search(
-                                [('name', '=', self.invoices_ids.name)]).origin_invoice
-                        invoice_end.porcent_assign = move.porcent_assign
-                        amount = invoice_end.porcent_assign
-                        r = move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
-                        r2 = invoice_end.with_context({'paid_amount': amount}).js_assign_outstanding_line(move.invoice_line_ids[0].id)
-                    elif move.move_type == 'out_refund':
-                        print(move)
+                        '''
+                            Conciliar las líneas del endoso con el pago
+                        '''
+                        print(move.name)
+                        # move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
                     else:
                         amount = move.porcent_assign
                         move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)

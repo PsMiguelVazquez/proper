@@ -7,11 +7,17 @@
         <field name="model">upload.invoice.wizard</field>
         <field name="arch" type="xml">
             <form string="Subir factura">
+                <field name="tipo" invisible="1"/>
                 <group name="Datos XML">
                     <field name="adjuntos" widget="many2many_binary" />
                     <field name="mensaje_error" decoration-danger="'mensaje_error'" readonly="1"/>
                     <group>
-                        <field name="client_id" required="1" domain="[('vat','=','rfc_receptor')]" options="{'no_create': True, 'no_create_edit':True}"/>
+                        <field name="client_id" required="1" domain="[('vat','=','rfc_receptor')]"
+                               options="{'no_create': True, 'no_create_edit':True}"
+                               attrs="{'invisible':[('tipo', '!=', 'sale_order')]}"/>
+                        <field name="provider_id" required="1" domain="[('vat','=','rfc_emisor')]"
+                               options="{'no_create': True, 'no_create_edit':True}"
+                               attrs="{'invisible':[('tipo', '!=', 'purchase_order')]}"/>
                         <field name="fecha_factura"  readonly="1"/>
                         <field name="rfc_emisor"  readonly="1"/>
                         <field name="rfc_receptor"  readonly="1"/>
@@ -22,9 +28,23 @@
                         <field name="forma_pago"  readonly="1"/>
                         <field name="version_cfdi"  readonly="1"/>
                     </group>
-                    <field name="order_lines" string="Líneas de las órdenes" options="{'no_create': True}">
+                    <field name="order_lines" string="Líneas de las órdenes"
+                           options="{'no_create': True}"
+                            attrs="{'invisible':[('tipo', '!=', 'sale_order')]}">
                         <tree editable="bottom">
                             <field name="x_descripcion_corta" readonly="1"/>
+                            <field name="order_id" readonly="1" string="Orden"/>
+                            <field name="product_uom_qty" readonly="1"/>
+                             <field name="price_unit"/>
+                            <field name="price_subtotal" readonly="1"/>
+                            <field name="price_tax" readonly="1"/>
+                            <field name="price_total" readonly="1"/>
+                        </tree>
+                    </field>
+                    <field name="purchase_lines" string="Líneas de las órdenes"
+                           options="{'no_create': True}"
+                            attrs="{'invisible':[('tipo', '!=', 'purchase_order')]}">
+                        <tree editable="bottom">
                             <field name="order_id" readonly="1" string="Orden"/>
                             <field name="product_uom_qty" readonly="1"/>
                              <field name="price_unit"/>

@@ -7,8 +7,11 @@ class UploadInvoice(models.TransientModel):
     _name = 'upload.invoice.wizard'
     _description = 'Sube una adjuntos para asignarla a ordenes de venta'
     client_id= fields.Many2one('res.partner', 'Cliente')
+    provider_id= fields.Many2one('res.partner', 'Proveedor')
     sale_ids = fields.Many2many('sale.order')
+    purchase_ids = fields.Many2many('purchase.order')
     order_lines = fields.Many2many('sale.order.line')
+    purchase_lines = fields.Many2many('purchase.order.line')
     adjuntos = fields.Many2many('ir.attachment')
     monto = fields.Float('Monto Total')
     subtotal = fields.Float('Subtotal')
@@ -31,12 +34,15 @@ class UploadInvoice(models.TransientModel):
     mensaje_error = fields.Text('')
     reparar_factura = fields.Boolean('Reparar factura', default=False)
     invoice_ids = fields.Many2one('account.move')
+    tipo = fields.Selection(string='Tipo', selection=[('purchase_order','Orden de compra'),('sale_order','Orden de venta')])
 
-    @api.depends('order_lines')
+    @api.depends('order_lines', 'purchase_lines')
     def _compute_total_lineas(self):
         for record in self:
             if record.order_lines:
                 self.total_lineas = sum(self.order_lines.mapped('price_total'))
+            elif record.purchase_lines:
+                self.total_lineas = sum(self.purchase_lines.mapped('price_total'))
             else:
                 self.total_lineas = 0
 
@@ -46,7 +52,7 @@ class UploadInvoice(models.TransientModel):
             if record.sale_ids:
                 self.total_ordenes = sum(self.sale_ids.mapped('amount_total'))
             else:
-                self.total_ordenes = 0
+                self.total_ordenes = sum(self.purchase_ids.mapped('amount_total'))
 
 
     def get_node(self,cfdi_node, attribute, namespaces):
@@ -69,10 +75,13 @@ class UploadInvoice(models.TransientModel):
     def validate(self):
         valid = True
         message = ''
-        sale_orders_total = sum(self.sale_ids.mapped('amount_total'))
-        if round(sale_orders_total,2) != self.monto:
+        if self.sale_ids:
+            total_validar = sum(self.sale_ids.mapped('amount_total'))
+        else:
+            total_validar = sum(self.purchase_ids.mapped('amount_total'))
+        if not (round(total_validar,2) - self.monto >= -1 and  round(total_validar,2) - self.monto <= 1):
             valid =  False
-            message += '\nNo coinciden los montos. Monto total de las facturas seleccionadas: ' + str(sale_orders_total) + ' Monto en el archívo XML: ' + str(self.monto)
+            message += '\nNo coinciden los montos. Monto total de las facturas seleccionadas: ' + str(total_validar) + ' Monto en el archívo XML: ' + str(self.monto)
         return valid, message
 
     def upload_invoice_and_assign(self):
@@ -107,25 +116,49 @@ class UploadInvoice(models.TransientModel):
         else:
             valid, message = self.validate()
             if valid:
+                if self.tipo == 'purchase_order':
+                    journal_id = 2
+                    tipo_movimiento = 'in_invoice'
+                    self.tipo_movimiento = tipo_movimiento
+                    invoice_origin = ', '.join(self.purchase_ids.mapped('name'))
+                else:
+                    journal_id = 1
+                    invoice_origin = ', '.join(self.sale_ids.mapped('name'))
+
+
                 if not invoice_id and self.client_id:
                     product_list =[]
-                    for line in self.order_lines:
-                        if line.product_uom_qty > 0:
-                            product_dict = {
-                                'sequence': 10,
-                                'name': line.product_id.name,
-                                'quantity': line.product_uom_qty,
-                                'product_id': line.product_id,
-                                'price_unit': line.price_unit,
-                                'tax_ids': line.tax_id,
-                                'product_uom_id': line.product_id.uom_id.id
-                            }
-                            product_list.append(product_dict)
+                    if self.tipo == 'purchase_order':
+                        for line in self.purchase_lines:
+                            if line.product_uom_qty > 0:
+                                product_dict = {
+                                    'sequence': 10,
+                                    'name': line.product_id.name,
+                                    'quantity': line.product_uom_qty,
+                                    'product_id': line.product_id,
+                                    'price_unit': line.price_unit,
+                                    'tax_ids': line.taxes_id,
+                                    'product_uom_id': line.product_id.uom_id.id
+                                }
+                                product_list.append(product_dict)
+                    else:
+                        for line in self.order_lines:
+                            if line.product_uom_qty > 0:
+                                product_dict = {
+                                    'sequence': 10,
+                                    'name': line.product_id.name,
+                                    'quantity': line.product_uom_qty,
+                                    'product_id': line.product_id,
+                                    'price_unit': line.price_unit,
+                                    'tax_ids': line.tax_id,
+                                    'product_uom_id': line.product_id.uom_id.id
+                                }
+                                product_list.append(product_dict)
                     invoice_dict = {
                         'invoice_date': self.fecha_factura,
                         'ref': self.ref,
                         'x_referencia': self.ref,
-                        'journal_id': 1,
+                        'journal_id': journal_id,
                         'posted_before': False,
                         'invoice_payment_term_id': self.terminos_pago_id,
                         'partner_id': self.client_id,
@@ -136,15 +169,44 @@ class UploadInvoice(models.TransientModel):
                         'version_cfdi': self.version_cfdi,
                         'invoice_line_ids': product_list,
                         'l10n_mx_edi_cfdi_uuid': self.folio_fiscal,
-                        'invoice_origin': ', '.join(self.sale_ids.mapped('name'))
+                        'invoice_origin': invoice_origin
                     }
                     invoice_id = self.env['account.move'].create(invoice_dict)
                     if invoice_id:
+                        if self.tipo == 'purchase_order':
+                            for purchase_order_id in self.purchase_ids:
+                                purchase_order_id.invoice_ids |= invoice_id
+                                purchase_order_dic = {
+                                    'invoice_ids': purchase_order_id.invoice_ids,
+                                    'invoice_status': 'invoiced',
+                                }
+                                for purchase_order_line_id in purchase_order_id.order_line:
+                                    if purchase_order_line_id.product_uom_qty > 0:
+                                        purchase_order_line_id.write({'invoice_lines': invoice_id.invoice_line_ids})
+                                purchase_order_id.write(purchase_order_dic)
+                                invoice_msg = (
+                                                  "This invoice has been created from: <a href=# data-oe-model=purchase.order data-oe-id=%d>%s</a>") % (
+                                                  purchase_order_id.id, purchase_order_id.name)
+                                invoice_id.message_post(body=invoice_msg, type="notification")
+                        else:
+                            for sale_order_id in self.sale_ids:
+                                sale_order_id.invoice_ids |= invoice_id
+                                sale_order_dict = {
+                                    'invoice_ids': sale_order_id.invoice_ids,
+                                    'invoice_status': 'invoiced',
+                                    'x_estado_surtido': 'surtir',
+                                }
+                                for sale_order_line_id in sale_order_id.order_line:
+                                    if sale_order_line_id.product_uom_qty > 0:
+                                        sale_order_line_id.write({'invoice_lines': invoice_id.invoice_line_ids})
+                                sale_order_id.write(sale_order_dict)
+                                invoice_msg = (
+                                                  "This invoice has been created from: <a href=# data-oe-model=sale.order data-oe-id=%d>%s</a>") % (
+                                                  sale_order_id.id, sale_order_id.name)
+                                invoice_id.message_post(body=invoice_msg, type="notification")
                         ap = invoice_id.action_post()
-                        print(ap)
                     acc_edi_doc_id = self.env['account.edi.document'].search([('move_id', '=', invoice_id.id), ('edi_format_id', '=', 2)])
                     for adjunto in self.adjuntos:
-                        # adjunto.update({'res_model': 'account.move', 'res_id' : invoice_id, 'description': ('Mexican invoice CFDI generated for the %s document.') % self.ref})
                         attachment = self.env['ir.attachment'].create({
                             'name': adjunto.name,
                             'type': 'binary',
@@ -160,40 +222,16 @@ class UploadInvoice(models.TransientModel):
                                 'attachment_id': attachment.id,
                             }
                             acc_edi_doc_id.write(acc_edi_doc_dict)
-                if invoice_id and self.client_id:
-                    invoice_dict = {
-                        'invoice_date': self.fecha_factura,
-                        'ref': self.ref,
-                        'x_referencia': self.ref,
-                        'journal_id': 1,
-                        'posted_before': False,
-                        'invoice_payment_term_id': self.terminos_pago_id,
-                        'partner_id': self.client_id,
-                        'move_type': self.tipo_movimiento,
-                        'l10n_mx_edi_payment_method_id': self.id_metodo_pago,
-                        'l10n_mx_edi_payment_policy': self.metodo_pago,
-                        'l10n_mx_edi_usage': self.uso_cfdi,
-                        'version_cfdi': self.version_cfdi,
-                        'invoice_origin': ', '.join(self.sale_ids.mapped('name'))
+                    return {
+                        'name': _('Factura'),
+                        'view_mode': 'form',
+                        'view_id': self.env.ref('account.view_move_form').id,
+                        'res_model': 'account.move',
+                        'type': 'ir.actions.act_window',
+                        'nodestroy': True,
+                        'res_id': invoice_id.id,
+                        'target': 'current',
                     }
-                    self.env['account.move'].write(invoice_dict)
-
-                    for sale_order_id in self.sale_ids:
-                        sale_order_id.invoice_ids |= invoice_id
-                        sale_order_dict = {
-                            'invoice_ids': sale_order_id.invoice_ids,
-                            'invoice_status': 'invoiced',
-                            'x_estado_surtido': 'surtir',
-                        }
-                        for sale_order_line_id in sale_order_id.order_line:
-                            if sale_order_line_id.product_uom_qty > 0:
-                                sale_order_line_id.write({'invoice_lines': invoice_id.line_ids})
-                                sale_order_line_id.write({'qty_invoiced': sale_order_line_id.product_uom_qty})
-                        sale_order_id.write(sale_order_dict)
-                        invoice_msg = (
-                                              "This invoice has been created from: <a href=# data-oe-model=sale.order data-oe-id=%d>%s</a>") % (
-                                          sale_order_id.id, sale_order_id.name)
-                        invoice_id.message_post(body=invoice_msg ,type="notification")
             else:
                 raise UserError(message)
 
@@ -261,9 +299,20 @@ class UploadInvoice(models.TransientModel):
 
                         cfdi_uuid = tfd_node.get('UUID')
 
-                        partner_id = self.env['res.partner'].search([('vat', '=', receptor_vat)]).filtered(lambda x: x.company_type == 'company')
+                        partner_id = self.env['res.partner']
+                        if self.tipo == 'purchase_order':
+                            provider_id = self.env['res.partner'].search([('vat', '=', emisor_vat)]).filtered(
+                                lambda x: x.company_type == 'company')
+                            self.purchase_ids = self.env['purchase.order'].search(
+                                [('id', 'in', self.env.context.get('active_ids'))])
+                            self.purchase_lines = self.purchase_ids.mapped('order_line')
+                            self.provider_id = provider_id
+                        else:
+                            partner_id = self.env['res.partner'].search([('vat', '=', receptor_vat)]).filtered(lambda x: x.company_type == 'company')
                         if partner_id:
                             self.client_id = partner_id[0]
+                        elif provider_id:
+                            self.client_id = provider_id[0]
                         else:
                             self.mensaje_error = 'No existe en el sistema el cliente con RFC ' + receptor_vat + ' en el XML. Tiene que darlo de alta como CLIENTE antes de subir esta factura'
 
@@ -313,6 +362,7 @@ class UploadInvoice(models.TransientModel):
                         w.codigos_producto = self.codigos_producto
                         w.sale_ids = self.sale_ids
                         w.order_lines = self.order_lines
+                        w.purchase_ids = self.purchase_ids
                     except:
                         self.mensaje_error ='Error al obtener los datos del documento XML. Compruebe la estructura del archivo'
             else:

@@ -13,6 +13,8 @@ class ConsolidacionWizard(models.Model):
     subtotal = fields.Float(string='Subtotal',compute='_compute_totals')
     total_lines = fields.Float(string='Total Lineas', compute='_compute_totals')
     subtotal_lines = fields.Float(string='Subtotal Lineas',compute='_compute_totals')
+    referencia = fields.Char(string='Referencia')
+    orden_compra = fields.Char(string='Orden de compra')
 
     def _compute_totals(self):
         for record in self:
@@ -84,21 +86,15 @@ class ConsolidacionWizard(models.Model):
 
         partner = self.sale_orders[0].partner_id
         partner_shipping = self.sale_orders[0].partner_shipping_id
-        referencia_f = ', '.join(self.sale_orders.mapped('name'))
-        if len(referencia_f) > 45:
-            referencia_f = referencia_f[:42] + '...'
         invoice_origin_f = ', '.join(self.sale_orders.mapped('name'))
         if len(invoice_origin_f) > 45:
             invoice_origin_f = invoice_origin_f[:42] + '...'
-        n_orden_compra = ', '.join(self.sale_orders.filtered(lambda x: x.x_studio_n_orden_de_compra).mapped('x_studio_n_orden_de_compra'))
-        if len(n_orden_compra) > 45:
-            n_orden_compra = n_orden_compra[:42] + '...'
         almacen = ', '.join(self.sale_orders.mapped('warehouse_id.name'))
         if len(almacen) > 45:
             almacen = almacen[:42] + '...'
         invoice_dict = {
-            'ref': referencia_f,
-            'x_referencia': referencia_f,
+            'ref': self.referencia,
+            'x_referencia': self.referencia,
             'journal_id': 1,
             'move_type': 'out_invoice',
             'posted_before': False,
@@ -110,11 +106,12 @@ class ConsolidacionWizard(models.Model):
             'invoice_origin': invoice_origin_f,
             'invoice_line_ids': product_list,
             'partner_shipping_id': partner_shipping.id,
-            'x_studio_orden_de_compra': n_orden_compra,
+            'x_studio_orden_de_compra': self.orden_compra,
             'x_studio_almacn': almacen
         }
         invoice_id = self.env['account.move'].create(invoice_dict)
         if invoice_id:
+            # invoice_id.sale_id.x_studio_n_orden_de_compra
             for sale_order_id in self.sale_orders:
                 sale_order_id.invoice_ids |= invoice_id
                 sale_order_dict = {
