@@ -818,6 +818,8 @@ class SaleOrderLine(models.Model):
                 market1 = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 80).mapped('reserved_quantity'))
                 existencia = "<table><thead><tr><th>A-0</th><th>A14</th></tr><tr><th>D/R</th><th>D/R</th></tr></thead><tbody><tr><td>" + str(int(zero)) + "/" + str(int(zero1)) + "</td><td>" + str(int(market)) + "/" + str(int(market1)) + "</td></tr></tbody>"
                 nombre = record.warehouse_id.name
+                if not nombre:
+                    nombre = ''
                 wh = record.order_id.warehouse_id.lot_stock_id
                 disponible = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id == wh).mapped(
                     'available_quantity'))
