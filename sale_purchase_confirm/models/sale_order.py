@@ -653,11 +653,13 @@ class SaleOrderLine(models.Model):
     valor_utilidad = fields.Monetary('Valor de la utilidad', compute='_compute_valor_utilidad')
     valor_utilidad_por_producto = fields.Monetary('Utilidad por producto', compute='_compute_valor_utilidad')
     costo_prom_total_venta = fields.Monetary('Costo promedio total (al momento de la venta)', compute='_compute_costos_promedio')
+    costo_promedio_total = fields.Monetary('Costo promedio total', compute='_compute_costos_promedio')
     costo_promedio_venta = fields.Monetary('Costo promedio unitario (al momento de la venta)', compute='_compute_costos_promedio')
 
     def _compute_costos_promedio(self):
         for record in self:
             record.costo_promedio_venta = record.price_unit * (1 - record.x_utilidad_por/100)
+            record.costo_promedio_total = record.product_uom_qty * record.x_studio_costo_promedio
             record.costo_prom_total_venta = record.price_unit * (1 - record.x_utilidad_por/100) * record.product_uom_qty
 
     def _compute_valor_utilidad(self):
