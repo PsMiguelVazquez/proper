@@ -9,6 +9,12 @@ class AccountMove(models.Model):
     ocultar_endoso = fields.Boolean(string='Ocultar endoso',
                                     help='Oculta el botón Endosar factura si ya está endosada',
                                     compute='_compute_ocultar_endoso')
+    es_endoso = fields.Boolean(string='Es endoso')
+
+    def is_inbound(self, include_receipts=True):
+        if 'END/' in self.name and self.es_endoso:
+            return True
+        return self.move_type in self.get_inbound_types(include_receipts)
 
     def _compute_ocultar_endoso(self):
         for record in self:
