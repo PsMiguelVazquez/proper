@@ -14,7 +14,7 @@
             <field name="amount_applied" string="Monto aplicado"/>
 <!--            <field name="invoices_ids" widget="many2many" domain="['|','&amp;',('partner_id', '=', partner_id),'&amp;', ('move_type', 'in', ('out_invoice','out_refund')), '&amp;',('payment_state', 'in', ('not_paid', 'partial')), ('state', '=', 'posted'),-->
             <field name="invoices_ids" widget="many2many" domain="['|','&amp;',('partner_id', '=', partner_id),'&amp;', ('move_type', '=', 'out_invoice'), '&amp;',('payment_state', 'in', ('not_paid', 'partial')), ('state', '=', 'posted'),
-                                                                    '&amp;',('partner_id', '=', partner_id), '&amp;',('state', '=', 'posted'), ('name', 'ilike', 'ENDOSO/')]">
+                                                                    '&amp;',('partner_id', '=', partner_id), '&amp;',('state', '=', 'posted'), '&amp;',('payment_state', 'in', ('not_paid','partial')), ('name', 'ilike', 'END/')]">
               <tree editable="bottom">
                 <field name="name" readonly="1"/>
                 <field name="partner_id" readonly="1"/>

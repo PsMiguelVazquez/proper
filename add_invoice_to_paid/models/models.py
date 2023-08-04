@@ -9,23 +9,68 @@ class AccountPayment(models.Model):
     amount_rest = fields.Float(compute='get_invoices')
 
     def action_process_edi_web_services(self):
-        # if round(self.amount_rest,2) > 5.0:
-        #     raise UserError('No se puede timbrar un pago que no está totalmente aplicado. Falta aplicar: $' +str(round(self.amount_rest,2)))
-        r = super(AccountPayment, self).action_process_edi_web_services()
+        endosos = self.get_endosos()
+        for endoso in endosos:
+            origin_invoice_documents = self.env['endoso.move'].search([('move_id','=',endoso.id)]).origin_invoice.edi_document_ids
+            endoso.edi_document_ids =origin_invoice_documents
+        r = self.move_id.action_process_edi_web_services()
+        for endoso in endosos:
+            origin_invoice = self.env['endoso.move'].search([('move_id','=',endoso.id)]).origin_invoice
+            origin_invoice.edi_document_ids = endoso.edi_document_ids
         return r
+
+    def action_retry_edi_documents_error(self):
+        endosos = self.get_endosos()
+        for endoso in endosos:
+            origin_invoice_documents = self.env['endoso.move'].search(
+                [('move_id', '=', endoso.id)]).origin_invoice.edi_document_ids
+            endoso.edi_document_ids = origin_invoice_documents
+        r =  super(AccountPayment, self).action_retry_edi_documents_error()
+        for endoso in endosos:
+            origin_invoice = self.env['endoso.move'].search([('move_id','=',endoso.id)]).origin_invoice
+            origin_invoice.edi_document_ids = endoso.edi_document_ids
+        return r
+
+
+
+    def get_endosos(self):
+        for record in self:
+            endosos = self.env['account.move']
+            pay_rec_lines = record.line_ids.filtered(
+                lambda line: line.account_internal_type in ('receivable', 'payable'))
+            for field1, field2 in (('debit', 'credit'), ('credit', 'debit')):
+                for partial in pay_rec_lines[f'matched_{field1}_ids']:
+                    invoice_line = partial[f'{field1}_move_id']
+                    invoice = invoice_line.move_id
+                    if 'END/' in invoice.name and invoice.es_endoso:
+                        endosos |= invoice
+            return endosos
+
+
 
     def get_invoices(self):
         for record in self:
-            totals = 0
-            for move in record.reconciled_invoice_ids:
-                data = json.loads(move.invoice_payments_widget)
-                if data:
-                    for payment in data['content']:
-                        payments = self.env['account.payment'].browse(payment['account_payment_id'])
-                        if payments:
-                            if payments.id == record.id:
-                                totals += payment['amount']
-            record.amount_rest = record.amount - totals
+            totals = 0.0
+            total_pagado = 0.0
+            # for move in record.reconciled_invoice_ids:
+            #     data = json.loads(move.invoice_payments_widget)
+            #     if data:
+            #         for payment in data['content']:
+            #             payments = self.env['account.payment'].browse(payment['account_payment_id'])
+            #             if payments:
+            #                 if payments.id == record.id:
+            #                     totals += payment['amount']
+            # record.amount_rest = record.amount - totals
+            pay_rec_lines = record.line_ids.filtered(lambda line: line.account_internal_type in ('receivable', 'payable'))
+            for field1, field2 in (('debit', 'credit'), ('credit', 'debit')):
+                for partial in pay_rec_lines[f'matched_{field1}_ids']:
+                    payment_line = partial[f'{field2}_move_id']
+                    invoice_line = partial[f'{field1}_move_id']
+                    invoice_amount = partial[f'{field1}_amount_currency']
+                    exchange_move = invoice_line.full_reconcile_id.exchange_move_id
+                    invoice = invoice_line.move_id
+                    total_pagado += invoice_amount
+            record.amount_rest = record.amount - total_pagado
 
 
     def asign_invoices(self):
@@ -72,12 +117,22 @@ class AccountPaymentWidget(models.TransientModel):
         else:
             if move_line:
                 for move in self.invoices_ids:
-                    if 'END/' in move.name:
+                    if 'END/' in move.name and move.es_endoso:
                         '''
                             Conciliar las líneas del endoso con el pago
                         '''
-                        print(move.name)
-                        # move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
+                        amount = move.porcent_assign
+                        end = self.env['endoso.move'].search([('move_id','=',move.id)])
+                        move.invoice_date = end.invoice_date
+                        move.l10n_mx_edi_cfdi_request = 'on_invoice'
+                        move.payment_reference = end.origin_invoice.name
+                        move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
+                        # end.amount_paid += amount
+                        # end.amount_residual = end.amount - end.amount_paid
+                        # move.amount_paid = end.amount_paid
+                        move.amount_residual = end.amount_residual
+                        move.amount_residual_signed = end.amount_residual
+                        print(move)
                     else:
                         amount = move.porcent_assign
                         move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
