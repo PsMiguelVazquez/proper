@@ -56,20 +56,20 @@ class Endoso(models.Model):
                 record.move_id.payment_state = 'paid'
             record.amount_residual = record.amount - record.amount_paid
             record.move_id.payment_state = record.payment_state
-            inv_ori = record.origin_invoice
-            record.move_id.write({
-                'amount_untaxed': inv_ori.amount_untaxed,
-                'amount_tax': inv_ori.amount_tax,
-                'amount_total': inv_ori.amount_total,
-                'amount_residual': inv_ori.amount_total,
-                'amount_untaxed_signed': inv_ori.amount_untaxed_signed,
-                'amount_tax_signed': inv_ori.amount_tax_signed,
-                'amount_total_signed': inv_ori.amount_total_signed,
-                'amount_residual_signed': inv_ori.amount_total,
-                'payment_state': 'not_paid',
-                'porcent_assign': 0.0,
-                'es_endoso': True
-            })
+            # inv_ori = record.origin_invoice
+            # record.move_id.write({
+            #     'amount_untaxed': inv_ori.amount_untaxed,
+            #     'amount_tax': inv_ori.amount_tax,
+            #     'amount_total': inv_ori.amount_total,
+            #     'amount_residual': inv_ori.amount_total,
+            #     'amount_untaxed_signed': inv_ori.amount_untaxed_signed,
+            #     'amount_tax_signed': inv_ori.amount_tax_signed,
+            #     'amount_total_signed': inv_ori.amount_total_signed,
+            #     'amount_residual_signed': inv_ori.amount_total,
+            #     'payment_state': 'not_paid',
+            #     'porcent_assign': 0.0,
+            #     'es_endoso': True
+            # })
 
     def _compute_invoice_fields(self):
         for record in self:
