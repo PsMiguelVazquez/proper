@@ -17,6 +17,19 @@ class AccountMove(models.Model):
     fecha_confirmacion_cancelacion = fields.Date(string='Fecha de confirmación de cancelación ante el SAT')
     ejecutivo_cuenta = fields.Char(string='Ejecutivo de cuenta', related='partner_id.x_nom_corto_agente_venta')
     fecha_entrega_mercancia_html = fields.Html(string='Fechas de entrega', compute='_compute_fecha_entrega_mercancia')
+    movimientos_almacen = fields.Many2many(comodel_name='stock.picking', compute='_compute_movimientos_almacen')
+    cantidad_facturada_total = fields.Integer(string='Cantidad facturada total',compute='_compute_cantidad_facturada_total')
+
+    def _compute_cantidad_facturada_total(self):
+        for record in self:
+            if record.invoice_line_ids:
+                record.cantidad_facturada_total = sum(record.invoice_line_ids.mapped('quantity'))
+            else:
+                record.cantidad_facturada_total = 0
+
+    def _compute_movimientos_almacen(self):
+        for record in self:
+            record.movimientos_almacen = self.env['stock.picking'].search([('x_studio_facturas','=',record.id),('picking_type_code','in',['outgoing', 'incoming'])])
     def _compute_fecha_entrega_mercancia(self):
         for record in self:
             fecha_entrega_mercancia_html = ''
