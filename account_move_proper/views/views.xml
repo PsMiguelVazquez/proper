@@ -22,6 +22,22 @@
                 <field name="fecha_entrega_mercancia_html" attrs="{'invisible':[('move_type', '!=', 'out_invoice')], 'readonly': True}"/>
                 <field name="fecha_recepcion_credito"/>
             </xpath>
+            <xpath expr="//notebook/page[@name='other_info']" position="after">
+                <page string="Movimientos de almacén" name="movimientos_almacen">
+                    <field name="movimientos_almacen">
+                        <tree>
+                            <field name="name" string="Movimiento" readonly="1"/>
+                            <field name="origin" string="Origen" readonly="1"/>
+                            <field name="location_id" string="Almacén" readonly="1"/>
+                            <field name="date_done" readonly="1"/>
+                            <field name="state" readonly="1" widget="badge" decoration-info="state in ('waiting','confirmed','assigned')" decoration-success="state == 'done'" decoration-danger="state == 'cancel'"/>
+                            <field name="productos_entregados"/>
+                        </tree>
+                    </field>
+                    <label for="cantidad_facturada_total" string="Cantidad total facturada"/>
+                    <field name="cantidad_facturada_total"/>
+                </page>
+            </xpath>
         </field>
     </record>
 
