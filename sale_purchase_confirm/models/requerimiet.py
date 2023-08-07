@@ -163,6 +163,7 @@ class ProposalPurchase(models.Model):
                  'x_studio_many2one_field_RWuq7': self.x_familia_id.id,
                  'x_studio_many2one_field_LZOP8': self.x_linea_id.id, 'image_1920': self.x_archivo,
                  'x_num_pro': self.x_name,
+                 'x_notas_propuestas': self.x_note,
                  'x_producto_propuesta': self.x_new_prod_prop})
         if self.rel_id.x_order_id.x_studio_nivel:
             margen = marca['x_studio_margen_' + str(self.rel_id.x_order_id.x_studio_nivel)] if marca else 12
