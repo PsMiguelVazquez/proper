@@ -10,6 +10,7 @@ class AccountPayment(models.Model):
 
     def action_process_edi_web_services(self):
         endosos = self.get_endosos()
+
         for endoso in endosos:
             origin_invoice_documents = self.env['endoso.move'].search([('move_id','=',endoso.id)]).origin_invoice.edi_document_ids
             endoso.edi_document_ids =origin_invoice_documents
@@ -135,7 +136,10 @@ class AccountPaymentWidget(models.TransientModel):
                         print(move)
                     else:
                         amount = move.porcent_assign
-                        move.with_context({'paid_amount': amount, 'no_exchange_difference': True}).js_assign_outstanding_line(move_line.id)
+                        if self.env.company.currency_id == move.currency_id:
+                            move.with_context({'paid_amount': amount, 'no_exchange_difference': True}).js_assign_outstanding_line(move_line.id)
+                        else:
+                            move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
             else:
                 raise odoo.exceptions.UserError("No hay asiento disponible para el movimiento")
         return True
