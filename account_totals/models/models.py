@@ -15,7 +15,7 @@ class AccountMove(models.Model):
             if type(data) == str:
                 amount = r[k].split(symbol)
                 monto = round(float(amount[1].replace(',', '')), 2)
-                r[k] = str(self.currency_id.symbol)+"\xa0"+f"{monto:,.2f}"
+                r[k] = str(symbol)+"\xa0"+f"{monto:,.2f}"
             if type(data) == dict:
                 for tax in list(r[k].keys()):
                     for li in r[k][tax]:
