@@ -948,6 +948,8 @@ class Alerta_limite_de_credito(models.TransientModel):
     def confirmar_validacion(self):
         self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0).write({'x_validacion_precio': True})
         self.sale_id.write({'solicito_validacion': True})
+        msg = self.mensaje.replace('Se solicitará validar datos de los siguientes productos', 'Se solicitó validar datos masivamente')
+        self.sale_id.message_post(body=msg, type="notification")
 
     def confirmar_parcial(self):
         mensaje = ''
