@@ -54,11 +54,7 @@ class account_bank_statement(models.Model):
         self.balance_end_real = self.balance_end
         if not self.name or self.name == '':
             if self.line_ids:
-                referencia = ''
-                inv_lines = self.line_ids[0].rel_payment.reconciled_invoice_ids
-                for invoice in inv_lines:
-                    referencia += invoice.ref + ' '
-                self.name = referencia
+                self.name = ','.join(self.line_ids[0].rel_payment.reconciled_invoice_ids.mapped('name'))
             else:
                 self.name = ''
 

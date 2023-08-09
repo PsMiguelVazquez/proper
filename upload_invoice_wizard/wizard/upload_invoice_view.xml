@@ -15,7 +15,7 @@
                         <field name="client_id" required="1" domain="[('vat','=','rfc_receptor')]"
                                options="{'no_create': True, 'no_create_edit':True}"
                                attrs="{'invisible':[('tipo', '!=', 'sale_order')]}"/>
-                        <field name="provider_id" required="1" domain="[('vat','=','rfc_emisor')]"
+                        <field name="provider_id" domain="[('vat','=','rfc_emisor')]"
                                options="{'no_create': True, 'no_create_edit':True}"
                                attrs="{'invisible':[('tipo', '!=', 'purchase_order')]}"/>
                         <field name="fecha_factura"  readonly="1"/>
