@@ -950,6 +950,13 @@ class Alerta_limite_de_credito(models.TransientModel):
         self.sale_id.write({'solicito_validacion': True})
         msg = self.mensaje.replace('Se solicitará validar datos de los siguientes productos', 'Se solicitó validar datos masivamente')
         self.sale_id.message_post(body=msg, type="notification")
+        activity_user = self.env['res.users'].search([('login', 'like', '%compras1%')])
+        self.sale_id.activity_schedule(
+            activity_type_id=4,
+            summary="Validación de precios",
+            note=msg,
+            user_id=activity_user.id
+        )
 
     def confirmar_parcial(self):
         mensaje = ''
