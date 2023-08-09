@@ -7,12 +7,13 @@ class AccountMove(models.Model):
     @api.model
     def _get_tax_totals(self, partner, tax_lines_data, amount_total, amount_untaxed, currency):
         r = super(AccountMove, self)._get_tax_totals(partner, tax_lines_data, amount_total, amount_untaxed, currency)
+        symbol = self.currency_id.symbol if self.currency_id else self.env.company.currency_id.symbol
         for k in list(r.keys()):
             data = r.get(k)
             if type(data) == float:
                 r[k] = round(data, 2)
             if type(data) == str:
-                amount = r[k].split(self.currency_id.symbol)
+                amount = r[k].split(symbol)
                 monto = round(float(amount[1].replace(',', '')), 2)
                 r[k] = str(self.currency_id.symbol)+"\xa0"+f"{monto:,.2f}"
             if type(data) == dict:
@@ -23,9 +24,9 @@ class AccountMove(models.Model):
                             if type(data) == float:
                                 li[taxlis] = round(data, 2)
                             if type(data) == str:
-                                if self.currency_id.symbol in data:
-                                    amount = li[taxlis].split(self.currency_id.symbol)
+                                if symbol in data:
+                                    amount = li[taxlis].split(symbol)
                                     monto = round(float(amount[1].replace(',', '')), 2)
-                                    li[taxlis] = str(self.currency_id.symbol) + "\xa0" + f"{monto:,.2f}"
+                                    li[taxlis] = str(symbol) + "\xa0" + f"{monto:,.2f}"
         return r
 
