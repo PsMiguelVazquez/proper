@@ -5,4 +5,4 @@
 from . import decimal_precision
 from . import fields
 #from . import ir_http
-#from . import res_currency
+from . import res_currency
