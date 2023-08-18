@@ -24,8 +24,8 @@
     # always loaded
     'data': [
         'views/account_move.xml',
-        'views/account_payment.xml',
         'wizard/factoraje_wizard_view.xml',
         'security/ir.model.access.csv',
+        'data/cfdi4/pago.xml',
     ],
 }
