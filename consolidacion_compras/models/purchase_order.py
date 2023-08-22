@@ -19,6 +19,9 @@ class PurchaseOrder(models.Model):
 
     def view_consolidate_purchase_wizard(self):
         purchase_orders = self.env['purchase.order'].browse(self.env.context.get('active_ids'))
+        for po in purchase_orders:
+            if len(po.order_line) == 0:
+                raise UserError('Algunas órdenes de compra no tienen productos')
         if len(purchase_orders.mapped('partner_id')) > 1:
             raise UserError('No se pueden consolidar órdenes de diferentes proveedores')
         if len(purchase_orders) == 1:
