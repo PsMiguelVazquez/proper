@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="view_consolidacion_compra_wizard_form" model="ir.ui.view">
+        <field name="name">consolidacion.wizard.compra.form</field>
+        <field name="model">consolidacion.compras.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Consolidar Compras">
+                <group>
+                    <group>
+                        <field name="partner_id" readonly="1"/>
+                        <field name="partner_ref"/>
+                    </group>
+                </group>
+                <label for="purchase_order_lines"/>
+                <field name="purchase_order_lines"  widget="many2many" readonly="1" invisible="1" mode="form,tree">
+                        <form>
+                            <group>
+                                <group>
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="product_qty" readonly="1"/>
+                                    <field name="price_unit" readonly="1"/>
+                                    <field name="price_subtotal"/>
+                                    <field name="price_total"/>
+                                </group>
+                            </group>
+                        </form>
+                        <tree string="Sales Order Lines">
+                            <field name="product_id"/>
+                            <field name="product_qty"/>
+                            <field name="price_unit"/>
+                            <field name="price_subtotal" sum="Subtotal"/>
+                            <field name="price_total" sum="Total"/>
+                        </tree>
+                </field>
+                <field name="wizard_lines"  widget="many2many" readonly="1" mode="form,tree">
+                        <form>
+                            <group>
+                                <group>
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="product_qty" readonly="1"/>
+                                    <field name="price_unit" readonly="1"/>
+                                    <field name="price_subtotal"/>
+                                    <field name="price_total"/>
+                                </group>
+                            </group>
+                        </form>
+                        <tree string="Sales Order Lines">
+                            <field name="product_id"/>
+                            <field name="product_qty"/>
+                            <field name="price_unit"/>
+                            <field name="price_subtotal" sum="Subtotal"/>
+                            <field name="price_total" sum="Total"/>
+                        </tree>
+                </field>
+                <footer>
+                    <button name="done_consolidar_compra" type="object" string="Confirmar"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
