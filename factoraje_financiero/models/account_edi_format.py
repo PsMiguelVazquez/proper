@@ -232,8 +232,9 @@ class AccountEdiFormat(models.Model):
 
 
         totales.setAttribute('MontoTotalPagos',str(round(suma_totales,2)))
-        totales.setAttribute('TotalTrasladosBaseIVA16',str(round(suma_traslados_base_iva16,2)))
-        totales.setAttribute('TotalTrasladosImpuestoIVA16', str(round(suma_traslados_impuesto_iva16,2)))
+        if round(suma_traslados_base_iva16,2) > 0.0:
+            totales.setAttribute('TotalTrasladosBaseIVA16',str(round(suma_traslados_base_iva16,2)))
+            totales.setAttribute('TotalTrasladosImpuestoIVA16', str(round(suma_traslados_impuesto_iva16,2)))
         cfdi = dom.toxml()
         decoded_cfdi_values = move._l10n_mx_edi_decode_cfdi(cfdi_data=cfdi)
         cfdi_cadena_crypted = cfdi_values['certificate'].sudo().get_encrypted_cadena(decoded_cfdi_values['cadena'])
@@ -253,7 +254,7 @@ class AccountEdiFormat(models.Model):
         if neteo:
             template_pago = self.env.ref('factoraje_financiero.pagocompensacion')
             cfdi_values = self.get_netting_values(neteo)
-            cfdi_values.update({'l10n_mx_edi_payment_method_id':self.env['l10n_mx_edi.payment.method'].browse(12), 'tax_objected': '02'})
+            cfdi_values.update({'l10n_mx_edi_payment_method_id':self.env['l10n_mx_edi.payment.method'].browse(12), 'tax_objected': move._l10n_mx_edi_get_tax_objected()})
             pago_str = template_pago._render(cfdi_values)
             s = r['cfdi_str'].decode()
             io = s.index('</pago20:Pagos>')

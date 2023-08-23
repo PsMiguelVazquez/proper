@@ -13,8 +13,16 @@ class PurchaseOrder(models.Model):
         ('purchase', 'Purchase Order'),
         ('done', 'Locked'),
         ('cancel', 'Cancelled'),
-        ('consolidate', 'Consolidada')
+        ('consolidate', 'Consolidada'),
+        ('approved', 'Aprobada')
     ], string='Status', readonly=True, index=True, copy=False, default='draft', tracking=True)
+
+
+    def button_approve(self, force=False):
+        r = super(PurchaseOrder, self).button_approve()
+        self.write({'state': 'approved', 'date_approve': fields.Datetime.now()})
+        return r
+
 
 
     def view_consolidate_purchase_wizard(self):
@@ -26,8 +34,8 @@ class PurchaseOrder(models.Model):
             raise UserError('No se pueden consolidar órdenes de diferentes proveedores')
         if len(purchase_orders) == 1:
             raise UserError('Se deben consolidar 2 o más órdenes')
-        if len(list(set(purchase_orders.mapped('state')))) > 1 and purchase_orders.mapped('state')[0] != 'draft':
-            raise UserError('No se pueden consolidar órdenes que no están en estado borrador')
+        if len(list(set(purchase_orders.mapped('state')))) > 1 and purchase_orders.mapped('state')[0] not in ['draft', 'approved']:
+            raise UserError('Sólo se pueden consolidar órdenes en estado borrador o en estado aprobado')
         partner = purchase_orders.mapped('partner_id')
         purchase_order_lines = purchase_orders.mapped('order_line')
         w = self.env['consolidacion.compras.wizard'].sudo().create(

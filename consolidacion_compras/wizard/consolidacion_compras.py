@@ -26,17 +26,19 @@ class ConsolidacionWizardPurchase(models.TransientModel):
         origin = [x for x in self.purchase_orders.mapped('origin') if x]
         partner_ref = [x for x in self.purchase_orders.mapped('partner_ref') if x]
         for line in self.wizard_lines:
-            line_detail = (0, 0, {
-                'product_id': line.product_id.id,
-                'product_qty': line.product_qty,
-                'price_unit': line.price_unit,
-            })
-            lines.append(line_detail)
+            if line.product_qty > 0:
+                line_detail = (0, 0, {
+                    'product_id': line.product_id.id,
+                    'product_qty': line.product_qty,
+                    'price_unit': line.price_unit,
+                })
+                lines.append(line_detail)
         purchase_order = self.env['purchase.order'].create({
             'partner_id': provider.id,
             'order_line': lines,
             'origin': ', '.join(origin),
-            'partner_ref': self.partner_ref
+            'partner_ref': self.partner_ref,
+            'sale_ids':self.purchase_orders.mapped('sale_ids')
         })
         if purchase_order:
             msg = (
