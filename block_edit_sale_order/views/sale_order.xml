@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+    <record id="sale_order_form_block_edit" model="ir.ui.view">
+        <field name="name">sale.order.form.block.edit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/header/field[@name='authorized_transaction_ids']" position="before">
+                <field name="edit_blocked" invisible="1"/>
+            </xpath>
+            <xpath expr="//form/sheet/notebook/page/field[@name='order_line']" position="attributes">
+                <attribute name="attrs">{'readonly':[('edit_blocked','=',True)]}</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
