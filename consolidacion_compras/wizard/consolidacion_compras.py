@@ -41,6 +41,7 @@ class ConsolidacionWizardPurchase(models.TransientModel):
             'sale_ids':self.purchase_orders.mapped('sale_ids')
         })
         if purchase_order:
+            purchase_order.write({'state': 'draft'})
             msg = (
                               "Se consolidó esta orden desde: " +
                               ", ".join([("<a href=# data-oe-model=purchase.order data-oe-id=%d>%s</a>")%(x.id, x.name)
@@ -54,7 +55,7 @@ class ConsolidacionWizardPurchase(models.TransientModel):
 
     def _compute_lines(self):
         for record in self:
-            order_lines = self.purchase_orders.mapped('order_line')
+            order_lines = self.purchase_order_lines
             lista_productos = []
             lista_productos_precios = [
                 (
