@@ -14,10 +14,22 @@ class AccountMove(models.Model):
         for record in self:
             record.balance_after_factoring = record.amount_residual - record.factoring_amount - record.porcent_assign
 
+    @api.onchange('factoring_amount')
+    def on_balance_after_factoring(self):
+        for record in self:
+            if record.porcent_assign == 0.0:
+                record.porcent_assign = record.balance_after_factoring
+
+
 
     def view_financial_factoring_wizard(self):
         active_ids = self._context.get('active_ids')
         facturas = self.env['account.move'].browse(active_ids)
+        if len(facturas.filtered(lambda x: x.payment_state == 'not_paid')) != len(facturas):
+            raise UserError('No se puede aplicar factoraje a facturas pagadas o pagadas parcialmente.')
+        if len(facturas.mapped('partner_id')) != 1:
+            raise UserError('No se puede aplicar factoraje a facturas de diferentes clientes.')
+
         facturas.write({'factoring_amount': 0.0, 'porcent_assign': 0.0})
         w = self.env['account.payment.register'].with_context(active_model='account.move', active_ids=active_ids).create({
             'group_payment': True,

@@ -71,6 +71,19 @@ class FactoringWizard(models.TransientModel):
             super(FactoringWizard, self).action_create_payments()
         else:
             '''
+                Validaciones
+            '''
+            if not self.financial_factor:
+                raise UserError('No se ha definido un factorante.')
+            if not self.factor_bill:
+                raise UserError('No se ha definido la factura/gasto del factorante.')
+            if round(self.amount_residual_factor_bill,2) != 0.00:
+                raise UserError('No se ha aplicado completamente el monto del factoraje.')
+            if round(sum(self.partner_bills.mapped('balance_after_factoring')),2) != 0.00:
+                raise UserError('No se han pagado las facturas por completo.')
+            if self.l10n_mx_edi_payment_method_id.id == 22:
+                raise UserError('La forma de pago 99 - Por definir no está permitida.')
+            '''
                 Si es pago por factoraje el partner del pago pasa a ser el factor
             '''
             self.partner_id = self.financial_factor
