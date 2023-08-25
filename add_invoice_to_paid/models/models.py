@@ -117,7 +117,7 @@ class AccountPaymentWidget(models.TransientModel):
             raise odoo.exceptions.UserError("No se puede asignar mas del monto: "+str(self.amount_rest) + '. Intentando asignar ' + str(check_sum))
         else:
             if move_line:
-                if len(self.invoices_ids) == 1:
+                if len(self.invoices_ids) == 1 and 'END/' in self.invoices_ids.name and self.invoices_ids.es_endoso:
                     move = self.invoices_ids
                     domain = [
                         ('parent_state', '=', 'posted'),
