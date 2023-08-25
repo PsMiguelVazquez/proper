@@ -23,7 +23,7 @@ class FactoringWizard(models.TransientModel):
 
     def create_neteo(self):
         for record in self:
-            journal = self.env['account.journal'].search([('name','=','NETEO')])
+            journal = self.env['account.journal'].search([('name','ilike','neteo')])
             if not journal:
                 raise UserError('No existe diario para llevar a cabo la operación')
             move = self.env['account.move'].create({
@@ -41,11 +41,16 @@ class FactoringWizard(models.TransientModel):
                     "account_id": inv.partner_id.property_account_receivable_id.id,
                 }
                 move_lines_d.append((0, 0, move_line_vals))
+            factor_account_creditor = record.financial_factor.property_account_creditor
+            if factor_account_creditor:
+                line_account_id = factor_account_creditor.id
+            else:
+                line_account_id = record.financial_factor.property_account_payable_id.id
             move_line_vals = {
                 'debit': sum(record.partner_bills.mapped('factoring_amount')),
                 "partner_id": record.financial_factor.id,
                 "name": record.factor_bill.name,
-                "account_id": record.financial_factor.property_account_payable_id.id,
+                "account_id": line_account_id,
             }
             move_lines_d.append((0, 0, move_line_vals))
             move.write({"line_ids": move_lines_d, 'l10n_mx_edi_payment_method_id': 12})
@@ -98,7 +103,7 @@ class FactoringWizard(models.TransientModel):
         if not self.hide_fields_factoraje:
             neteo = self.create_neteo()
             neteo.rel_payment = payments
-            neteo.payment_id = payments.id
+            # neteo.payment_id = payments.id
         return payments
 
     def _reconcile_payments(self, to_process, edit_mode=False):

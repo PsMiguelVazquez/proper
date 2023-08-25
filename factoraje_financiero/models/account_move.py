@@ -9,6 +9,23 @@ class AccountMove(models.Model):
     balance_after_factoring = fields.Float(string='Restante', compute='_compute_balance_after_factoring')
     rel_payment = fields.Many2one('account.payment')
 
+    def write(self, vals):
+        '''
+            SI EL DIARIO ES EL CORRESPONDIENTE AL DE GASTOS Y EL MOVIMIENTO ESTÁ EN ESTADO BORRADOR
+            CAMBIA LA CUENTA DE LA LÍNEA CONTABLE DE LA CUENTA DE PROVEEDOR A LA CUENTA DE ACREEDOR
+            SI LA TIENE CONFIGURADA. SI NO NO HACE NINGÚN CAMBIO. (EL JOURNAL_ID ESTÁ HARDCODEADO.
+            INTENTAR HACERLO GENÉRICO)
+        '''
+        def_journal = self._context.get('default_journal_id')
+        if def_journal == 21 and self.state == 'draft':
+            account_creditor = self.partner_id.property_account_creditor
+            account_payable = self.partner_id.property_account_payable_id
+            creditor_line = self.line_ids.filtered(lambda x: x.account_id == account_payable)
+            if creditor_line:
+                if account_creditor:
+                    creditor_line.write({'account_id': account_creditor.id})
+        return super(AccountMove, self).write(vals)
+
     @api.depends('porcent_assign', 'factoring_amount')
     def _compute_balance_after_factoring(self):
         for record in self:
