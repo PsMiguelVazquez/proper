@@ -117,29 +117,53 @@ class AccountPaymentWidget(models.TransientModel):
             raise odoo.exceptions.UserError("No se puede asignar mas del monto: "+str(self.amount_rest) + '. Intentando asignar ' + str(check_sum))
         else:
             if move_line:
-                for move in self.invoices_ids:
-                    if 'END/' in move.name and move.es_endoso:
-                        '''
-                            Conciliar las líneas del endoso con el pago
-                        '''
-                        amount = move.porcent_assign
-                        end = self.env['endoso.move'].search([('move_id','=',move.id)])
-                        move.invoice_date = end.invoice_date
-                        move.l10n_mx_edi_cfdi_request = 'on_invoice'
-                        move.payment_reference = end.origin_invoice.name
-                        move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
-                        # end.amount_paid += amount
-                        # end.amount_residual = end.amount - end.amount_paid
-                        # move.amount_paid = end.amount_paid
-                        move.amount_residual = end.amount_residual
-                        move.amount_residual_signed = end.amount_residual
-                        print(move)
-                    else:
-                        amount = move.porcent_assign
-                        if self.env.company.currency_id == move.currency_id:
-                            move.with_context({'paid_amount': amount, 'no_exchange_difference': True}).js_assign_outstanding_line(move_line.id)
-                        else:
+                if len(self.invoices_ids) == 1:
+                    move = self.invoices_ids
+                    domain = [
+                        ('parent_state', '=', 'posted'),
+                        ('account_internal_type', 'in', ('receivable', 'payable')),
+                        ('reconciled', '=', False),
+                    ]
+                    to_reconcile = move_line
+                    amount = move.porcent_assign
+                    end = self.env['endoso.move'].search([('move_id', '=', move.id)])
+                    move.invoice_date = end.invoice_date
+                    move.l10n_mx_edi_cfdi_request = 'on_invoice'
+                    move.payment_reference = end.origin_invoice.name
+                    movs_reconciled = move._get_reconciled_invoices_partials()
+                    if movs_reconciled:
+                        move._get_reconciled_invoices_partials()[0][2].remove_move_reconcile()
+                    inv_line = end.origin_invoice.line_ids.filtered(
+                        lambda x: x.account_id.internal_type == 'receivable')
+                    inv_line.write({'account_id': move_line.account_id.id})
+                    to_reconcile |= inv_line
+                    to_reconcile.write({'account_id': end.origin_invoice.partner_id.property_account_receivable_id.id})
+                    to_reconcile.with_context({'paid_amount': amount}).reconcile()
+                    move.amount_residual = end.amount_residual
+                    move.amount_residual_signed = end.amount_residual
+                else:
+                    for move in self.invoices_ids:
+                        if 'END/' in move.name and move.es_endoso:
+                            '''
+                                Conciliar las líneas del endoso con el pago
+                            '''
+                            amount = move.porcent_assign
+                            end = self.env['endoso.move'].search([('move_id','=',move.id)])
+                            move.invoice_date = end.invoice_date
+                            move.l10n_mx_edi_cfdi_request = 'on_invoice'
+                            move.payment_reference = end.origin_invoice.name
                             move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
+                            # end.amount_paid += amount
+                            # end.amount_residual = end.amount - end.amount_paid
+                            # move.amount_paid = end.amount_paid
+                            move.amount_residual = end.amount_residual
+                            move.amount_residual_signed = end.amount_residual
+                        else:
+                            amount = move.porcent_assign
+                            if self.env.company.currency_id == move.currency_id:
+                                move.with_context({'paid_amount': amount, 'no_exchange_difference': True}).js_assign_outstanding_line(move_line.id)
+                            else:
+                                move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
             else:
                 raise odoo.exceptions.UserError("No hay asiento disponible para el movimiento")
         return True
