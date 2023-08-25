@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "Factoraje financiero",
+    'name': "Consolidación de órdenes de compra",
 
     'summary': """
-        Factoraje financiero""",
+        Consolida las órdenes de compra seleccionadas, cambiando el estado de las ordenes
+        consolidadas a consolidado
+        """,
 
     'description': """
-        Aplicación de pagos por Factoraje , ( incluye aplicación de los Interéses correspondientes )
+        Permite consolidar órdenes de compra
     """,
 
     'author': "Jonathan Alfaro",
@@ -19,13 +21,12 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'account','l10n_mx_edi'],
+    'depends': ['base', 'purchase'],
 
     # always loaded
     'data': [
-        'views/account_move.xml',
-        'wizard/factoraje_wizard_view.xml',
-        'security/ir.model.access.csv',
-        'data/cfdi4/pago.xml',
+        'views/views.xml',
+        'wizard/consolidacion_compras_view.xml',
+        'security/ir.model.access.csv'
     ],
 }

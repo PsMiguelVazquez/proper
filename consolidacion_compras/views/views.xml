@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="action_consolidate_purchase_order" model="ir.actions.server">
+        <field name="name">Consolidar compras</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="consolidacion_compras.model_purchase_order"/>
+        <field name="binding_model_id" ref="purchase.model_purchase_order" />
+        <field name="code">action=model.view_consolidate_purchase_wizard()</field>
+        <field name="state">code</field>
+    </record>
+</odoo>

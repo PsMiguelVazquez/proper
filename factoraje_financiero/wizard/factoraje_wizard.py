@@ -6,109 +6,123 @@ from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
 class FactoringWizard(models.TransientModel):
-    _name = 'factoraje.financiero.wizard'
+    _inherit = 'account.payment.register'
     _description = 'Muestra un wizard para el proceso de factoraje financiero'
 
-    partner_id = fields.Many2one('res.partner', string='Cliente')
+    hide_fields_factoraje = fields.Boolean(default=True)
     financial_factor = fields.Many2one('res.partner', string='Factorante')
-    provider_bill = fields.Many2one('account.move', string='Factura del proveedor')
-    amount_provider_bill = fields.Float(string='Monto restante de la factura', compute='compute_amount_provider_bill')
-    journal = fields.Many2one('account.journal', string='Diario')
-    currency = fields.Many2one('res.currency', string='Moneda')
-    memo = fields.Char(string='Memo')
-    amount_total = fields.Float(string='Monto del pago', compute='compute_totals')
-    payment_method = fields.Many2one('l10n_mx_edi.payment.method')
-    partner_bills = fields.Many2many(comodel_name='account.move', string='Facturas del cliente')
-    payment_date = fields.Datetime('Fecha de pago')
-    factoring_total = fields.Float(string='Total por factoraje', compute='compute_totals')
-    bank_total = fields.Float(string='Pago')
-    line_ids = fields.Many2many('account.move.line', compute='get_line_ids')
+    factor_bill = fields.Many2one('account.move', string='Factura del factorante')
+    amount_factor_bill = fields.Monetary('Monto factura', related='factor_bill.amount_residual')
+    amount_residual_factor_bill = fields.Monetary('Monto restante factoraje', compute='get_factor_bill_amount')
+    partner_bills = fields.Many2many(comodel_name='account.move')
 
-    @api.depends('partner_bills')
-    def get_line_ids(self):
+    @api.depends('partner_bills','amount_factor_bill')
+    def get_factor_bill_amount(self):
         for record in self:
-            record.line_ids = self.env['account.move.line']
+            record.amount_residual_factor_bill = record.amount_factor_bill - sum(record.partner_bills.mapped('factoring_amount'))
 
-    @api.depends('partner_bills')
-    def compute_totals(self):
+    def create_neteo(self):
         for record in self:
-            record.factoring_total = sum(record.partner_bills.mapped('factoring_amount'))
-            record.amount_total = record.factoring_total + record.bank_total
+            journal = self.env['account.journal'].search([('name','ilike','neteo')])
+            if not journal:
+                raise UserError('No existe diario para llevar a cabo la operación')
+            move = self.env['account.move'].create({
+                'ref': _(', '.join(self.partner_bills.mapped(('name'))))
+                , 'journal_id': journal.id
+            })
+            move_lines = record.partner_bills.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable') and x.partner_id == record.partner_bills.mapped('partner_id'))
+            move_lines |= record.factor_bill.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable') and x.partner_id == record.financial_factor)
+            move_lines_d = []
+            for inv in record.partner_bills:
+                move_line_vals = {
+                    'credit': inv.factoring_amount,
+                    "partner_id": inv.partner_id.id,
+                    "name": inv.name,
+                    "account_id": inv.partner_id.property_account_receivable_id.id,
+                }
+                move_lines_d.append((0, 0, move_line_vals))
+            factor_account_creditor = record.financial_factor.property_account_creditor
+            if factor_account_creditor:
+                line_account_id = factor_account_creditor.id
+            else:
+                line_account_id = record.financial_factor.property_account_payable_id.id
+            move_line_vals = {
+                'debit': sum(record.partner_bills.mapped('factoring_amount')),
+                "partner_id": record.financial_factor.id,
+                "name": record.factor_bill.name,
+                "account_id": line_account_id,
+            }
+            move_lines_d.append((0, 0, move_line_vals))
+            move.write({"line_ids": move_lines_d, 'l10n_mx_edi_payment_method_id': 12})
+            move.action_post()
+            for move_line in move.line_ids:
+                to_reconcile = move_line + move_lines.filtered(
+                    lambda x: x.account_id == move_line.account_id and x.move_id.name == move_line.name
+                )
+                to_reconcile.reconcile()
+            return move
 
-
-    @api.depends('provider_bill')
-    def compute_amount_provider_bill(self):
+    @api.onchange('partner_bills')
+    def on_change_partner_bills(self):
+        '''
+            Calcula el monto del pago cada que cambia el monto individual de cada factura de cliente
+        '''
         for record in self:
-            record.amount_provider_bill = 0.0
-            if record.provider_bill:
-                record.amount_provider_bill = record.provider_bill.amount_residual
+            if not record.hide_fields_factoraje:
+                record.amount = sum(record.partner_bills.mapped('porcent_assign'))
 
-
-    def done_factoring(self):
+    def action_create_payments(self):
+        if self.hide_fields_factoraje:
+            super(FactoringWizard, self).action_create_payments()
+        else:
+            '''
+                Validaciones
+            '''
+            if not self.financial_factor:
+                raise UserError('No se ha definido un factorante.')
+            if not self.factor_bill:
+                raise UserError('No se ha definido la factura/gasto del factorante.')
+            if round(self.amount_residual_factor_bill,2) != 0.00:
+                raise UserError('No se ha aplicado completamente el monto del factoraje.')
+            if round(sum(self.partner_bills.mapped('balance_after_factoring')),2) != 0.00:
+                raise UserError('No se han pagado las facturas por completo.')
+            if self.l10n_mx_edi_payment_method_id.id == 22:
+                raise UserError('La forma de pago 99 - Por definir no está permitida.')
+            '''
+                Si es pago por factoraje el partner del pago pasa a ser el factor
+            '''
+            self.partner_id = self.financial_factor
+            payments = super(FactoringWizard, self).action_create_payments()
+            return payments
+    def _create_payments(self):
+        payments = super(FactoringWizard, self)._create_payments()
         '''
-            Crear pago por compensación, aplicando el monto del campo factoring_amount para cada factura de cliente partner_bills
+            Si es proceso de factoraje se crea el neteo, se publica y se postea 
+            para marcar como pagadas/parcialmente pagadas/en proceso de pago las facturas de cliente y proveedor
         '''
-        print(self)
-        self._get_batches()
+        if not self.hide_fields_factoraje:
+            neteo = self.create_neteo()
+            neteo.rel_payment = payments
+            # neteo.payment_id = payments.id
+        return payments
+
+    def _reconcile_payments(self, to_process, edit_mode=False):
         '''
-            Crear pago con el método de pago especificado en el wizard para cada factura aplicando el monto en el campo porcent_assign
+            Si las facturas del cliente son mas de una se concilia por el monto ingresado
+            en el campo porcent_assign
         '''
-        print(self)
-        '''
-            Ver si se puede obtener los datos de ambos pagos y unirlos en un solo xml para mandar a timbrarlo
-        '''
-        print(self)
-
-    def _get_batches(self):
-        ''' Group the account.move.line linked to the wizard together.
-        Lines are grouped if they share 'partner_id','account_id','currency_id' & 'partner_type' and if
-        0 or 1 partner_bank_id can be determined for the group.
-        :return: A list of batches, each one containing:
-            * payment_values:   A dictionary of payment values.
-            * moves:        An account.move recordset.
-        '''
-        self.ensure_one()
-
-        lines = self.line_ids._origin
-
-        if len(lines.company_id) > 1:
-            raise UserError(_("You can't create payments for entries belonging to different companies."))
-        if not lines:
-            raise UserError(_("You can't open the register payment wizard without at least one receivable/payable line."))
-
-        batches = defaultdict(lambda: {'lines': self.env['account.move.line']})
-        for line in lines:
-            batch_key = self._get_line_batch_key(line)
-            serialized_key = '-'.join(str(v) for v in batch_key.values())
-            vals = batches[serialized_key]
-            vals['payment_values'] = batch_key
-            vals['lines'] += line
-
-        # Compute 'payment_type'.
-        for vals in batches.values():
-            lines = vals['lines']
-            balance = sum(lines.mapped('balance'))
-            vals['payment_values']['payment_type'] = 'inbound' if balance > 0.0 else 'outbound'
-
-        return list(batches.values())
-
-    def _get_line_batch_key(self, line):
-        ''' Turn the line passed as parameter to a dictionary defining on which way the lines
-        will be grouped together.
-        :return: A python dictionary.
-        '''
-        move = line.move_id
-
-        partner_bank_account = self.env['res.partner.bank']
-        if move.is_invoice(include_receipts=True):
-            partner_bank_account = move.partner_bank_id._origin
-
-        return {
-            'partner_id': line.partner_id.id,
-            'account_id': line.account_id.id,
-            'currency_id': line.currency_id.id,
-            'partner_bank_id': partner_bank_account.id,
-            'partner_type': 'customer' if line.account_internal_type == 'receivable' else 'supplier',
-        }
-
-
+        if len(self.partner_bills) > 1:
+            domain = [
+                ('parent_state', '=', 'posted'),
+                ('account_internal_type', 'in', ('receivable', 'payable')),
+                ('reconciled', '=', False),
+            ]
+            for vals in to_process:
+                payment_lines = vals['payment'].line_ids.filtered_domain(domain)
+                lines = vals['to_reconcile']
+                for line in lines:
+                    account = line.account_id
+                    to_reconcile = ((payment_lines + line).filtered_domain([('reconciled', '=', False)]))
+                    to_reconcile.with_context({'paid_amount': line.move_id.porcent_assign}).reconcile()
+        else:
+            super(FactoringWizard, self)._reconcile_payments(to_process, edit_mode=False)

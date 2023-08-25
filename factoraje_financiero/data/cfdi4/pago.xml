@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="pagocompensacion" xmlns:pago20="http://www.sat.gob.mx/Pagos20">
+        <pago20:Pago
+                t-att-FechaPago="cfdi_payment_date"
+                t-att-FormaDePagoP="l10n_mx_edi_payment_method_id.code"
+                t-att-MonedaP="currency.name"
+                t-att-TipoCambioP="format_float(rate_payment_curr_mxn_40, 6) if rate_payment_curr_mxn_40 != 1 else '1'"
+                t-att-Monto="format_float(amount, record.currency_id.decimal_places)"
+                t-att-NumOperacion="format_string(record.ref, 100)"
+                t-att-RfcEmisorCtaOrd="emitter_vat_ord"
+                t-att-NomBancoOrdExt="bank_vat_ord"
+                t-att-CtaOrdenante="payment_account_ord"
+                t-att-RfcEmisorCtaBen="receiver_vat_ord"
+                t-att-CtaBeneficiario="payment_account_receiver">
+            <t t-foreach="invoice_vals_list" t-as="invoice_vals">
+                <t t-set="invoice" t-value="invoice_vals['invoice']"/>
+                <t t-set="invoice_tax_objected" t-value="invoice._l10n_mx_edi_get_tax_objected()"/>
+                <pago20:DoctoRelacionado
+                        t-att-IdDocumento="invoice.l10n_mx_edi_cfdi_uuid"
+                        t-att-Folio="format_string(invoice_vals['folio_number'], 40)"
+                        t-att-Serie="format_string(invoice_vals['serie_number'], 25)"
+                        t-att-MonedaDR="invoice.currency_id.name"
+                        t-att-EquivalenciaDR="format_float(invoice_vals['exchange_rate'], invoice_vals['EQUIVALENCIADR_PRECISION_DIGITS']) if invoice_vals['exchange_rate'] else '1'"
+                        t-att-NumParcialidad="invoice_vals['number_of_payments']"
+                        t-att-ImpSaldoAnt="format_float(invoice_vals['amount_before_paid'], invoice.currency_id.decimal_places)"
+                        t-att-ImpPagado="format_float(invoice_vals['amount_paid'], invoice.currency_id.decimal_places)"
+                        t-att-ObjetoImpDR="invoice_tax_objected"
+                        t-att-ImpSaldoInsoluto="format_float(invoice_vals['amount_before_paid'] - invoice_vals['amount_paid'], invoice.currency_id.decimal_places)">
+                    <pago20:ImpuestosDR t-if="invoice_tax_objected == '02'">
+                        <t t-set="tax_detail_withholding"
+                           t-value="invoice_vals['tax_details_withholding']['tax_details']"/>
+                        <t t-set="tax_detail_transferred"
+                           t-value="invoice_vals['tax_details_transferred']['tax_details']"/>
+                        <pago20:RetencionesDR t-if="tax_detail_withholding">
+                            <t t-foreach="tax_detail_withholding.values()" t-as="wh_tax_detail">
+                                <t t-set="tax" t-value="wh_tax_detail['tax']"/>
+                                <pago20:RetencionDR
+                                        t-att-BaseDR="format_float(wh_tax_detail['base_val_prop_amt_curr'], invoice.currency_id.decimal_places)"
+                                        t-att-ImpuestoDR="wh_tax_detail['tax_class']"
+                                        t-att-TipoFactorDR="tax.l10n_mx_tax_type"
+                                        t-att-TasaOCuotaDR="format_float(wh_tax_detail['tax_amount'], 6) if tax.l10n_mx_tax_type != 'Exento' else False"
+                                        t-att-ImporteDR="format_float(wh_tax_detail['tax_val_prop_amt_curr'], invoice.currency_id.decimal_places)"/>
+                            </t>
+                        </pago20:RetencionesDR>
+                        <pago20:TrasladosDR t-if="tax_detail_transferred">
+                            <t t-foreach="tax_detail_transferred.values()" t-as="tax_detail">
+                                <t t-set="tax" t-value="tax_detail['tax']"/>
+                                <pago20:TrasladoDR
+                                        t-att-BaseDR="format_float(tax_detail['base_val_prop_amt_curr'], invoice.currency_id.decimal_places)"
+                                        t-att-ImpuestoDR="tax_detail['tax_class']"
+                                        t-att-TipoFactorDR="tax.l10n_mx_tax_type"
+                                        t-att-TasaOCuotaDR="format_float(tax_detail['tax_amount'], 6) if tax.l10n_mx_tax_type != 'Exento' else False"
+                                        t-att-ImporteDR="format_float(tax_detail['tax_val_prop_amt_curr'], invoice.currency_id.decimal_places)"/>
+                            </t>
+                        </pago20:TrasladosDR>
+                    </pago20:ImpuestosDR>
+                </pago20:DoctoRelacionado>
+            </t>
+            <pago20:ImpuestosP t-if="tax_objected == '02'">
+                <pago20:RetencionesP t-if="sum([tax['amount_curr'] for tax in withholding_summary.values()])">
+                    <t t-foreach="withholding_summary.keys()" t-as="tax_class">
+                        <pago20:RetencionP
+                                t-if="withholding_summary[tax_class] and withholding_summary[tax_class]['amount_curr']"
+                                t-att-ImpuestoP="tax_class"
+                                t-att-ImporteP="format_float(withholding_summary[tax_class]['amount_curr'], record.currency_id.decimal_places)"/>
+                    </t>
+                </pago20:RetencionesP>
+                <pago20:TrasladosP>
+                    <t t-foreach="tax_summary.values()" t-as="item">
+                        <pago20:TrasladoP t-if="item['tax_spec'] == 'T'"
+                                          t-att-BaseP="format_float(item['base_value'], record.currency_id.decimal_places)"
+                                          t-att-ImpuestoP="item['tax_class']"
+                                          t-att-TipoFactorP="item['tax_type']"
+                                          t-att-TasaOCuotaP="format_float(item['tax_amount'], 6) if item['tax_type'] != 'Exento' else False"
+                                          t-att-ImporteP="format_float(item['tax_value'], record.currency_id.decimal_places) if item['tax_type'] != 'Exento' else False"/>
+                    </t>
+                </pago20:TrasladosP>
+            </pago20:ImpuestosP>
+        </pago20:Pago>
+    </template>
+</odoo>
