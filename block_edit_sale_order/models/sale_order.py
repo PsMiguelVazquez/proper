@@ -27,8 +27,8 @@ class SaleOrder(models.Model):
     def _compute_invoice_approved(self):
         for record in self:
             record.invoice_approved = True
-            if record.order_line.filtered(lambda x: x.cantidad_asignada + x.qty_delivered + x.qty_invoiced < x.product_uom_qty) and record.state == 'sale':
-                record.invoice_approved = False
+            # if record.order_line.filtered(lambda x: x.cantidad_asignada + x.qty_delivered + x.qty_invoiced < x.product_uom_qty) and record.state == 'sale':
+            #     record.invoice_approved = False
 
     def approve_invoicing(self):
         self.invoice_approved = not self.invoice_approved
