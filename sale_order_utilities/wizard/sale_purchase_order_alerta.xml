@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+    <record id="sale_purchase_order_alerta" model="ir.ui.view">
+        <field name="name">sale.purchase.order.alerta.form</field>
+        <field name="model">sale.purchase.order.alerta</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="message_top"/>
+                <field name="res_order_id" invisible="1"/>
+                <field name="lines" class="oe_edit_only"  options="{'no_create': True}"
+                       widget="many2many"
+                       domain="[('order_id', '=', res_order_id)]"
+                >
+                    <tree create="false" delete="false" editable="top">
+                        <field name="product_id" readonly="1"/>
+                        <field name="product_uom_qty"  readonly="1"/>
+                        <field name="price_unit"  readonly="1"/>
+                        <field name="proveedor_propuesta"  readonly="1"/>
+                        <field name="x_cantidad_disponible_compra"  string="Cantidad propuesta por compras" readonly="1"/>
+                        <field name="cantidad_a_comprar" />
+                        <field name="atendido_por"  readonly="1"/>
+                    </tree>
+                </field>
+                <field name="message_bottom"/>
+                <footer>
+                    <button name="confirm"  string="Guardar" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>
