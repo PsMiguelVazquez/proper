@@ -348,9 +348,6 @@ class SaleOrder(models.Model):
             self.write({'x_bloqueo': False, 'x_aprovacion_compras': True})
             return self.action_confirm()
 
-        partial_lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero +
-                                                         - x.product_uom_qty) < 0)
-        # if partial_lines:
         lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra  - x.product_uom_qty) < 0 and x.x_validacion_precio == True)
         if lines:
             mensaje = '<h3>Se solicita aprobar la orden parcial.</h3><table class="table" style="width: 100%"><thead>' \
@@ -360,8 +357,6 @@ class SaleOrder(models.Model):
                       '<th style="width: 20%">Cantidad solicitada</th>' \
                       '</tr></thead>' \
                       '<tbody>'
-            # view = self.env.ref('sale_order_utilities.sale_purchase_order_alerta')
-            # for order_line in partial_lines:
             view = self.env.ref('sale_purchase_confirm.sale_order_partial_view')
             for order_line in lines:
                 mensaje += '<tr><td>' + order_line.name + '</td><td>' \
@@ -399,15 +394,11 @@ class SaleOrder(models.Model):
                                + '</td></tr>'
             mensaje += '</tbody></table>'
             wiz = self.env['sale.order.alerta'].create({'sale_id': self.id, 'mensaje': mensaje})
-            # wiz = self.env['sale.purchase.order.alerta'].create(
-            #                             {'res_order_id': self.id, 'message_top': '<h3>TOP</h3>', 'lines': partial_lines,
-            #                              'message_bottom': '<h3>BOTTOM</h3>'})
             return {
                 'name': _('Alerta'),
                 'type': 'ir.actions.act_window',
                 'view_mode': 'form',
                 'res_model': 'sale.order.alerta',
-                # 'res_model': 'sale.purchase.order.alerta',
                 'views': [(view.id, 'form')],
                 'view_id': view.id,
                 'target': 'new',
@@ -957,17 +948,6 @@ class Alerta_limite_de_credito(models.TransientModel):
     def confirmar_validacion(self):
         o_lines = self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0)
         o_lines.write({'x_validacion_precio': True})
-        data_validate_arr = []
-        for ol in o_lines:
-            data_validate_arr.append({
-                'new_cost': 0.0,
-                'product_qty_purchases': 0.0,
-                'delivery_time': 0,
-                'note': '',
-                'description': '',
-                'order_line_id': ol.id
-            })
-        dv = self.env['data.validate'].create(data_validate_arr)
         self.sale_id.write({'solicito_validacion': True})
         msg = self.mensaje.replace('Se solicitará validar datos de los siguientes productos', 'Se solicitó validar datos masivamente')
         self.sale_id.message_post(body=msg, type="notification")
