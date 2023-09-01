@@ -955,7 +955,19 @@ class Alerta_limite_de_credito(models.TransientModel):
         self.sale_id.message_post(body=mensaje ,type="notification")
 
     def confirmar_validacion(self):
-        self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0).write({'x_validacion_precio': True})
+        o_lines = self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0)
+        o_lines.write({'x_validacion_precio': True})
+        data_validate_arr = []
+        for ol in o_lines:
+            data_validate_arr.append({
+                'new_cost': 0.0,
+                'product_qty_purchases': 0.0,
+                'delivery_time': 0,
+                'note': '',
+                'description': '',
+                'order_line_id': ol.id
+            })
+        dv = self.env['data.validate'].create(data_validate_arr)
         self.sale_id.write({'solicito_validacion': True})
         msg = self.mensaje.replace('Se solicitará validar datos de los siguientes productos', 'Se solicitó validar datos masivamente')
         self.sale_id.message_post(body=msg, type="notification")
