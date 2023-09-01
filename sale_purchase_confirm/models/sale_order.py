@@ -350,9 +350,9 @@ class SaleOrder(models.Model):
 
         partial_lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero +
                                                          - x.product_uom_qty) < 0)
-        if partial_lines:
-        # lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra  - x.product_uom_qty) < 0 and x.x_validacion_precio == True)
-        # if lines:
+        # if partial_lines:
+        lines = self.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra  - x.product_uom_qty) < 0 and x.x_validacion_precio == True)
+        if lines:
             mensaje = '<h3>Se solicita aprobar la orden parcial.</h3><table class="table" style="width: 100%"><thead>' \
                         '<tr style="width: 40% !important;"><th>Producto</th>' \
                       '<th style="width: 20%">Existencia en almacén 0</th>' \
@@ -360,10 +360,10 @@ class SaleOrder(models.Model):
                       '<th style="width: 20%">Cantidad solicitada</th>' \
                       '</tr></thead>' \
                       '<tbody>'
-            view = self.env.ref('sale_order_utilities.sale_purchase_order_alerta')
-            for order_line in partial_lines:
-            # view = self.env.ref('sale_purchase_confirm.sale_order_partial_view')
-            # for order_line in lines:
+            # view = self.env.ref('sale_order_utilities.sale_purchase_order_alerta')
+            # for order_line in partial_lines:
+            view = self.env.ref('sale_purchase_confirm.sale_order_partial_view')
+            for order_line in lines:
                 mensaje += '<tr><td>' + order_line.name + '</td><td>' \
                             + str(order_line.product_id.stock_quant_warehouse_zero) + '</td><td>' \
                            + str(order_line.x_cantidad_disponible_compra) + '</td><td>' \
@@ -398,16 +398,16 @@ class SaleOrder(models.Model):
                                 order_line.x_studio_nuevo_costo / order_line.price_unit)) * 100) if order_line.x_studio_nuevo_costo > 0 else order_line.x_utilidad_por) \
                                + '</td></tr>'
             mensaje += '</tbody></table>'
-            # wiz = self.env['sale.order.alerta'].create({'sale_id': self.id, 'mensaje': mensaje})
-            wiz = self.env['sale.purchase.order.alerta'].create(
-                                        {'res_order_id': self.id, 'message_top': '<h3>TOP</h3>', 'lines': partial_lines,
-                                         'message_bottom': '<h3>BOTTOM</h3>'})
+            wiz = self.env['sale.order.alerta'].create({'sale_id': self.id, 'mensaje': mensaje})
+            # wiz = self.env['sale.purchase.order.alerta'].create(
+            #                             {'res_order_id': self.id, 'message_top': '<h3>TOP</h3>', 'lines': partial_lines,
+            #                              'message_bottom': '<h3>BOTTOM</h3>'})
             return {
                 'name': _('Alerta'),
                 'type': 'ir.actions.act_window',
                 'view_mode': 'form',
-                # 'res_model': 'sale.order.alerta',
-                'res_model': 'sale.purchase.order.alerta',
+                'res_model': 'sale.order.alerta',
+                # 'res_model': 'sale.purchase.order.alerta',
                 'views': [(view.id, 'form')],
                 'view_id': view.id,
                 'target': 'new',
@@ -567,7 +567,7 @@ class SaleOrder(models.Model):
                         order_line.order_id.x_studio_nivel)] if order_line.product_id.x_fabricante else 12
                 mensaje += '<tr><td>' + order_line.x_descripcion_corta + '</td><td>' \
                            + str(order_line.product_id.stock_quant_warehouse_zero) + '</td><td>'\
-                           + str(order_line.product_id.standard_price) + '</td><td>'\
+                           + str(round(order_line.product_id.standard_price, 2)) + '</td><td>'\
                            + str(order_line.product_uom_qty) + '</td><td>'\
                            + str(order_line.product_uom_qty + order_line.x_cantidad_disponible_compra - order_line.product_id.stock_quant_warehouse_zero) + '</td></tr>'
             mensaje += '</tbody></table>'

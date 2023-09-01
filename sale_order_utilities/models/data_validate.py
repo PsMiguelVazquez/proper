@@ -8,13 +8,13 @@ from datetime import datetime
 
 class DataValidate(models.Model):
     _name = 'data.validate'
-
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     order_line_id = fields.Many2one('sale.order.line', string='Línea de la orden')
     product_id = fields.Many2one('product.product', string='Producto', related='order_line_id.product_id')
     branch = fields.Selection(string='Rama', related='product_id.product_tmpl_id.x_studio_rama')
     proposal_id = fields.Many2one('proposal.purchases', related='order_line_id.proposal_id', )
-    order_partner_id = fields.Many2one('res.partner', string='Cliente', related='order_line_id.order_partner_id')
-    order_id = fields.Many2one('sale.order', string='Referencia de la orden', related='order_line_id.order_id')
+    order_partner_id = fields.Many2one('res.partner', string='Cliente', related='order_line_id.order_partner_id', store=True)
+    order_id = fields.Many2one('sale.order', string='Referencia de la orden', related='order_line_id.order_id', store=True)
     salesman_id = fields.Many2one('res.users', string='Vendedor', related='order_line_id.salesman_id')
     product_uom_qty = fields.Float(string='Cantidad', related='order_line_id.product_uom_qty')
     standard_price = fields.Float(string='Costo promedio', related='order_line_id.x_studio_costo_promedio')
@@ -25,6 +25,23 @@ class DataValidate(models.Model):
     note = fields.Char(string='Observaciones')
     description = fields.Char(string='Descripción')
     request_answered = fields.Selection(string='Propuesta atendida', selection=[('Atendido', 'Atendido'), ('Noatendido', 'No atendido')])
+
+
+    def migrate_lines(self):
+        lines_to_migrate = self.env['sale.order.line'].search([
+            ('x_validacion_precio', '=' , True )
+        ],order="id asc")
+        for line in lines_to_migrate:
+            data_validate = self.env['data.validate'].search([('order_line_id','=',line.id)])
+            if not data_validate:
+                self.env['data.validate'].create({
+                    'order_line_id' : line.id,
+                    'product_qty_purchases' : line.x_cantidad_disponible_compra,
+                    'new_cost' : line.x_studio_nuevo_costo,
+                    'delivery_time' : line.x_tiempo_entrega_compra,
+                    'note' : line.x_obse_comprador,
+                    'request_answered' : line.x_solicitud_atendida,
+                })
 
 
     @api.onchange('new_cost')
