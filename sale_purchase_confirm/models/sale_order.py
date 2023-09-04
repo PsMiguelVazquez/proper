@@ -591,10 +591,10 @@ class SaleOrder(models.Model):
                 # for ol in self.order_line:
                 #     ol.product_id.qty_available = ol.product_id.qty_available - ol.product_uom_qty
                 #     self.env['stock.quant']._update_available_quantity(ol.product_id, self.warehouse_id.lot_stock_id, -(ol.product_id.qty_available - ol.product_uom_qty))
-                if r and self.order_line.filtered(lambda x: x.x_validacion_precio):
+                if r and self.order_line.filtered(lambda x: x.x_validacion_precio and x.cantidad_a_comprar > 0):
                     prods_html = '<table class="table" style="width:100%"><thead><tr><th style="width:60% !important;">Producto</th><th style="width:15% !important; text-align:center">Cantidad requerida</th><th style="width:15% !important; text-align:center">Cantidad validada por compras</th><th style="text-align:center">Costo validado por compras</th></thead><tbody></tr>'
                     for line in self.order_line.filtered(lambda x: x.x_validacion_precio):
-                        prods_html += '<tr><td style="text-align:justify">' + line.name + '</td><td style="text-align:center">' + str(line.product_uom_qty - line.product_id.stock_quant_warehouse_zero) + '</td><td style="text-align:center">' + str(line.x_cantidad_disponible_compra) + '</td><td style="text-align:center">' + str(line.x_studio_nuevo_costo) + '</td></tr>'
+                        prods_html += '<tr><td style="text-align:justify">' + line.name + '</td><td style="text-align:center">' + str(line.cantidad_a_comprar) + '</td><td style="text-align:center">' + str(line.x_cantidad_disponible_compra) + '</td><td style="text-align:center">' + str(line.x_studio_nuevo_costo) + '</td></tr>'
                     prods_html += '</tbody></table>'
                     activity_message = ("<h3>Por favor realizar la compra de los siguientes productos</h3> %s") % (prods_html)
                     activity_user = self.env['res.users'].search([('login', 'like', '%compras1%')])
@@ -654,7 +654,7 @@ class SaleOrderLine(models.Model):
     costo_prom_total_venta = fields.Monetary('Costo promedio total (al momento de la venta)', compute='_compute_costos_promedio')
     costo_promedio_total = fields.Monetary('Costo promedio total', compute='_compute_costos_promedio')
     costo_promedio_venta = fields.Monetary('Costo promedio unitario (al momento de la venta)', compute='_compute_costos_promedio')
-    proveedor_propuesta = fields.Char('Proveedor de la propuesta')
+    cantidad_a_comprar = fields.Integer(string='Cantidad a comprar')
 
     def _compute_costos_promedio(self):
         for record in self:

@@ -180,7 +180,6 @@ class ProposalPurchase(models.Model):
                                                                  'x_vigencia_compra':self.x_vigencia,
                                                                  'proposal_id': self.id,
                                                                  'atendido_por': self.create_uid.id,
-                                                                 'proveedor_propuesta':self.x_studio_proveedor if self.x_studio_proveedor else ''
                                                                  })]})
     def cancel(self):
         self.x_state = 'cancel'
