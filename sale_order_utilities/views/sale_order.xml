@@ -6,9 +6,6 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
-            <header>
-                <button string="Confirmar compra" name="show_confirm_sale_wizard" type="object"/>
-            </header>
             <xpath expr="//form/header/field[@name='authorized_transaction_ids']" position="before">
                 <field name="edit_blocked" invisible="1"/>
                 <field name="block_invoicing" invisible="1"/>
@@ -16,17 +13,20 @@
                 <field name="approve_invoicing_requested" invisible="1"/>
             </xpath>
             <xpath expr="//form/header/button[@name='328']" position="attributes">
-                <attribute name="attrs">{'invisible': [
-                    '|',
-                    ('invoice_status', '!=', 'to invoice'),
-                    ('block_invoicing', '=', True)
-                    ]}</attribute>
+<!--                <attribute name="attrs">{'invisible': [-->
+<!--                    '|',-->
+<!--                    ('invoice_status', '!=', 'to invoice'),-->
+<!--                    ('block_invoicing', '=', True)-->
+<!--                    ]}</attribute>-->
+                <attribute name="invisible">0</attribute>
             </xpath>
             <header>
                 <button name="approve_invoicing" string="Aprobar facturación" type="object"
-                        attrs="{'invisible': [('approve_invoicing_requested','!=',True)]}"/>
+                        attrs="{'invisible': 1}"/>
+<!--                        attrs="{'invisible': [('approve_invoicing_requested','!=',True)]}"/>-->
                 <button name="request_approve_invoicing" string="Solicitar Aprobación de facturación" type="object"
-                        attrs="{'invisible': ['|','|',('state','!=','sale'), ('block_invoicing','!=',True), ('approve_invoicing_requested','=',True)]}"/>
+                        attrs="{'invisible': 1}"/>
+<!--                        attrs="{'invisible': ['|','|',('state','!=','sale'), ('block_invoicing','!=',True), ('approve_invoicing_requested','=',True)]}"/>-->
             </header>
             <xpath expr="//form/sheet/notebook/page/field[@name='order_line']" position="attributes">
                 <attribute name="attrs">{'readonly':[('edit_blocked','=',True)]}</attribute>
