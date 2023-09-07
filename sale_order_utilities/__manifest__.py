@@ -30,6 +30,6 @@
         'security/ir.model.access.csv',
         'views/sale_order.xml',
         'views/data_validate.xml',
-        'wizard/sale_purchase_order_alerta.xml',
+        # 'wizard/sale_purchase_order_alerta.xml',
     ],
 }

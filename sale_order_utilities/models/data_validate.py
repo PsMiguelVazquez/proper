@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-from lxml import etree
-
 from odoo import models, fields, api
-from odoo.exceptions import UserError, ValidationError
-from datetime import datetime
 
 
 class DataValidate(models.Model):
     _name = 'data.validate'
     _inherit = ['mail.thread', 'mail.activity.mixin']
+    _description = 'data.validate'
     order_line_id = fields.Many2one('sale.order.line', string='Línea de la orden')
     product_id = fields.Many2one('product.product', string='Producto', related='order_line_id.product_id')
     branch = fields.Selection(string='Rama', related='product_id.product_tmpl_id.x_studio_rama')
