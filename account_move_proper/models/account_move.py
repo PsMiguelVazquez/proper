@@ -178,6 +178,27 @@ class AccountMove(models.Model):
                 'target': 'current'
             }
 
+    def valida_addenda(self):
+        if self.partner_id.l10n_mx_edi_addenda:
+            valid = True
+            message = 'Faltan los siguientes datos de addenda:\n'
+            if not self.x_studio_sociedad:
+                valid = False
+                message += '- Sociedad.\n'
+            if not self.x_studio_numero_proveedor:
+                valid = False
+                message += '- Número de proveedor.\n'
+            if not self.x_studio_numero_pedido:
+                valid = False
+                message += '- Número de pedido.\n'
+            if not self.x_studio_numero_entrada_sap:
+                valid = False
+                message += '- Número de entrada a SAP.\n'
+            if not self.x_studio_numero_remision_1:
+                valid = False
+                message += '- Número de remisión.\n'
+            if not valid:
+                raise UserError(message)
     def button_process_edi_web_services(self):
         folio_fiscal_uuid = ''
         if self.edi_state == 'to_cancel':
@@ -208,6 +229,8 @@ class AccountMove(models.Model):
                                       '\n\t2. Una vez que esté seguro que se realizó la cancelación ante el SAT de click en el menú de acciones (ícono de engrane) y seleccione la opción "Marcar como cancelado".'
                                       '\n\nAl realizar estos pasos la factura quedará como cancelada tambien en Odoo.')
             folio_fiscal_uuid= self.l10n_mx_edi_cfdi_uuid
+        if self.move_type == 'out_invoice':
+            self.valida_addenda()
         super(AccountMove, self).button_process_edi_web_services()
         if folio_fiscal_uuid != '' :
             self.l10n_mx_edi_cfdi_uuid = folio_fiscal_uuid
