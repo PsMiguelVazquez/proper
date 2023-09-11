@@ -6,7 +6,7 @@ from datetime import datetime
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
-    remision_name = fields.Char(string='Número de remisión', compute='_compute_remision_name', store=True)
+    remision_name = fields.Char(string='Número de remisión', compute='_compute_remision_name')
 
     motivo_cancelacion = fields.Selection(string='Motivo de cancelación', selection=[('01','01 - Comprobante emitido con errores con relación'),
                                                                                       ('02','02 - Comprobante emitido con errores sin relación'),
