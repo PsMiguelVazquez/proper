@@ -251,7 +251,7 @@ class AccountMove(models.Model):
     def name_get(self):
         result = []
         for record in self:
-            if record.state == 'draft':
+            if record.state == 'draft' and record.move_type == 'out_invoice':
                 name = record.remision_name
             else:
                 name = record.name
