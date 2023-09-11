@@ -25,6 +25,7 @@
     'data': [
         'views/account_move.xml',
         'wizard/factoraje_wizard_view.xml',
+        'wizard/compensate_wizard_view.xml',
         'security/ir.model.access.csv',
         'data/cfdi4/pago.xml',
     ],

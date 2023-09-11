@@ -9,6 +9,15 @@
         <field name="state">code</field>
     </record>
 
+    <record id="action_compensate" model="ir.actions.server">
+        <field name="name">Compensación</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="factoraje_financiero.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move" />
+        <field name="code">action=model.view_compensate_wizard()</field>
+        <field name="state">code</field>
+    </record>
+
     <record id="action_view_gastos" model="ir.actions.act_window">
         <field name="name">Gastos</field>
         <field name="type">ir.actions.act_window</field>
