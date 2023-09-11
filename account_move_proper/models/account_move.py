@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, _
+from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+    remision_name = fields.Char(string='Número de remisión', compute='_compute_remision_name', store=True)
+    @api.depends('state')
+    def _compute_remision_name(self):
+        for record in self:
+            record['remision_name'] = 'Remisión - ' + str(record.id)
 
     motivo_cancelacion = fields.Selection(string='Motivo de cancelación', selection=[('01','01 - Comprobante emitido con errores con relación'),
                                                                                       ('02','02 - Comprobante emitido con errores sin relación'),
