@@ -7,10 +7,6 @@ from datetime import datetime
 class AccountMove(models.Model):
     _inherit = 'account.move'
     remision_name = fields.Char(string='Número de remisión', compute='_compute_remision_name', store=True)
-    @api.depends('state')
-    def _compute_remision_name(self):
-        for record in self:
-            record['remision_name'] = 'Remisión - ' + str(record.id)
 
     motivo_cancelacion = fields.Selection(string='Motivo de cancelación', selection=[('01','01 - Comprobante emitido con errores con relación'),
                                                                                       ('02','02 - Comprobante emitido con errores sin relación'),
@@ -24,6 +20,11 @@ class AccountMove(models.Model):
     fecha_entrega_mercancia_html = fields.Html(string='Fechas de entrega', compute='_compute_fecha_entrega_mercancia')
     movimientos_almacen = fields.Many2many(comodel_name='stock.picking', compute='_compute_movimientos_almacen')
     cantidad_facturada_total = fields.Integer(string='Cantidad facturada total',compute='_compute_cantidad_facturada_total')
+
+    @api.depends('state')
+    def _compute_remision_name(self):
+        for record in self:
+            record['remision_name'] = str(record.id)
 
     def _compute_cantidad_facturada_total(self):
         for record in self:
