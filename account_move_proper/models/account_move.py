@@ -248,4 +248,15 @@ class AccountMove(models.Model):
         return r
 
 
+    def name_get(self):
+        result = []
+        for record in self:
+            if record.state == 'draft':
+                name = record.remision_name
+            else:
+                name = record.name
+            result.append((record.id, name))
+        return result
+
+
 

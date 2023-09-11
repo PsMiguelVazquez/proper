@@ -66,4 +66,17 @@
         <field name="code">action=model.repair_invoice()</field>
         <field name="state">code</field>
     </record>
+
+    <record id="invoice_search_inherit" model="ir.ui.view">
+            <field name="name">invoice.search.inherit</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="remision_name"/>
+                </search>
+
+            </field>
+    </record>
+
 </odoo>
