@@ -178,7 +178,8 @@ class ProposalPurchase(models.Model):
                                                                  'x_cantidad_disponible_compra':self.x_cantidad,
                                                                  'x_tiempo_entrega_compra':self.x_tiempo_entrega,
                                                                  'x_vigencia_compra':self.x_vigencia,
-                                                                 'proposal_id': self.id
+                                                                 'proposal_id': self.id,
+                                                                 'atendido_por': self.create_uid.id,
                                                                  })]})
     def cancel(self):
         self.x_state = 'cancel'
@@ -295,7 +296,7 @@ class WizarPropo(models.TransientModel):
              'x_tiempo_entrega': self.x_tiempo_entrega, 'x_archivo': self.x_archivo, 'rel_id': self.rel_id.id,
              'x_marca': self.x_marca, 'x_grup_id': self.x_grup_id.id, 'x_categoria_id': self.x_categoria_id.id,
              'x_familia_id': self.x_familia_id.id, 'x_linea_id': self.x_linea_id.id, 'x_modelo': self.x_modelo,
-             'x_cantidad': self.x_cantidad, 'x_costo': self.x_costo, 'x_studio_proveedor': self.x_proveedor_char,
+             'x_cantidad': self.x_cantidad, 'x_costo': self.x_costo, 'x_studio_proveedor': self.x_proveedor.name,
              'x_documento': self.x_documento, 'x_note': self.x_note})
     @api.depends('rel_id')
     def get_detalle(self):

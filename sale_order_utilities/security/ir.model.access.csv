@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sale_purchase_alert,sale.purchase.order.alerta,model_sale_purchase_order_alerta,base.group_user,1,1,1,1
+access_data_validate,data.validate,model_data_validate,base.group_user,1,1,1,1

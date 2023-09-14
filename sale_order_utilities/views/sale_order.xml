@@ -18,12 +18,18 @@
                     ('invoice_status', '!=', 'to invoice'),
                     ('block_invoicing', '=', True)
                     ]}</attribute>
+<!--                <attribute name="invisible">0</attribute>-->
             </xpath>
             <header>
                 <button name="approve_invoicing" string="Aprobar facturación" type="object"
-                        attrs="{'invisible': [('approve_invoicing_requested','!=',True)]}"/>
+                        attrs="{'invisible': [('approve_invoicing_requested','!=',True)]}" groups="purchase.group_purchase_manager"/>
+<!--                        attrs="{'invisible': 1}"/>-->
+                <button name="reject_invoicing" string="Rechazar facturación" type="object"
+                        attrs="{'invisible': [('approve_invoicing_requested','!=',True)]}" groups="purchase.group_purchase_manager"/>
                 <button name="request_approve_invoicing" string="Solicitar Aprobación de facturación" type="object"
                         attrs="{'invisible': ['|','|',('state','!=','sale'), ('block_invoicing','!=',True), ('approve_invoicing_requested','=',True)]}"/>
+<!--                        attrs="{'invisible': 1}"/>-->
+
             </header>
             <xpath expr="//form/sheet/notebook/page/field[@name='order_line']" position="attributes">
                 <attribute name="attrs">{'readonly':[('edit_blocked','=',True)]}</attribute>

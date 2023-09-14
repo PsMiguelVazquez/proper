@@ -17,24 +17,33 @@ class SaleOrder(models.Model):
         ('no', 'Nothing to Invoice')
     ], string='Invoice Status', compute='_get_invoice_status', store=True)
     credit_notes = fields.Many2many('account.move', string='Notas de crédito relacionadas', compute='get_credit_notes')
-    allow_invoicing = fields.Boolean(string='Permitir facturar', compute='_compute_allow_invoicing')
-    invoice_allowed = fields.Boolean(string='Facturación de orden parcial permitida', default=False)
+    block_invoicing = fields.Boolean(compute='_compute_block_invoicing')
+    invoice_approved = fields.Boolean(compute='_compute_invoice_approved', store=True)
+    approve_invoicing_requested = fields.Boolean(default=False)
+
+    def request_approve_invoicing(self):
+        self.approve_invoicing_requested = True
+
+    def _compute_invoice_approved(self):
+        for record in self:
+            record.invoice_approved = True
+            # if record.order_line.filtered(lambda x: x.cantidad_asignada + x.qty_delivered + x.qty_invoiced < x.product_uom_qty) and record.state == 'sale':
+            #     record.invoice_approved = False
+
+    def approve_invoicing(self):
+        self.invoice_approved = not self.invoice_approved
+        self.approve_invoicing_requested = False
 
     @api.depends('state')
-    def _compute_allow_invoicing(self):
+    def _compute_block_invoicing(self):
         for record in self:
-            op = False
-            if record.order_line.filtered(
-                    lambda x: x.cantidad_asignada + x.qty_delivered + x.qty_invoiced < x.product_uom_qty) and record.state == 'sale':
-                op = True
-            record.allow_invoicing = 1
-            print(record.allow_invoicing)
+            record.block_invoicing = record.invoice_status != 'to_invoice' and record.es_orden_parcial and not record.invoice_approved
 
     @api.depends('state')
     def _compute_edit_blocked(self):
         for record in self:
-            # record.edit_blocked = record.state not in ['draft']
-            record.edit_blocked = False
+            record.edit_blocked = record.state not in ['draft']
+            # record.edit_blocked = False
 
     @api.depends('invoice_ids')
     def get_credit_notes(self):

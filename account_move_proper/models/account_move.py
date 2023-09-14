@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, _
+from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+    remision_name = fields.Char(string='Número de remisión', compute='_compute_remision_name', store=True)
 
     motivo_cancelacion = fields.Selection(string='Motivo de cancelación', selection=[('01','01 - Comprobante emitido con errores con relación'),
                                                                                       ('02','02 - Comprobante emitido con errores sin relación'),
@@ -19,6 +20,14 @@ class AccountMove(models.Model):
     fecha_entrega_mercancia_html = fields.Html(string='Fechas de entrega', compute='_compute_fecha_entrega_mercancia')
     movimientos_almacen = fields.Many2many(comodel_name='stock.picking', compute='_compute_movimientos_almacen')
     cantidad_facturada_total = fields.Integer(string='Cantidad facturada total',compute='_compute_cantidad_facturada_total')
+
+    @api.depends('write_date')
+    def _compute_remision_name(self):
+        for record in self:
+            if record.move_type == 'out_invoice':
+                record['remision_name'] = str(record.id)
+            else:
+                record['remision_name'] = ''
 
     def _compute_cantidad_facturada_total(self):
         for record in self:
@@ -178,6 +187,27 @@ class AccountMove(models.Model):
                 'target': 'current'
             }
 
+    def valida_addenda(self):
+        if self.partner_id.l10n_mx_edi_addenda:
+            valid = True
+            message = 'Faltan los siguientes datos de addenda:\n'
+            if not self.x_studio_sociedad:
+                valid = False
+                message += '- Sociedad.\n'
+            if not self.x_studio_numero_proveedor:
+                valid = False
+                message += '- Número de proveedor.\n'
+            if not self.x_studio_numero_pedido:
+                valid = False
+                message += '- Número de pedido.\n'
+            if not self.x_studio_numero_entrada_sap:
+                valid = False
+                message += '- Número de entrada a SAP.\n'
+            if not self.x_studio_numero_remision_1:
+                valid = False
+                message += '- Número de remisión.\n'
+            if not valid:
+                raise UserError(message)
     def button_process_edi_web_services(self):
         folio_fiscal_uuid = ''
         if self.edi_state == 'to_cancel':
@@ -208,6 +238,8 @@ class AccountMove(models.Model):
                                       '\n\t2. Una vez que esté seguro que se realizó la cancelación ante el SAT de click en el menú de acciones (ícono de engrane) y seleccione la opción "Marcar como cancelado".'
                                       '\n\nAl realizar estos pasos la factura quedará como cancelada tambien en Odoo.')
             folio_fiscal_uuid= self.l10n_mx_edi_cfdi_uuid
+        if self.move_type == 'out_invoice':
+            self.valida_addenda()
         super(AccountMove, self).button_process_edi_web_services()
         if folio_fiscal_uuid != '' :
             self.l10n_mx_edi_cfdi_uuid = folio_fiscal_uuid
@@ -218,6 +250,17 @@ class AccountMove(models.Model):
         if folio_fiscal and folio_fiscal != '':
             self.l10n_mx_edi_cfdi_uuid = folio_fiscal
         return r
+
+
+    def name_get(self):
+        result = []
+        for record in self:
+            if record.state == 'draft' and record.move_type == 'out_invoice':
+                name = record.remision_name
+            else:
+                name = record.name
+            result.append((record.id, name))
+        return result
 
 
 
