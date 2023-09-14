@@ -656,6 +656,10 @@ class SaleOrderLine(models.Model):
     cantidad_faltante = fields.Integer('Cantidad faltante', compute='_compute_cantidad_faltante')
     atendido_por = fields.Many2one('res.users', compute='_on_change_x_solicitud_atendida', store=True)
 
+    def _compute_cantidad_faltante(self):
+        for record in self:
+            record.cantidad_faltante = record.product_uom_qty - record.product_id.stock_quant_warehouse_zero
+
     @api.depends('x_solicitud_atendida')
     def _on_change_x_solicitud_atendida(self):
         for record in self:

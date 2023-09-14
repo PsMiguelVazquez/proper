@@ -94,9 +94,9 @@ class SaleOrderLine(models.Model):
                 record.cantidad_vendida_kits += (sum(lines.mapped('product_uom_qty')) *
                                                  sum(kit.bom_line_ids.filtered(lambda y: y.product_id == record.product_id).mapped('product_qty')))
 
-    def _compute_cantidad_faltante(self):
-        for record in self:
-            record.cantidad_faltante = record.product_uom_qty - record.product_id.stock_quant_warehouse_zero
+    # def _compute_cantidad_faltante(self):
+    #     for record in self:
+    #         record.cantidad_faltante = record.product_uom_qty - record.product_id.stock_quant_warehouse_zero
 
 
 

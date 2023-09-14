@@ -17,10 +17,10 @@ class CompensateWizard(models.TransientModel):
         for record in self:
             record['amount_residual_compensation'] = record.amount_factor_bill - sum(record.partner_bills.mapped('porcent_assign'))
 
-    def compensate(self):
-        for inv in self.partner_bills:
-            inv.write({'factoring_amount': inv.porcent_assign})
-        self.financial_factor = self.partner_id
-        r = self.create_neteo()
-        return r
+    # def compensate(self):
+    #     for inv in self.partner_bills:
+    #         inv.write({'factoring_amount': inv.porcent_assign})
+    #     self.financial_factor = self.partner_id
+    #     r = self.create_neteo()
+    #     return r
 

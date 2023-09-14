@@ -37,30 +37,30 @@ class AccountMove(models.Model):
             if record.porcent_assign == 0.0:
                 record.porcent_assign = record.balance_after_factoring
 
-    def view_compensate_wizard(self):
-        active_ids = self._context.get('active_ids')
-        facturas = self.env['account.move'].browse(active_ids)
-        if len(facturas.filtered(lambda x: x.payment_state == 'not_paid')) != len(facturas):
-            raise UserError('No se puede aplicar compensación a facturas pagadas o pagadas parcialmente.')
-        if len(facturas.mapped('partner_id')) != 1:
-            raise UserError('No se puede aplicar compensación a facturas de diferentes clientes.')
-
-        w = self.env['account.payment.register'].with_context(active_model='account.move',
-                                                              active_ids=active_ids).create({
-            'amount': 0.0,
-            'hide_button_payment_register': True
-        })
-        view = self.env.ref('factoraje_financiero.account_payment_register_form_compensate')
-        return {
-            'name': _('Compensación'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.payment.register',
-            'view_mode': 'form',
-            'res_id': w.id,
-            'views': [(view.id, 'form')],
-            'view_id': view.id,
-            'target': 'new'
-        }
+    # def view_compensate_wizard(self):
+    #     active_ids = self._context.get('active_ids')
+    #     facturas = self.env['account.move'].browse(active_ids)
+    #     if len(facturas.filtered(lambda x: x.payment_state == 'not_paid')) != len(facturas):
+    #         raise UserError('No se puede aplicar compensación a facturas pagadas o pagadas parcialmente.')
+    #     if len(facturas.mapped('partner_id')) != 1:
+    #         raise UserError('No se puede aplicar compensación a facturas de diferentes clientes.')
+    #
+    #     w = self.env['account.payment.register'].with_context(active_model='account.move',
+    #                                                           active_ids=active_ids).create({
+    #         'amount': 0.0,
+    #         'hide_button_payment_register': True
+    #     })
+    #     view = self.env.ref('factoraje_financiero.account_payment_register_form_compensate')
+    #     return {
+    #         'name': _('Compensación'),
+    #         'type': 'ir.actions.act_window',
+    #         'res_model': 'account.payment.register',
+    #         'view_mode': 'form',
+    #         'res_id': w.id,
+    #         'views': [(view.id, 'form')],
+    #         'view_id': view.id,
+    #         'target': 'new'
+    #     }
 
 
 
