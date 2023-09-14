@@ -10,7 +10,7 @@
                 <group attrs="{'invisible': [('hide_button_payment_register','!=',True)]}">
                     <group>
                         <field name="partner_id"/>
-                        <field name="factor_bill" string="Gasto" domain="[('partner_id', '=', partner_id),
+                        <field name="factor_bill" string="Gasto" domain="[('partner_id', '=', financial_factor),
                                                                             ('move_type', '=', 'in_invoice')
                                                                             , ('state', '=', 'posted')
                                                                             ,('payment_state', 'in', ('not_paid', 'partial'))]"/>
@@ -27,7 +27,7 @@
                             <field name="amount_total_signed" string="Importe Total" readonly="1"/>
                             <field name="amount_residual" string="Importe adeudado" readonly="1" sum="Total adeudado"/>
                             <field name="balance_after_factoring" sum="Balance total adeudado"/>
-<!--                            <field name="factoring_amount" sum="Total por factoraje"/>-->
+                            <field name="factoring_amount" sum="Total por factoraje"/>
                             <field name="porcent_assign" sum="Total por depósito"/>
                         </tree>
                     </field>
