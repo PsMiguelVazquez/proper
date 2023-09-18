@@ -7,6 +7,7 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
     factoring_amount = fields.Float('Monto por factoraje')
     balance_after_factoring = fields.Float(string='Restante', compute='_compute_balance_after_factoring')
+    balance_after_compensate = fields.Float(string='Restante', compute='_compute_balance_after_compensate')
     rel_payment = fields.Many2one('account.payment')
 
     def write(self, vals):
@@ -30,6 +31,10 @@ class AccountMove(models.Model):
     def _compute_balance_after_factoring(self):
         for record in self:
             record.balance_after_factoring = record.amount_residual - record.factoring_amount - record.porcent_assign
+    @api.depends('porcent_assign')
+    def _compute_balance_after_compensate(self):
+        for record in self:
+            record.balance_after_compensate = record.amount_residual - record.porcent_assign
 
     @api.onchange('factoring_amount')
     def on_balance_after_factoring(self):
@@ -37,18 +42,36 @@ class AccountMove(models.Model):
             if record.porcent_assign == 0.0:
                 record.porcent_assign = record.balance_after_factoring
 
+    def action_register_payment(self):
+        view = self.env.ref('account.view_account_payment_register_form')
+        # return super(AccountMove, self).action_register_payment()
+        return {
+            'name': _('Register Payment'),
+            'res_model': 'account.payment.register',
+            'view_mode': 'form',
+            'views': [(view.id, 'form')],
+            'view_id': view.id,
+            'context': {
+                'active_model': 'account.move',
+                'active_ids': self.ids,
+            },
+            'target': 'new',
+            'type': 'ir.actions.act_window',
+        }
+
     def view_compensate_wizard(self):
         active_ids = self._context.get('active_ids')
         facturas = self.env['account.move'].browse(active_ids)
-        if len(facturas.filtered(lambda x: x.payment_state == 'not_paid')) != len(facturas):
-            raise UserError('No se puede aplicar compensación a facturas pagadas o pagadas parcialmente.')
+        facturas.write({'porcent_assign': 0.0})
         if len(facturas.mapped('partner_id')) != 1:
             raise UserError('No se puede aplicar compensación a facturas de diferentes clientes.')
 
         w = self.env['account.payment.register'].with_context(active_model='account.move',
                                                               active_ids=active_ids).create({
             'amount': 0.0,
-            'hide_button_payment_register': True
+            'hide_button_payment_register': True,
+            'partner_bills': facturas,
+            'financial_factor': facturas[0].partner_id.id
         })
         view = self.env.ref('factoraje_financiero.account_payment_register_form_compensate')
         return {
