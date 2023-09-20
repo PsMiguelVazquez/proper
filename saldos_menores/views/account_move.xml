@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="action_saldos" model="ir.actions.server">
+        <field name="name">Eliminar saldos menores</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="code">action=model.action_eliminate_balance()</field>
+        <field name="state">code</field>
+    </record>
+
+    <menuitem name="Eliminar saldos"
+                  id="eliminate_balance"
+                  sequence="99"
+                  parent="account.account_account_menu"
+                  action="action_saldos"/>
+
+</odoo>
