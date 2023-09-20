@@ -7,17 +7,18 @@
             <form>
                 <group>
                     <group>
-                        <field name="partner_id"/>
-                        <field name="move_date"/>
+                        <field name="partner_id" invisible="1"/>
+                        <field name="journal_id" string="Diario"/>
                         <field name="max_move_balance"/>
+                        <field name="account_id" string="Cuenta"/>
+                        <field name="move_date"/>
 
                     </group>
                     <group>
-                        <field name="from_date"/>
-                        <field name="to_date"/>
+                            <field name="from_date" widget="daterange" string="Del" options="{'related_end_date': 'to_date'}"/>
+                            <field name="to_date" widget="daterange" string="Al" options="{'related_start_date': 'from_date'}"/>
                     </group>
                 </group>
-<!--                <field name="moves" string="movimientos" widget="many2many" domain="['&amp;',('partner_id','=',partner_id),'&amp;',('amount_residual','&lt;',max_move_balance),('amount_residual','&gt;',0.0)]">-->
                 <field name="lines">
                     <tree>
                         <field name="invoice_name" readonly="1"/>

@@ -15,6 +15,14 @@ class WizardEliminateBalance(models.TransientModel):
     max_move_balance = fields.Float('Saldo menor a')
     moves = fields.Many2many('account.move', string='Movimientos')
     lines = fields.Many2many('wizard.eliminate.line', compute='_get_wizard_lines')
+    account_id = fields.Many2one('account.account')
+    journal_id = fields.Many2one('account.journal')
+
+    def create(self, vals):
+        r = super(WizardEliminateBalance, self).create(vals)
+        r.account_id = self.env['account.account'].search([('name', 'ilike', 'GASTOS NO DEDUCIBLES (SIN REQUISITOS FISCALES)')])
+        r.journal_id = self.env['account.journal'].browse(3)
+        return r
 
     @api.depends('moves')
     def _get_wizard_lines(self):
@@ -25,10 +33,11 @@ class WizardEliminateBalance(models.TransientModel):
                 origin_move = self.env['account.move'].browse(move.id.origin)
                 lines_list.append({
                     'invoice_name':origin_move.name,
+                    'invoice_id': origin_move.id,
                     'partner_id':origin_move.partner_id.id,
                     'amount_total':origin_move.amount_total_signed,
                     'amount_payed': origin_move.amount_total_signed - origin_move.amount_residual,
-                    'amount_residual':origin_move.amount_residual,
+                    'amount_residual':origin_move.amount_residual_signed,
                     'wizard_id': self.ids[0],
                     'move_id': origin_move.id,
                 })
@@ -58,29 +67,61 @@ class WizardEliminateBalance(models.TransientModel):
                     ('amount_residual', '>', 0.1),
                     ('state', '=', 'posted')
                 ])
-            print(record.moves)
 
     def eliminate_balance(self):
         move_lines_d = []
         lineas = self.env['wizard.eliminate.line'].search([('wizard_id', '=', self.id)])
         if lineas:
+            move_lines_d.append((0, 0, {
+                'debit': sum(lineas.mapped('amount_residual')),
+                "name": 'Eliminación de saldos menores',
+                "account_id": self.account_id.id,
+            }))
             for inv in lineas:
+                '''
+                    Crea un abono al cliente por la saldo de la cada factura
+                '''
                 move_line_vals = {
-                    'debit': inv.amount_residual,
+                    'credit': inv.amount_residual,
                     "partner_id": inv.partner_id.id,
                     "name": 'Eliminación de saldos menores',
                     "account_id": inv.partner_id.property_account_receivable_id.id,
                 }
                 move_lines_d.append((0, 0, move_line_vals))
-            move_line_vals = {
-                'credit': sum(lineas.mapped('amount_residual')),
-                "partner_id": inv.partner_id.id,
-                "name": 'Eliminación de saldos menores',
-                "account_id": inv.partner_id.property_account_receivable_id.id,
-            }
-            move_lines_d.append((0, 0, move_line_vals))
+            '''
+                Crea el apunte con el total de saldos menores con un cargo en la cuenta Gastos no deducibles
+            '''
         move = self.env['account.move'].create({
             'ref': _(', '.join(lineas.mapped(('invoice_name'))))
-            , 'journal_id': 3
+            , 'journal_id': self.journal_id.id
+            , 'date': self.move_date
         })
         move.write({"line_ids": move_lines_d})
+        move.action_post()
+        invoices_to_reconcile = lineas.invoice_id
+        for line in move.line_ids:
+            inv_to_rec = invoices_to_reconcile.filtered(lambda x: x.amount_residual == line.credit)
+            line_to_rec = inv_to_rec.line_ids.filtered(lambda y: y.account_id == line.account_id)
+            if line_to_rec:
+                to_reconcile = line + line_to_rec[0]
+                to_reconcile.reconcile()
+        invoice_msg = (
+                          "Se realizó el proceso de eliminación de saldos desde: <a href=# data-oe-model=account.move data-oe-id=%d>%s</a>") % (
+                          move.id, move.name)
+        for inv in invoices_to_reconcile:
+            inv.message_post(body=invoice_msg, type="notification")
+
+        msg = (
+                "Se realizó eliminación de saldos: " +
+                ", ".join([("<a href=# data-oe-model=account.move data-oe-id=%d>%s</a>") % (x.id, x.name)
+                           for x in invoices_to_reconcile]))
+        move.message_post(body=msg, type="notification")
+        result = {
+            "type": "ir.actions.act_window",
+            "res_model": "account.move",
+            "domain": [('id', 'in', invoices_to_reconcile.ids)],
+            "context": {"create": False, 'default_move_type': 'out_invoice'},
+            "name": _("Customer Invoices"),
+            'view_mode': 'tree,form',
+        }
+        return result

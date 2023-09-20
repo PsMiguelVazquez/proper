@@ -9,6 +9,7 @@ class WizardEliminateLine(models.TransientModel):
     _name = 'wizard.eliminate.line'
 
     invoice_name = fields.Char('Número')
+    invoice_id = fields.Many2one('account.move', 'Movimiento')
     partner_id = fields.Many2one('res.partner','Cliente')
     amount_total = fields.Float('Monto total')
     amount_payed = fields.Float('Monto pagado')
