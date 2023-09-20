@@ -13,7 +13,7 @@ class SaleOrder(models.Model):
             raise UserError(_('No se puede subir una factura externa si la orden ya tiene una factura publicada'))
         if self.filtered(lambda x: x.state != 'sale'):
             raise UserError(_('No se puede subir una factura si el pedido no esta en el estado "Orden de venta"'))
-        w = self.env['upload.invoice.wizard'].create({'subtotal': 0.0, 'monto': 0.0, 'tipo':'sale_order'})
+        w = self.env['upload.invoice.wizard'].create({'subtotal': 0.0, 'monto': 0.0, 'tipo':'sale_order', 'margen': 1.0})
         view = self.env.ref('upload_invoice_wizard.view_upload_invoice_sale_form')
         return {
             'name': _('Asignar Facturas'),

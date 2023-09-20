@@ -8,7 +8,7 @@
         <field name="state">code</field>
     </record>
 
-    <menuitem name="Eliminar saldos"
+    <menuitem name="Eliminación de saldos menores"
                   id="eliminate_balance"
                   sequence="99"
                   parent="account.account_account_menu"
