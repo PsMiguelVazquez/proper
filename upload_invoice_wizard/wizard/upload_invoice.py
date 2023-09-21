@@ -127,7 +127,7 @@ class UploadInvoice(models.TransientModel):
                     invoice_origin = ', '.join(self.sale_ids.mapped('name'))
 
 
-                if invoice_id and self.client_id:
+                if (not invoice_id) and self.client_id:
                     product_list =[]
                     if self.tipo == 'purchase_order':
                         for line in self.purchase_lines:

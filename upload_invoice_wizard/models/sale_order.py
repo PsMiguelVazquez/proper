@@ -11,8 +11,6 @@ class SaleOrder(models.Model):
     def upload_invoice(self):
         if self.env['account.move'].search([('sale_id','in',self.ids)]).filtered(lambda x: x.state == 'posted'):
             raise UserError(_('No se puede subir una factura externa si la orden ya tiene una factura publicada'))
-        if self.margen > 5:
-            raise UserError(_('El valor máximo del margen no puede ser mayor que 5.'))
         if self.filtered(lambda x: x.state != 'sale'):
             raise UserError(_('No se puede subir una factura si el pedido no esta en el estado "Orden de venta"'))
         w = self.env['upload.invoice.wizard'].create({'subtotal': 0.0, 'monto': 0.0, 'tipo':'sale_order', 'margen': 1.0})
