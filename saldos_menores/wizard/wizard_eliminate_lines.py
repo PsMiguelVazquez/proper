@@ -16,3 +16,4 @@ class WizardEliminateLine(models.TransientModel):
     amount_residual = fields.Float('Monto restante')
     wizard_id = fields.Many2one('wizard.eliminate.balance')
     move_id = fields.Many2one('account.move')
+    type = fields.Char('Tipo')

@@ -22,6 +22,7 @@
                 <field name="lines">
                     <tree>
                         <field name="invoice_name" readonly="1"/>
+                        <field name="type" readonly="1"/>
                         <field name="partner_id" readonly="1"/>
                         <field name="amount_total" readonly="1"/>
                         <field name="amount_payed" readonly="1"/>

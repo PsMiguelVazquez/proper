@@ -14,6 +14,7 @@ class WizardEliminateBalance(models.TransientModel):
     partner_id = fields.Many2one('res.partner', string='Cliente')
     max_move_balance = fields.Float('Saldo menor a')
     moves = fields.Many2many('account.move', string='Movimientos')
+    payments = fields.Many2many('account.payment', string='Pagos')
     lines = fields.Many2many('wizard.eliminate.line', compute='_get_wizard_lines')
     account_id = fields.Many2one('account.account')
     journal_id = fields.Many2one('account.journal')
@@ -40,6 +41,20 @@ class WizardEliminateBalance(models.TransientModel):
                     'amount_residual':origin_move.amount_residual_signed,
                     'wizard_id': self.ids[0],
                     'move_id': origin_move.id,
+                    'type': 'Factura'
+                })
+            for payment in record.payments:
+                origin_move = self.env['account.move'].browse(payment.move_id.id.origin)
+                lines_list.append({
+                    'invoice_name': origin_move.name,
+                    'invoice_id': origin_move.id,
+                    'partner_id': origin_move.partner_id.id,
+                    'amount_total': origin_move.amount_total_signed,
+                    'amount_payed': origin_move.amount_total_signed - origin_move.amount_residual,
+                    'amount_residual': -payment.amount_rest,
+                    'wizard_id': self.ids[0],
+                    'move_id': origin_move.id,
+                    'type': 'Pago'
                 })
             if lines_list:
                 lines = self.env['wizard.eliminate.line'].create(lines_list)
@@ -50,43 +65,56 @@ class WizardEliminateBalance(models.TransientModel):
     @api.onchange('from_date','to_date', 'max_move_balance','partner_id')
     def get_moves(self):
         for record in self:
-            if record.partner_id:
-                record.moves = self.env['account.move'].search([
-                    ('create_date', '>=',  record.from_date),
-                    ('create_date', '<=',  record.to_date),
-                    ('amount_residual','<',record.max_move_balance),
-                    ('amount_residual','>', 0.1),
-                    ('state','=', 'posted'),
-                    ('partner_id', '=', record.partner_id.id)
-                ])
-            else:
-                record.moves = self.env['account.move'].search([
-                    ('create_date', '>=', record.from_date),
-                    ('create_date', '<=', record.to_date),
-                    ('amount_residual', '<', record.max_move_balance),
-                    ('amount_residual', '>', 0.1),
-                    ('state', '=', 'posted')
-                ])
+            record.moves = self.env['account.move'].search([
+                ('create_date', '>=', record.from_date),
+                ('create_date', '<=', record.to_date),
+                ('amount_residual', '<', record.max_move_balance),
+                ('amount_residual', '>', -record.max_move_balance),
+                ('amount_residual', '!=', 0.0),
+                ('state', '=', 'posted')
+            ])
+            pays = self.env['account.payment'].search([
+                ('date', '>=', record.from_date),
+                ('date', '<=', record.to_date),
+                ('state', '=', 'posted')
+            ])
+            record.payments = pays.filtered(lambda x: x.amount_rest > -5 and x.amount_rest < 5 and round(x.amount_rest, 2) != 0.0)
 
     def eliminate_balance(self):
         move_lines_d = []
         lineas = self.env['wizard.eliminate.line'].search([('wizard_id', '=', self.id)])
         if lineas:
-            move_lines_d.append((0, 0, {
-                'debit': sum(lineas.mapped('amount_residual')),
-                "name": 'Eliminación de saldos menores',
-                "account_id": self.account_id.id,
-            }))
+            suma = sum(lineas.mapped('amount_residual'))
+            if suma < 0:
+                move_lines_d.append((0, 0, {
+                    'credit': -suma,
+                    "name": 'Eliminación de saldos menores',
+                    "account_id": self.account_id.id,
+                }))
+            else:
+                move_lines_d.append((0, 0, {
+                    'debit': suma,
+                    "name": 'Eliminación de saldos menores',
+                    "account_id": self.account_id.id,
+                }))
             for inv in lineas:
                 '''
                     Crea un abono al cliente por la saldo de la cada factura
                 '''
-                move_line_vals = {
-                    'credit': inv.amount_residual,
-                    "partner_id": inv.partner_id.id,
-                    "name": 'Eliminación de saldos menores',
-                    "account_id": inv.partner_id.property_account_receivable_id.id,
-                }
+                if inv.amount_residual < 0:
+                    move_line_vals = {
+                        'debit': -inv.amount_residual,
+                        "partner_id": inv.partner_id.id,
+                        "name": 'Eliminación de saldos menores',
+                        "account_id": inv.partner_id.property_account_receivable_id.id,
+                    }
+                else:
+                    move_line_vals = {
+                        'credit': inv.amount_residual,
+                        "partner_id": inv.partner_id.id,
+                        "name": 'Eliminación de saldos menores',
+                        "account_id": inv.partner_id.property_account_receivable_id.id,
+                    }
                 move_lines_d.append((0, 0, move_line_vals))
             '''
                 Crea el apunte con el total de saldos menores con un cargo en la cuenta Gastos no deducibles
@@ -101,10 +129,10 @@ class WizardEliminateBalance(models.TransientModel):
         invoices_to_reconcile = lineas.invoice_id
         for line in move.line_ids:
             inv_to_rec = invoices_to_reconcile.filtered(lambda x: x.amount_residual == line.credit)
-            line_to_rec = inv_to_rec.line_ids.filtered(lambda y: y.account_id == line.account_id)
+            line_to_rec = inv_to_rec.line_ids.filtered(lambda y: y.account_id == line.account_id and not y.reconciled)
             if line_to_rec:
                 to_reconcile = line + line_to_rec[0]
-                to_reconcile.reconcile()
+                to_reconcile.with_context({'no_exchange_difference': True}).reconcile()
         invoice_msg = (
                           "Se realizó el proceso de eliminación de saldos desde: <a href=# data-oe-model=account.move data-oe-id=%d>%s</a>") % (
                           move.id, move.name)
