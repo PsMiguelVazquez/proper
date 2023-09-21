@@ -59,7 +59,7 @@ class SaleOrder(models.Model):
     @api.depends('state')
     def _compute_edit_blocked(self):
         for record in self:
-            record.edit_blocked = record.state not in ['draft']
+            record.edit_blocked = record.state not in ['draft', 'sent']
             # record.edit_blocked = False
 
     @api.depends('invoice_ids')
