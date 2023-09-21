@@ -9,6 +9,7 @@ class AccountEdiFormat(models.Model):
             return edi_result
         for invoice in invoices:
             if edi_result[invoice].get('attachment', False):
-                cfdi_filename = invoice.name.replace('/','')
+                if edi_result[invoice]['attachment'].mimetype == 'application/xml':
+                    cfdi_filename = invoice.name.replace('/','') + '.xml'
                 edi_result[invoice]['attachment'].name = cfdi_filename
         return edi_result
