@@ -276,7 +276,7 @@ class AccountMove(models.Model):
                                       '\n\t2. Una vez que esté seguro que se realizó la cancelación ante el SAT de click en el menú de acciones (ícono de engrane) y seleccione la opción "Marcar como cancelado".'
                                       '\n\nAl realizar estos pasos la factura quedará como cancelada tambien en Odoo.')
             folio_fiscal_uuid= self.l10n_mx_edi_cfdi_uuid
-        if self.move_type == 'out_invoice':
+        if self.move_type == 'out_invoice' and self.l10n_mx_edi_payment_method_id.id != 20:
             self.valida_addenda()
         super(AccountMove, self).button_process_edi_web_services()
         if folio_fiscal_uuid != '' :
