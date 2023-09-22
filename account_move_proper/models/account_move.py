@@ -30,6 +30,9 @@ class AccountMove(models.Model):
             if record.l10n_mx_edi_payment_method_id.id == 20:
                 record.invoice_payment_term_id = 1
                 record.x_plazo_pago = 'PUE'
+            else:
+                record.invoice_payment_term_id = record.partner_id.property_payment_term_id
+                record.x_plazo_pago = record.partner_id.x_nombre_corto_tpago
 
     @api.depends('write_date')
     def _compute_remision_name(self):
