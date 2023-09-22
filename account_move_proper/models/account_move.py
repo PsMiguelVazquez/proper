@@ -281,7 +281,13 @@ class AccountMove(models.Model):
             folio_fiscal_uuid= self.l10n_mx_edi_cfdi_uuid
         if self.move_type == 'out_invoice' and self.l10n_mx_edi_payment_method_id.id != 20:
             self.valida_addenda()
-        super(AccountMove, self).button_process_edi_web_services()
+        if self.l10n_mx_edi_payment_method_id.id == 20 and self.partner_id.l10n_mx_edi_addenda:
+            add_id = self.partner_id.l10n_mx_edi_addenda.id
+            self.partner_id.l10n_mx_edi_addenda = None
+            super(AccountMove, self).button_process_edi_web_services()
+            self.partner_id.l10n_mx_edi_addenda = add_id
+        else:
+            super(AccountMove, self).button_process_edi_web_services()
         if folio_fiscal_uuid != '' :
             self.l10n_mx_edi_cfdi_uuid = folio_fiscal_uuid
 
