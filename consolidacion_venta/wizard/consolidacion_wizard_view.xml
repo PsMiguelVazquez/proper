@@ -20,13 +20,14 @@
 <!--                        <field name="subtotal" widget="monetary"/>-->
 <!--                        <field name="total" widget="monetary"/>-->
 <!--                    </group>-->
-                    <group>
-                        <field name="subtotal_lines" widget="monetary"/>
-                        <field name="total_lines" widget="monetary"/>
-                    </group>
+
                     <group>
                         <field name="referencia"/>
                         <field name="orden_compra"/>
+                    </group>
+                    <group invisible="1">
+                        <field name="subtotal_lines" widget="monetary"/>
+                        <field name="total_lines" widget="monetary"/>
                     </group>
                 </group>
                 <label for="lines"/>
@@ -52,11 +53,11 @@
                             <field name="sale_order_char"/>
                             <field name="orden_compra"/>
                             <field name="product_id"/>
-                            <field name="quantity"/>
+                            <field name="quantity" sum="Total de productos"/>
                             <field name="price_unit"/>
-                            <field name="subtotal"/>
-                            <field name="taxes"/>
-                            <field name="total"/>
+                            <field name="subtotal" sum="Subtotal"/>
+                            <field name="taxes" sum="Impuestos"/>
+                            <field name="total" sum="Total"/>
                         </tree>
                 </field>
                 <footer>
