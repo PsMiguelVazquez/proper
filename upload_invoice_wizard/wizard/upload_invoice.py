@@ -35,6 +35,7 @@ class UploadInvoice(models.TransientModel):
     reparar_factura = fields.Boolean('Reparar factura', default=False)
     invoice_ids = fields.Many2one('account.move')
     tipo = fields.Selection(string='Tipo', selection=[('purchase_order','Orden de compra'),('sale_order','Orden de venta')])
+    margen = fields.Float('Margen de redondeo')
 
     @api.depends('order_lines', 'purchase_lines')
     def _compute_total_lineas(self):
@@ -79,13 +80,16 @@ class UploadInvoice(models.TransientModel):
             total_validar = sum(self.sale_ids.mapped('amount_total'))
         else:
             total_validar = sum(self.purchase_ids.mapped('amount_total'))
-        if not (round(total_validar,2) - self.monto >= -1 and  round(total_validar,2) - self.monto <= 1):
+        if not (round(total_validar, 2) >= self.monto- self.margen and round(total_validar, 2) <=  self.monto + self.margen):
+        # if not (round(total_validar,2) - self.monto >= -self.margen and  round(total_validar,2) - self.monto <= self.margen):
             valid =  False
             message += '\nNo coinciden los montos. Monto total de las facturas seleccionadas: ' + str(total_validar) + ' Monto en el archívo XML: ' + str(self.monto)
         return valid, message
 
     def upload_invoice_and_assign(self):
         invoice_id = self.env['account.move'].search([('ref', '=', self.ref)])
+        if invoice_id:
+            raise UserError(('Ya existe una factura %s con esa referencia %s.') % (invoice_id.name, self.ref) )
         if self.reparar_factura:
             invoice_id = self.invoice_ids
             if invoice_id and self.client_id:
@@ -126,7 +130,7 @@ class UploadInvoice(models.TransientModel):
                     invoice_origin = ', '.join(self.sale_ids.mapped('name'))
 
 
-                if not invoice_id and self.client_id:
+                if self.client_id:
                     product_list =[]
                     if self.tipo == 'purchase_order':
                         for line in self.purchase_lines:

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_wizard_eliminate_balance_form" model="ir.ui.view">
+        <field name="name">wizard.eliminate.balance.form</field>
+        <field name="model">wizard.eliminate.balance</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <group>
+                        <field name="partner_id" invisible="1"/>
+                        <field name="journal_id" string="Diario"/>
+                        <field name="max_move_balance"/>
+                        <field name="account_id" string="Cuenta"/>
+                        <field name="move_date"/>
+
+                    </group>
+                    <group>
+                            <field name="from_date" widget="daterange" string="Del" options="{'related_end_date': 'to_date'}"/>
+                            <field name="to_date" widget="daterange" string="Al" options="{'related_start_date': 'from_date'}"/>
+                    </group>
+                </group>
+                <field name="lines">
+                    <tree>
+                        <field name="invoice_name" readonly="1"/>
+                        <field name="type" readonly="1"/>
+                        <field name="partner_id" readonly="1"/>
+                        <field name="amount_total" readonly="1"/>
+                        <field name="amount_payed" readonly="1"/>
+                        <field name="amount_residual" readonly="1" sum="Suma total"/>
+                    </tree>
+
+                </field>
+<!--                <field name="lines" string="movimientos" widget="many2many">-->
+<!--                        <tree >-->
+<!--                            <field name="invoice_name" readonly="1"/>-->
+<!--                            <field name="partner_id" readonly="1"/>-->
+<!--                            <field name="amount_total" sum="Total" readonly="1"/>-->
+<!--                            <field name="amount_residual" sum="Total residual" readonly="1"/>-->
+<!--                        </tree>-->
+<!--                </field>-->
+                <footer>
+                    <button name="eliminate_balance" type="object" string="Eliminar saldos" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

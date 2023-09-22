@@ -73,7 +73,7 @@ class FactoringWizard(models.TransientModel):
 
     def action_create_payments(self):
         if self.hide_fields_factoraje:
-            super(FactoringWizard, self).action_create_payments()
+            return super(FactoringWizard, self).action_create_payments()
         else:
             '''
                 Validaciones
@@ -125,4 +125,4 @@ class FactoringWizard(models.TransientModel):
                     to_reconcile = ((payment_lines + line).filtered_domain([('reconciled', '=', False)]))
                     to_reconcile.with_context({'paid_amount': line.move_id.porcent_assign}).reconcile()
         else:
-            super(FactoringWizard, self)._reconcile_payments(to_process, edit_mode=False)
+            return super(FactoringWizard, self)._reconcile_payments(to_process, edit_mode=False)
