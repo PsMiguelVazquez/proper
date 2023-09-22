@@ -68,8 +68,8 @@ class WizardEliminateBalance(models.TransientModel):
             record.moves = self.env['account.move'].search([
                 ('create_date', '>=', record.from_date),
                 ('create_date', '<=', record.to_date),
-                ('amount_residual', '<', record.max_move_balance),
-                ('amount_residual', '>', -record.max_move_balance),
+                ('amount_residual', '<=', record.max_move_balance),
+                ('amount_residual', '>=', -record.max_move_balance),
                 ('amount_residual', '!=', 0.0),
                 ('state', '=', 'posted')
             ])
@@ -78,7 +78,7 @@ class WizardEliminateBalance(models.TransientModel):
                 ('date', '<=', record.to_date),
                 ('state', '=', 'posted')
             ])
-            record.payments = pays.filtered(lambda x: x.amount_rest > -record.max_move_balance and x.amount_rest < record.max_move_balance and round(x.amount_rest, 2) != 0.0)
+            record.payments = pays.filtered(lambda x: x.amount_rest >= -record.max_move_balance and x.amount_rest <= record.max_move_balance and round(x.amount_rest, 2) != 0.0)
 
     def eliminate_balance(self):
         move_lines_d = []
