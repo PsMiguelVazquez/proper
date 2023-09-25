@@ -21,6 +21,7 @@ class AccountMove(models.Model):
     movimientos_almacen = fields.Many2many(comodel_name='stock.picking', compute='_compute_movimientos_almacen')
     cantidad_facturada_total = fields.Integer(string='Cantidad facturada total',compute='_compute_cantidad_facturada_total')
     duplicated_from = fields.Many2one('account.move')
+    es_anticipo = fields.Boolean(string='¿Es anticipo?', default=False)
     x_studio_n_orden_de_compra = fields.Char()
 
 
@@ -279,9 +280,9 @@ class AccountMove(models.Model):
                                       '\n\t2. Una vez que esté seguro que se realizó la cancelación ante el SAT de click en el menú de acciones (ícono de engrane) y seleccione la opción "Marcar como cancelado".'
                                       '\n\nAl realizar estos pasos la factura quedará como cancelada tambien en Odoo.')
             folio_fiscal_uuid= self.l10n_mx_edi_cfdi_uuid
-        if self.move_type == 'out_invoice' and self.l10n_mx_edi_payment_method_id.id != 20:
+        if self.move_type == 'out_invoice' and not self.es_anticipo:
             self.valida_addenda()
-        if self.l10n_mx_edi_payment_method_id.id == 20 and self.partner_id.l10n_mx_edi_addenda:
+        if self.es_anticipo and self.partner_id.l10n_mx_edi_addenda:
             add_id = self.partner_id.l10n_mx_edi_addenda.id
             self.partner_id.l10n_mx_edi_addenda = None
             super(AccountMove, self).button_process_edi_web_services()
