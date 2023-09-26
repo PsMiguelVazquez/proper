@@ -21,6 +21,7 @@ class DataValidate(models.Model):
     new_cost = fields.Float(string='Nuevo costo')
     note = fields.Char(string='Observaciones')
     description = fields.Char(string='Descripción')
+    vigencia = fields.Char(string='Vigencia')
     request_answered = fields.Selection(string='Propuesta atendida', selection=[('Atendido', 'Atendido'), ('Noatendido', 'No atendido')])
 
 
@@ -72,3 +73,16 @@ class DataValidate(models.Model):
                 'x_solicitud_atendida': record.request_answered
             })
             record.requested_by = self.write_uid
+
+    @api.onchange('vigencia')
+    def on_change_request_answered(self):
+        for record in self:
+            record.order_line_id.write({
+                'x_vigencia_compra': record.vigencia
+            })
+    @api.onchange('description')
+    def on_change_request_answered(self):
+        for record in self:
+            record.order_line_id.write({
+                'description': record.description
+            })

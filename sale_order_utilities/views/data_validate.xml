@@ -20,7 +20,8 @@
                     <field name="request_answered"/>
                     <field name="proposal_id"/>
                     <field name="note"/>
-                    <field name="description" optional="show"/>
+                    <field name="vigencia"/>
+                    <field name="description"/>
                 </tree>
             </field>
         </record>
@@ -50,6 +51,7 @@
                                 <field name="request_answered"/>
                                 <field name="proposal_id"/>
                                 <field name="note"/>
+                                <field name="vigencia"/>
                                 <field name="description"/>
                             </group>
                         </group>
