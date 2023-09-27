@@ -20,6 +20,20 @@ class AccountMove(models.Model):
     fecha_entrega_mercancia_html = fields.Html(string='Fechas de entrega', compute='_compute_fecha_entrega_mercancia')
     movimientos_almacen = fields.Many2many(comodel_name='stock.picking', compute='_compute_movimientos_almacen')
     cantidad_facturada_total = fields.Integer(string='Cantidad facturada total',compute='_compute_cantidad_facturada_total')
+    duplicated_from = fields.Many2one('account.move')
+    es_anticipo = fields.Boolean(string='¿Es anticipo?', default=False)
+    x_studio_n_orden_de_compra = fields.Char()
+
+
+    @api.onchange('l10n_mx_edi_payment_method_id')
+    def on_change_l10n_mx_edi_payment_method_id(self):
+        for record in self:
+            if record.l10n_mx_edi_payment_method_id.id == 20:
+                record.invoice_payment_term_id = 1
+                record.x_plazo_pago = 'PUE'
+            else:
+                record.invoice_payment_term_id = record.partner_id.property_payment_term_id
+                record.x_plazo_pago = record.partner_id.x_nombre_corto_tpago
 
     @api.depends('write_date')
     def _compute_remision_name(self):
@@ -38,7 +52,7 @@ class AccountMove(models.Model):
 
     def _compute_movimientos_almacen(self):
         for record in self:
-            record.movimientos_almacen = self.env['stock.picking'].search([('x_studio_facturas','=',record.id),('picking_type_code','in',['outgoing', 'incoming'])])
+            record.movimientos_almacen = self.env['stock.picking'].search(['|',('x_studio_facturas','=',record.id), '|',('origin', '=', record.name), ('origin', '=', 'RF'+str(record.id)),('picking_type_code','in',['outgoing', 'incoming'])])
     def _compute_fecha_entrega_mercancia(self):
         for record in self:
             fecha_entrega_mercancia_html = ''
@@ -132,15 +146,15 @@ class AccountMove(models.Model):
                 'Para duplicar esta factura de esta manera debe estar timbrada')
         if len(invoice.sale_id.invoice_ids.filtered(lambda x:x.state == 'draft')) > 0:
             raise UserError('Ya existe otro borrador de factura relacionado con este movimiento. Elimínelo primero para duplicar esta factura')
-        for line in invoice.sale_id.order_line:
+        for line in invoice.invoice_line_ids:
             product_dict = {
                 'sequence': 10,
-                'name': line.product_id.name,
-                'quantity': line.qty_invoiced,
+                'name': line.name,
+                'quantity': line.quantity,
                 'product_id': line.product_id,
                 'price_unit': line.price_unit,
-                'tax_ids': line.tax_id,
-                'product_uom_id': line.product_uom
+                'tax_ids': line.tax_ids,
+                'product_uom_id': line.product_uom_id
             }
             product_list.append(product_dict)
         invoice_dict = {
@@ -161,7 +175,8 @@ class AccountMove(models.Model):
             'partner_shipping_id':  invoice.partner_shipping_id,
             'x_comentarios': invoice.x_comentarios,
             'x_atencion': invoice.x_atencion,
-            'x_observaciones': invoice.x_observaciones
+            'x_observaciones': invoice.x_observaciones,
+            'duplicated_from': invoice.id
         }
         invoice_id = self.env['account.move'].create(invoice_dict)
         invoice.sale_id.order_line.invoice_lines |= invoice_id.invoice_line_ids
@@ -175,6 +190,33 @@ class AccountMove(models.Model):
         invoice_id.message_post(body=invoice_msg, type="notification")
 
         if invoice_id:
+            if not self.env['stock.picking'].search([('origin', '=', invoice.name)
+                                                        , ('picking_type_code', '=', 'incoming')
+                                                        , ('location_dest_id.id', '=', 69)
+                                                     ]):
+                move_lines_d = []
+                for line in invoice_id.invoice_line_ids:
+                    move_line_vals = {
+                        'name': line.product_id.name,
+                        "product_id": line.product_id.id,
+                        "product_uom_qty": line.quantity,
+                        "quantity_done": line.quantity,
+                        "product_uom": line.product_id.uom_id.id,
+                        'location_id': 4,
+                        'location_dest_id': 69
+
+                    }
+                    move_lines_d.append((0, 0, move_line_vals))
+                picking = self.env['stock.picking'].create({
+                    'location_id': 4,
+                    'origin': invoice.name,
+                    'location_dest_id': 69,
+                    'picking_type_id': 11,
+                    'immediate_transfer': True,
+                    'move_type': 'direct',
+                    'move_lines': move_lines_d,
+                })
+                picking.button_validate()
             return {
                 'name': _('Customer Invoice'),
                 'view_mode': 'form',
@@ -238,9 +280,15 @@ class AccountMove(models.Model):
                                       '\n\t2. Una vez que esté seguro que se realizó la cancelación ante el SAT de click en el menú de acciones (ícono de engrane) y seleccione la opción "Marcar como cancelado".'
                                       '\n\nAl realizar estos pasos la factura quedará como cancelada tambien en Odoo.')
             folio_fiscal_uuid= self.l10n_mx_edi_cfdi_uuid
-        if self.move_type == 'out_invoice':
+        if self.move_type == 'out_invoice' and not self.es_anticipo:
             self.valida_addenda()
-        super(AccountMove, self).button_process_edi_web_services()
+        if self.es_anticipo and self.partner_id.l10n_mx_edi_addenda:
+            add_id = self.partner_id.l10n_mx_edi_addenda.id
+            self.partner_id.l10n_mx_edi_addenda = None
+            super(AccountMove, self).button_process_edi_web_services()
+            self.partner_id.l10n_mx_edi_addenda = add_id
+        else:
+            super(AccountMove, self).button_process_edi_web_services()
         if folio_fiscal_uuid != '' :
             self.l10n_mx_edi_cfdi_uuid = folio_fiscal_uuid
 

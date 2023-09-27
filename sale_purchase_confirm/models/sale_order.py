@@ -720,7 +720,7 @@ class SaleOrderLine(models.Model):
                     asignados = []
                     # for linea in picking_lines:
                     for producto in productos_kit:
-                        asignados.append(sum(picking_lines.filtered(lambda x: x.product_id == producto).mapped('reserved_availability'))/necesarios_dic[producto.default_code])
+                        asignados.append(sum(picking_lines.filtered(lambda x: x.product_id == producto).mapped('product_uom_qty')))
                     if asignados:
                         record.cantidad_asignada = min(asignados)
                     else:

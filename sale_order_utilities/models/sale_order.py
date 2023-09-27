@@ -71,6 +71,7 @@ class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
     cantidad_por_comprar = fields.Float('Cantidad pendiente de compra', compute='_compute_cantidad_por_comprar')
     cantidad_vendida_kits = fields.Float('Cantidad vendida en kits', compute='_compute_cantidad_vendida_kits')
+    description =  fields.Char('Descripción')
 
 
     def _compute_cantidad_por_comprar(self):

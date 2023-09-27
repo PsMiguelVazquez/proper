@@ -18,10 +18,10 @@ class ConsolidacionWizard(models.Model):
 
     def _compute_totals(self):
         for record in self:
-            record.total = round(sum(record.lines.mapped('total')),2)
-            record.subtotal = round(sum(record.lines.mapped('subtotal')),2)
-            record.total_lines = round(sum(record.sale_orders.mapped('amount_total')),2)
-            record.subtotal_lines = round(sum(record.sale_orders.mapped('amount_untaxed')),2)
+            record.total = round(sum(record.lines.mapped('total')),6)
+            record.subtotal = round(sum(record.lines.mapped('subtotal')),6)
+            record.total_lines = round(sum(record.sale_orders.mapped('amount_total')),6)
+            record.subtotal_lines = round(sum(record.sale_orders.mapped('amount_untaxed')),6)
 
 
     def _compute_lines(self):
