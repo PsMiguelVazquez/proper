@@ -75,13 +75,13 @@ class DataValidate(models.Model):
             record.requested_by = self.write_uid
 
     @api.onchange('vigencia')
-    def on_change_request_answered(self):
+    def on_change_vigencia(self):
         for record in self:
             record.order_line_id.write({
                 'x_vigencia_compra': record.vigencia
             })
     @api.onchange('description')
-    def on_change_request_answered(self):
+    def on_change_description(self):
         for record in self:
             record.order_line_id.write({
                 'description': record.description
