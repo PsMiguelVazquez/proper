@@ -52,7 +52,7 @@ class AccountMove(models.Model):
 
     def _compute_movimientos_almacen(self):
         for record in self:
-            record.movimientos_almacen = self.env['stock.picking'].search(['|',('x_studio_facturas','=',record.id),('origin', '=', record.name),('picking_type_code','in',['outgoing', 'incoming'])])
+            record.movimientos_almacen = self.env['stock.picking'].search(['|',('x_studio_facturas','=',record.id), '|',('origin', '=', record.name), ('origin', '=', 'RF'+str(record.id)),('picking_type_code','in',['outgoing', 'incoming'])])
     def _compute_fecha_entrega_mercancia(self):
         for record in self:
             fecha_entrega_mercancia_html = ''
