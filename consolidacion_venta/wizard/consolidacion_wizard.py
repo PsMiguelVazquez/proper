@@ -26,7 +26,7 @@ class ConsolidacionWizard(models.Model):
 
     def _compute_lines(self):
         for record in self:
-            order_lines = self.sale_orders.mapped('order_line')
+            order_lines = self.sale_orders.mapped('order_line').filtered(lambda x: x.product_uom_qty > 0)
             productos = order_lines.mapped('product_id')
             lista_productos = []
             lista_productos_precios = [
