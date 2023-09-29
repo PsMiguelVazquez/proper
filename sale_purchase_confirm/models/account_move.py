@@ -132,7 +132,8 @@ class AccountMoveRevers(models.TransientModel):
                                                                       ('noeslosolicitadoporelcliente','No es lo solicitado por el cliente'),('clienteinsatisfecho','Cliente Insatisfecho'),
                                                                       ('productoequivocado','Producto equivocado'),('productoincompleto','Producto Incompleto'),
                                                                       ('pedidoincompleto','Pedido incompleto'),('clienteyanolorequiere','Cliente ya no lo requiere'),
-                                                                      ('productomalestado','Producto en mal estado'),('otros','Otros (Especifique)')
+                                                                      ('productomalestado','Producto en mal estado'),('refacturacion','Refacturación'),
+                                                                      ('otros','Otros (Especifique)')
                                                                       ])
 
     @api.onchange('motivo')
