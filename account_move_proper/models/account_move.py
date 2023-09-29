@@ -22,7 +22,14 @@ class AccountMove(models.Model):
     cantidad_facturada_total = fields.Integer(string='Cantidad facturada total',compute='_compute_cantidad_facturada_total')
     duplicated_from = fields.Many2one('account.move')
     es_anticipo = fields.Boolean(string='¿Es anticipo?', default=False)
-    x_studio_n_orden_de_compra = fields.Char(string="Orden de compra")
+    x_studio_n_orden_de_compra = fields.Char(string="Orden de compra", compute="compute_orden_compra")
+
+    def compute_orden_compra(self):
+        for record in self:
+            if record.sale_id:
+                record.x_studio_n_orden_de_compra = record.sale_id.x_studio_n_orden_de_compra
+            else:
+                record.x_studio_n_orden_de_compra = ''
 
 
     @api.onchange('l10n_mx_edi_payment_method_id')
