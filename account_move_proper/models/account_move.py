@@ -22,7 +22,14 @@ class AccountMove(models.Model):
     cantidad_facturada_total = fields.Integer(string='Cantidad facturada total',compute='_compute_cantidad_facturada_total')
     duplicated_from = fields.Many2one('account.move')
     es_anticipo = fields.Boolean(string='¿Es anticipo?', default=False)
-    x_studio_n_orden_de_compra = fields.Char(string="Orden de compra")
+    x_studio_n_orden_de_compra = fields.Char(string="Orden de compra", compute="compute_orden_compra")
+
+    def compute_orden_compra(self):
+        for record in self:
+            if record.sale_id:
+                record.x_studio_n_orden_de_compra = record.sale_id.x_studio_n_orden_de_compra
+            else:
+                record.x_studio_n_orden_de_compra = ''
 
 
     @api.onchange('l10n_mx_edi_payment_method_id')
@@ -52,7 +59,11 @@ class AccountMove(models.Model):
 
     def _compute_movimientos_almacen(self):
         for record in self:
-            record.movimientos_almacen = self.env['stock.picking'].search(['|',('x_studio_facturas','=',record.id), '|',('origin', '=', record.name), ('origin', '=', 'RF'+str(record.id)),('picking_type_code','in',['outgoing', 'incoming'])])
+            if record.sale_id:
+                salename = record.sale_id.name
+            else:
+                salename = ''
+            record.movimientos_almacen = self.env['stock.picking'].search(['|',('x_studio_facturas','=',record.id), '|',('origin', '=', record.name), ('origin', '=', salename),('picking_type_code','in',['outgoing', 'incoming'])])
     def _compute_fecha_entrega_mercancia(self):
         for record in self:
             fecha_entrega_mercancia_html = ''

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<odoo>
+
+
+    <record id="action_refactura_credito" model="ir.actions.server">
+        <field name="name">Refacturación (cŕedito)</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="refacturacion.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move" />
+        <field name="code">action=model.refactura_credito()</field>
+        <field name="state">code</field>
+    </record>
+
+
+
+</odoo>
