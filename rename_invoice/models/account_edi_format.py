@@ -21,6 +21,7 @@ class AccountEdiFormat(models.Model):
             return edi_result
         for move in payments:
             if edi_result[move].get('attachment', False):
-                cfdi_filename = move.name.replace('/', '')
+                if edi_result[move]['attachment'].mimetype == 'application/xml':
+                    cfdi_filename = move.name.replace('/', '')+ '.xml'
                 edi_result[move]['attachment'].name = cfdi_filename
         return edi_result
