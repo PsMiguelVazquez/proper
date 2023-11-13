@@ -44,7 +44,7 @@ class AccountPayment(models.Model):
             if record.attachment_ids:
                 for att in record.attachment_ids:
                     if att.datas:
-                        if 'Payment' in att.name and 'xml' in att.name:
+                        if att.description and 'CFDI de pago' in att.description and 'xml' in att.name:
                             path = att._full_path(att.store_fname)
                             try:
                                 with open(path, 'r') as f:
