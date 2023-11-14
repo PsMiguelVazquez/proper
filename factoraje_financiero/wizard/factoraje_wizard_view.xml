@@ -26,9 +26,9 @@
                 <attribute name="attrs">{'invisible':[('hide_fields_factoraje','!=',True)]}</attribute>
             </xpath>
             <xpath expr="//form[1]/group[1]" position="after">
-                <field name="partner_bills" widget="many2many"
+                <field name="partner_bills" widget="many2many"  domain="[('id', 'in', active_ids)]"
                        attrs="{'invisible':[('hide_fields_factoraje', '=', True)]}" mode="tree">
-                    <tree create="0" delete="0" editable="bottom">
+                    <tree create="false" delete="false" editable="bottom">
                         <field name="partner_id" optional="hide" readonly="1"/>
                         <field name="name" readonly="1"/>
                         <field name="amount_total_signed" string="Importe Total" readonly="1"/>

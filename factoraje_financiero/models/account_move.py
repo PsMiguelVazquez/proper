@@ -94,6 +94,16 @@ class AccountMove(models.Model):
             raise UserError('No se puede aplicar factoraje a facturas pagadas o pagadas parcialmente.')
         if len(facturas.mapped('partner_id')) != 1:
             raise UserError('No se puede aplicar factoraje a facturas de diferentes clientes.')
+        # if len(facturas.mapped('partner_bank_id')) > 1:
+        #     raise UserError('No se puede aplicar factoraje a facturas con diferentes bancos asociados.')
+        for factura in facturas:
+            if not factura.partner_bank_id:
+                if len(self.env.company.bank_ids) < 1:
+                    raise UserError('No se puede aplicar factoraje a facturas sin banco asociado.')
+                if factura.move_type != 'out_invoice':
+                    raise UserError('Solo se puede aplicar factoraje a facturas de clientes.')
+                else:
+                    factura.partner_bank_id = self.env.company.bank_ids[0].id
 
         facturas.write({'factoring_amount': 0.0, 'porcent_assign': 0.0})
         w = self.env['account.payment.register'].with_context(active_model='account.move', active_ids=active_ids).create({
