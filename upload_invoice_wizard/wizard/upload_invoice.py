@@ -88,8 +88,6 @@ class UploadInvoice(models.TransientModel):
 
     def upload_invoice_and_assign(self):
         invoice_id = self.env['account.move'].search([('ref', '=', self.ref)])
-        if invoice_id:
-            raise UserError(('Ya existe una factura %s con esa referencia %s.') % (invoice_id.name, self.ref) )
         if self.reparar_factura:
             invoice_id = self.invoice_ids
             if invoice_id and self.client_id:
@@ -118,6 +116,14 @@ class UploadInvoice(models.TransientModel):
                         }
                         acc_edi_doc_id.write(acc_edi_doc_dict)
         else:
+            invoices = self.env['account.move'].search([
+                ('move_type', '=', 'out_invoice')
+                , ('state', '=', 'posted')
+                , ('partner_id', '=', self.client_id.id)
+            ])
+            if self.folio_fiscal in invoices.mapped('l10n_mx_edi_cfdi_uuid'):
+                raise UserError(('Ya existe una factura %s con ese folio fiscal %s.') % (
+                invoices[0].name, invoices[0].l10n_mx_edi_cfdi_uuid))
             valid, message = self.validate()
             if valid:
                 if self.tipo == 'purchase_order':
@@ -201,6 +207,15 @@ class UploadInvoice(models.TransientModel):
                                     'x_estado_surtido': 'surtir',
                                 }
                                 for sale_order_line_id in sale_order_id.order_line:
+                                    # used_invoice_ids = []
+                                    # if sale_order_line_id.product_uom_qty > 0:
+                                    #     sale_order_line_id.write({'invoice_lines': invoice_id.invoice_line_ids.filtered(
+                                    #         lambda x: x.product_id == sale_order_line_id.product_id
+                                    #         and x.quantity == sale_order_line_id.product_uom_qty
+                                    #         and x.price_unit == sale_order_line_id.price_unit
+                                    #         and x.id not in used_invoice_ids
+                                    #     )})
+                                    #     used_invoice_ids.append(sale_order_line_id.invoice_lines.id)
                                     if sale_order_line_id.product_uom_qty > 0:
                                         sale_order_line_id.write({'invoice_lines': invoice_id.invoice_line_ids})
                                 sale_order_id.write(sale_order_dict)
