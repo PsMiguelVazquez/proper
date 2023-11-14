@@ -187,7 +187,9 @@ class AccountMove(models.Model):
             'x_comentarios': invoice.x_comentarios,
             'x_atencion': invoice.x_atencion,
             'x_observaciones': invoice.x_observaciones,
-            'duplicated_from': invoice.id
+            'duplicated_from': invoice.id,
+            'partner_bank_id': invoice.partner_bank_id.id if invoice.partner_bank_id else None,
+            'invoice_origin': invoice.invoice_origin
         }
         invoice_id = self.env['account.move'].create(invoice_dict)
         invoice.sale_id.order_line.invoice_lines |= invoice_id.invoice_line_ids
