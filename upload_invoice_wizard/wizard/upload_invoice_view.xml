@@ -14,7 +14,7 @@
                     <group>
                         <field name="client_id" required="1" domain="[('vat','=','rfc_receptor')]"
                                options="{'no_create': True, 'no_create_edit':True}"
-                               attrs="{'invisible':[('tipo', '!=', 'sale_order')]}"/>
+                               attrs="{'invisible':[('tipo', '!=', 'sale_order')]}" readonly="1"/>
                         <field name="provider_id" domain="[('vat','=','rfc_emisor')]"
                                options="{'no_create': True, 'no_create_edit':True}"
                                attrs="{'invisible':[('tipo', '!=', 'purchase_order')]}"/>

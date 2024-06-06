@@ -116,14 +116,6 @@ class UploadInvoice(models.TransientModel):
                         }
                         acc_edi_doc_id.write(acc_edi_doc_dict)
         else:
-            invoices = self.env['account.move'].search([
-                ('move_type', '=', 'out_invoice')
-                , ('state', '=', 'posted')
-                , ('partner_id', '=', self.client_id.id)
-            ])
-            if self.folio_fiscal in invoices.mapped('l10n_mx_edi_cfdi_uuid'):
-                raise UserError(('Ya existe una factura %s con ese folio fiscal %s.') % (
-                invoices[0].name, invoices[0].l10n_mx_edi_cfdi_uuid))
             valid, message = self.validate()
             if valid:
                 if self.tipo == 'purchase_order':
@@ -132,115 +124,50 @@ class UploadInvoice(models.TransientModel):
                     self.tipo_movimiento = tipo_movimiento
                     invoice_origin = ', '.join(self.purchase_ids.mapped('name'))
                 else:
+                    partners_id = self.sale_ids.mapped('partner_id.id')
+                    if len(partners_id) == 0:
+                        raise UserError('No existe el cliente')
+                    if len(partners_id) > 1:
+                        raise UserError('No se puede subir una factura si los clientes no son los mismos')
+                    attachments = self.env['ir.attachment'].search([
+                        ('res_model', '=', 'account.move')
+                        , ('mimetype', '=', 'application/xml')
+                    ])
+                    xml = self.adjuntos.filtered(lambda x: x.mimetype == 'application/xml')
+                    repeated_attachments = attachments.filtered(lambda x: x.datas[:15] == xml.datas[:15])
+                    repeated_invoice = self.env['account.move'].search([
+                        ('id', 'in', repeated_attachments.mapped('res_id'))
+                        , ('state', '=', 'posted')
+                    ])
+                    if repeated_invoice:
+                        raise UserError('Ya existe una factura %s con ese UUID' % repeated_invoice[0].name)
                     journal_id = 1
                     invoice_origin = ', '.join(self.sale_ids.mapped('name'))
-
-
                 if self.client_id:
-                    product_list =[]
-                    if self.tipo == 'purchase_order':
-                        for line in self.purchase_lines:
-                            if line.product_uom_qty > 0:
-                                product_dict = {
-                                    'sequence': 10,
-                                    'name': line.product_id.name,
-                                    'quantity': line.product_uom_qty,
-                                    'product_id': line.product_id,
-                                    'price_unit': line.price_unit,
-                                    'tax_ids': line.taxes_id,
-                                    'product_uom_id': line.product_id.uom_id.id
-                                }
-                                product_list.append(product_dict)
-                    else:
-                        for line in self.order_lines:
-                            if line.product_uom_qty > 0:
-                                product_dict = {
-                                    'sequence': 10,
-                                    'name': line.product_id.name,
-                                    'quantity': line.product_uom_qty,
-                                    'product_id': line.product_id,
-                                    'price_unit': line.price_unit,
-                                    'tax_ids': line.tax_id,
-                                    'product_uom_id': line.product_id.uom_id.id
-                                }
-                                product_list.append(product_dict)
-                    invoice_dict = {
-                        'invoice_date': self.fecha_factura,
-                        'ref': self.ref,
-                        'x_referencia': self.ref,
-                        'journal_id': journal_id,
-                        'posted_before': False,
-                        'invoice_payment_term_id': self.terminos_pago_id,
-                        'partner_id': self.client_id,
-                        'move_type': self.tipo_movimiento,
-                        'l10n_mx_edi_payment_method_id': self.id_metodo_pago,
-                        'l10n_mx_edi_payment_policy': self.metodo_pago,
-                        'l10n_mx_edi_usage': self.uso_cfdi,
-                        'version_cfdi': self.version_cfdi,
-                        'invoice_line_ids': product_list,
-                        'l10n_mx_edi_cfdi_uuid': self.folio_fiscal,
-                        'invoice_origin': invoice_origin
-                    }
-                    invoice_id = self.env['account.move'].create(invoice_dict)
+                    invoice_id = self.sale_ids._create_invoices()
+                    invoice_id.ref = self.ref
+                    invoice_id.x_referencia = self.ref
+                    invoice_id.invoice_date = self.fecha_factura
+                    invoice_id.partner_id = self.client_id
                     if invoice_id:
-                        if self.tipo == 'purchase_order':
-                            for purchase_order_id in self.purchase_ids:
-                                purchase_order_id.invoice_ids |= invoice_id
-                                purchase_order_dic = {
-                                    'invoice_ids': purchase_order_id.invoice_ids,
-                                    'invoice_status': 'invoiced',
+                        invoice_id.action_post()
+                        acc_edi_doc_id = self.env['account.edi.document'].search([('move_id', '=', invoice_id.id), ('edi_format_id', '=', 2)])
+                        for adjunto in self.adjuntos:
+                            attachment = self.env['ir.attachment'].create({
+                                'name': adjunto.name,
+                                'type': 'binary',
+                                'datas': adjunto.datas,
+                                'res_model': 'account.move',
+                                'res_id': invoice_id.id,
+                                'mimetype': adjunto.mimetype,
+                            })
+                            if adjunto.mimetype == 'application/xml':
+                                ### Account
+                                acc_edi_doc_dict = {
+                                    'state': 'sent',
+                                    'attachment_id': attachment.id,
                                 }
-                                for purchase_order_line_id in purchase_order_id.order_line:
-                                    if purchase_order_line_id.product_uom_qty > 0:
-                                        purchase_order_line_id.write({'invoice_lines': invoice_id.invoice_line_ids})
-                                purchase_order_id.write(purchase_order_dic)
-                                invoice_msg = (
-                                                  "This invoice has been created from: <a href=# data-oe-model=purchase.order data-oe-id=%d>%s</a>") % (
-                                                  purchase_order_id.id, purchase_order_id.name)
-                                invoice_id.message_post(body=invoice_msg, type="notification")
-                        else:
-                            for sale_order_id in self.sale_ids:
-                                sale_order_id.invoice_ids |= invoice_id
-                                sale_order_dict = {
-                                    'invoice_ids': sale_order_id.invoice_ids,
-                                    'invoice_status': 'invoiced',
-                                    'x_estado_surtido': 'surtir',
-                                }
-                                for sale_order_line_id in sale_order_id.order_line:
-                                    # used_invoice_ids = []
-                                    # if sale_order_line_id.product_uom_qty > 0:
-                                    #     sale_order_line_id.write({'invoice_lines': invoice_id.invoice_line_ids.filtered(
-                                    #         lambda x: x.product_id == sale_order_line_id.product_id
-                                    #         and x.quantity == sale_order_line_id.product_uom_qty
-                                    #         and x.price_unit == sale_order_line_id.price_unit
-                                    #         and x.id not in used_invoice_ids
-                                    #     )})
-                                    #     used_invoice_ids.append(sale_order_line_id.invoice_lines.id)
-                                    if sale_order_line_id.product_uom_qty > 0:
-                                        sale_order_line_id.write({'invoice_lines': invoice_id.invoice_line_ids})
-                                sale_order_id.write(sale_order_dict)
-                                invoice_msg = (
-                                                  "This invoice has been created from: <a href=# data-oe-model=sale.order data-oe-id=%d>%s</a>") % (
-                                                  sale_order_id.id, sale_order_id.name)
-                                invoice_id.message_post(body=invoice_msg, type="notification")
-                        ap = invoice_id.action_post()
-                    acc_edi_doc_id = self.env['account.edi.document'].search([('move_id', '=', invoice_id.id), ('edi_format_id', '=', 2)])
-                    for adjunto in self.adjuntos:
-                        attachment = self.env['ir.attachment'].create({
-                            'name': adjunto.name,
-                            'type': 'binary',
-                            'datas': adjunto.datas,
-                            'res_model': 'account.move',
-                            'res_id': invoice_id.id,
-                            'mimetype': adjunto.mimetype,
-                        })
-                        if adjunto.mimetype == 'application/xml':
-                            ### Account
-                            acc_edi_doc_dict = {
-                                'state': 'sent',
-                                'attachment_id': attachment.id,
-                            }
-                            acc_edi_doc_id.write(acc_edi_doc_dict)
+                                acc_edi_doc_id.write(acc_edi_doc_dict)
                     return {
                         'name': _('Factura'),
                         'view_mode': 'form',
@@ -282,7 +209,8 @@ class UploadInvoice(models.TransientModel):
                         ####  Folio y serie
                         serie = cfdi_node.get('Serie')
                         folio = cfdi_node.get('Folio')
-                        cfdi_ref = serie + folio
+
+                        cfdi_ref = (serie if serie else '') + (folio if folio else '')
 
                         ####  MetodoPago
                         MetodoPago = cfdi_node.get('MetodoPago')
@@ -319,6 +247,7 @@ class UploadInvoice(models.TransientModel):
                         cfdi_uuid = tfd_node.get('UUID')
 
                         partner_id = self.env['res.partner']
+                        provider_id = self.env['res.partner']
                         if self.tipo == 'purchase_order':
                             provider_id = self.env['res.partner'].search([('vat', '=', emisor_vat)]).filtered(
                                 lambda x: x.company_type == 'company')
