@@ -8,6 +8,7 @@
     'description': """
         Aplicación de pagos por Factoraje , ( incluye aplicación de los Interéses correspondientes )
     """,
+    'license': 'LGPL-3',
 
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",

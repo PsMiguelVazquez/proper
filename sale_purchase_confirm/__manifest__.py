@@ -9,6 +9,7 @@
     'description': """
         Long description of module's purpose
     """,
+    'license': 'LGPL-3',
 
     'author': "My Company",
     'website': "http://www.yourcompany.com",

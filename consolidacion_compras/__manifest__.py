@@ -10,6 +10,7 @@
     'description': """
         Permite consolidar órdenes de compra
     """,
+    'license': 'LGPL-3',
 
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",

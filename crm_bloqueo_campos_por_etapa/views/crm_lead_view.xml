@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+    <record id="view_crm_lead_form" model="ir.ui.view">
+        <field name="name">	crm.lead.form</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form" />
+        <field name="mode">extension</field>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='lead_partner']" position="inside">
+                <field name="giro_segmento"/>
+                <field name="temporalidad"/>
+            </xpath>
+            
+        </field>
+    </record>
+    </data>
+    
+</odoo>

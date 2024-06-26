@@ -9,6 +9,7 @@
     'description': """
         Bloquea las órdenes de venta cuando ya le ha llegado la solicitud de compra de productos a Compras.
     """,
+    'license': 'LGPL-3',
 
     'author': "My Company",
     'website': "http://www.yourcompany.com",

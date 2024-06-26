@@ -9,6 +9,7 @@
     'description': """
         Agrega la opción de configurar la cuenta de acreedor para los clientes/proveedores necesaria para el proceso de factoraje
     """,
+    'license': 'LGPL-3',
 
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",

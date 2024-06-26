@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+    <record id="view_res_partner_form" model="ir.ui.view">
+        <field name="name">res.partner.form</field>
+        <field name="model">res.partner</field>
+        <!--<field name="inherit_id" ref="studio_customization.odoo_studio_res_part_63dbb6f3-9942-4501-a240-59dc977491e0" />-->
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <!--<xpath expr="//group[@name='studio_group_webs_right']" position="inside">
+                <field name="ine"/>
+                <field name="identificacion_representante_legal"/>
+                <field name="llenado_solicitud"/>
+            </xpath>-->
+            <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
+                <page name="Cumplimiento Info Adicional" string="Cumplimiento Info Adicional">
+                    <group name="info_adicional">
+                        <field name="ine"/>
+                        <field name="identificacion_representante_legal"/>
+                        <field name="llenado_solicitud"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+    </data>
+    
+</odoo>

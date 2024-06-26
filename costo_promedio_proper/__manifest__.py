@@ -8,7 +8,7 @@
     'description': """
         Calcula el costo promedio de acuerdo a las existencias en los almacenes 0,14,etc. y lo almacena en otro campo
     """,
-
+    'license': 'LGPL-3',
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",
 

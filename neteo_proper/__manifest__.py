@@ -8,6 +8,7 @@
     'description': """
         Permite realizar pagos por compensación
     """,
+    'license': 'LGPL-3',
 
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",

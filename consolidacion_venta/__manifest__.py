@@ -9,7 +9,7 @@
         Permite consolidar las líneas de la orden de venta y crear una factura a partir de esta
         en el orden seleccionado en el wizard
     """,
-
+    'license': 'LGPL-3',
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",
 

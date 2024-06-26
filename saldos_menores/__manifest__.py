@@ -9,6 +9,7 @@
     'description': """
         Genera una acción configurable para eliminar los saldos menores de las cuentas por pagar/cobrar
     """,
+    'license': 'LGPL-3',
 
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",

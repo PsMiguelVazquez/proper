@@ -12,6 +12,7 @@
         - Bloqueo de la facturación si es una orden surtida parcialmente.
         - Solucitud de desbloqueo de la facturación cuando la orden está surtida parcialmente
     """,
+    'license': 'LGPL-3',
 
     'author': "My Company",
     'website': "http://www.yourcompany.com",

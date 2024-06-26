@@ -7,6 +7,7 @@
     'description': """
     Sirve para generar el kardex de productos
     """,
+    'license': 'LGPL-3',
 
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",
