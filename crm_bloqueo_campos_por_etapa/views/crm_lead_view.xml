@@ -8,8 +8,10 @@
         <field name="mode">extension</field>
         <field name="arch" type="xml">
             <xpath expr="//group[@name='lead_partner']" position="inside">
-                <field name="giro_segmento"/>
+                <field name="giro"/>
+                <field name="segmento"/>
                 <field name="temporalidad"/>
+                <field name="es_admin" invisible="1"/>
             </xpath>
             
         </field>
