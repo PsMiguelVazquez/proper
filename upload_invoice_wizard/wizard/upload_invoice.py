@@ -3,6 +3,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
+import base64
 class UploadInvoice(models.TransientModel):
     _name = 'upload.invoice.wizard'
     _description = 'Sube una adjuntos para asignarla a ordenes de venta'
@@ -129,18 +130,38 @@ class UploadInvoice(models.TransientModel):
                         raise UserError('No existe el cliente')
                     if len(partners_id) > 1:
                         raise UserError('No se puede subir una factura si los clientes no son los mismos')
+                    #Se obtienen los archivos xml para facturas mexicanas emitidas
                     attachments = self.env['ir.attachment'].search([
-                        ('res_model', '=', 'account.move')
-                        , ('mimetype', '=', 'application/xml')
+                        ('res_model', '=', 'account.move'),
+                        ('mimetype', '=', 'application/xml'),
+                        ('description', 'ilike', 'factura mexicana')
                     ])
-                    xml = self.adjuntos.filtered(lambda x: x.mimetype == 'application/xml')
-                    repeated_attachments = attachments.filtered(lambda x: x.datas[:15] == xml.datas[:15])
-                    repeated_invoice = self.env['account.move'].search([
-                        ('id', 'in', repeated_attachments.mapped('res_id'))
-                        , ('state', '=', 'posted')
-                    ])
-                    if repeated_invoice:
-                        raise UserError('Ya existe una factura %s con ese UUID' % repeated_invoice[0].name)
+                    '''
+                        Como el valor del UUID no es un dato almaceado se tiene que extraer de los archivos
+                        Se crea una tupla (UUID,ID DE FACTURA) para poder buscar si ya está registrado un UUID
+                        #######################
+                        ######## TO DO ########
+                        - Optimizar este proceso
+                        - Idea: Puede ser con el checksum del adjunto pero no garantiza que no se suban UUID repetidos
+                        ######################
+                        #######################
+                    '''
+                    tupla_uuids_facturas = [
+                        (self.get_node(
+                            fromstring(base64.decodebytes(attachment.with_context(bin_size=False).datas)),
+                            'tfd:TimbreFiscalDigital[1]',
+                            {'tfd': 'http://www.sat.gob.mx/TimbreFiscalDigital'},
+                        ).get('UUID'), attachment.res_id)
+                        for attachment in attachments
+                    ]
+                    uuids = [uuids_fact[0] for uuids_fact in tupla_uuids_facturas]
+                    #Si ya existe el folio fiscal muestra un mensaje e indica en cuál factura
+                    if self.folio_fiscal in uuids:
+                        index = uuids.index(self.folio_fiscal)
+                        id_am = tupla_uuids_facturas[index][1]
+                        am = self.env['account.move'].browse(id_am)
+                        raise UserError(f'Ya existe una factura {am.name} con ese folio fiscal.')
+
                     journal_id = 1
                     invoice_origin = ', '.join(self.sale_ids.mapped('name'))
                 if self.client_id:
@@ -160,6 +181,7 @@ class UploadInvoice(models.TransientModel):
                                 'res_model': 'account.move',
                                 'res_id': invoice_id.id,
                                 'mimetype': adjunto.mimetype,
+                                'description': f'CFDI de factura mexicana generado para el documento {invoice_id.name}'
                             })
                             if adjunto.mimetype == 'application/xml':
                                 ### Account
