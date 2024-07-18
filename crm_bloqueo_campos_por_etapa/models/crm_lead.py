@@ -25,6 +25,7 @@ class CrmLead(models.Model):
             _logger.error('user {}'.format(user))
             # Verifica si el usuario pertenece a un grupo específico
             esta_en_grupo = user.has_group('sales_team.group_sale_salesman_all_leads')
+            #esta_en_grupo_2 = user.has_group('Usuario: Gerente Ventas documentos equipo')
             _logger.error('esta_en_grupo {}'.format(esta_en_grupo))
             record.es_admin = user.has_group('sales_team.group_sale_salesman_all_leads')
 
