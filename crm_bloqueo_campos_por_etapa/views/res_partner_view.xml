@@ -7,16 +7,20 @@
         <!--<field name="inherit_id" ref="studio_customization.odoo_studio_res_part_63dbb6f3-9942-4501-a240-59dc977491e0" />-->
         <field name="inherit_id" ref="base.view_partner_form" />
         <field name="arch" type="xml">
-            <!--<xpath expr="//group[@name='studio_group_webs_right']" position="inside">
-                <field name="ine"/>
-                <field name="identificacion_representante_legal"/>
-                <field name="llenado_solicitud"/>
-            </xpath>-->
+            <!--<xpath expr="//form[1]/sheet[1]/group[1]" position="after">-->
+            <xpath expr="//form[1]/sheet[1]/group[1]/group[1]" position="inside">
+                <group name="info_adicional_tc">
+                    <field name="tipo_compra"/>
+                </group>
+            </xpath>
             <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
                 <page name="Cumplimiento Info Adicional" string="Cumplimiento Info Adicional">
                     <group name="info_adicional">
                         <field name="ine"/>
+                        <field name="origen"/>
+                        <field name="opinion_cumplimiento"/>
                         <field name="identificacion_representante_legal"/>
+                        <field name="comprobante_domicilio"/>
                         <field name="llenado_solicitud"/>
                     </group>
                 </page>

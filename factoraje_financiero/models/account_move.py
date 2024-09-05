@@ -42,22 +42,22 @@ class AccountMove(models.Model):
             if record.porcent_assign == 0.0:
                 record.porcent_assign = record.balance_after_factoring
 
-    def action_register_payment(self):
-        view = self.env.ref('account.view_account_payment_register_form')
-        # return super(AccountMove, self).action_register_payment()
-        return {
-            'name': _('Register Payment'),
-            'res_model': 'account.payment.register',
-            'view_mode': 'form',
-            'views': [(view.id, 'form')],
-            'view_id': view.id,
-            'context': {
-                'active_model': 'account.move',
-                'active_ids': self.ids,
-            },
-            'target': 'new',
-            'type': 'ir.actions.act_window',
-        }
+    #def action_register_payment(self):
+    #   view = self.env.ref('account.view_account_payment_register_form')
+    #    # return super(AccountMove, self).action_register_payment()
+    #    return {
+    #        'name': _('Register Payment'),
+    #        'res_model': 'account.payment.register',
+    #        'view_mode': 'form',
+    #        'views': [(view.id, 'form')],
+    #        'view_id': view.id,
+    #        'context': {
+    #            'active_model': 'account.move',
+    #            'active_ids': self.ids,
+    #        },
+    #        'target': 'new',
+    #        'type': 'ir.actions.act_window',
+    #    }
 
     def view_compensate_wizard(self):
         active_ids = self._context.get('active_ids')

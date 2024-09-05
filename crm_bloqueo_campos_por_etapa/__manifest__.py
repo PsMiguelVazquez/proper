@@ -15,7 +15,8 @@
     },
     "data": [
             'views/res_partner_view.xml',
-            'views/crm_lead_view.xml'
+            'views/crm_lead_view.xml',
+            'views/crm_lead_kanban_view.xml'
     ],
     'demo': [],
     'external_dependencies': {

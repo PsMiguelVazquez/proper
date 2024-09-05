@@ -7,11 +7,13 @@
         <field name="inherit_id" ref="crm.crm_lead_view_form" />
         <field name="mode">extension</field>
         <field name="arch" type="xml">
-            <xpath expr="//group[@name='lead_partner']" position="inside">
-                <field name="giro"/>
-                <field name="segmento"/>
-                <field name="temporalidad"/>
-                <field name="es_admin" invisible="1"/>
+            <xpath expr="//group[@name='opportunity_info']" position="after">
+                <group name="info_adicional">
+                    <field name="giro"/>
+                    <field name="segmento"/>
+                    <field name="temporalidad"/>
+                    <field name="es_admin" invisible="1"/>
+                </group>
             </xpath>
             
         </field>

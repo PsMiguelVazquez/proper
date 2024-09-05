@@ -15,7 +15,7 @@ class CrmLead(models.Model):
     
     segmento = fields.Selection([('cuentas_especiales','Cuentas Especiales'), ('jr','Jr.'), ('kam','KAM'), ('proper_services','Proper Services')], string='Segmento')
     
-    temporalidad = fields.Selection([('una_vez_al_anio','1 Vez Al Año'),('esporadico','Esporádico'),('semestrales','Semestrales'),('todo_el_anio ','Todo El Año'),('trimestrales','Trimestrales')], string='Temporalidad')
+    temporalidad = fields.Selection([('una_vez_al_anio','1 Vez Al Año'),('esporadico','Esporádico'),('semestrales','Semestrales'),('todo_el_anio','Todo El Año'),('trimestrales','Trimestrales')], string='Temporalidad')
     es_admin = fields.Boolean(compute="_compute_es_solo_lectura")
 
     @api.depends('user_id')
@@ -23,11 +23,20 @@ class CrmLead(models.Model):
         for record in self:
             user = self.env.user
             _logger.error('user {}'.format(user))
-            # Verifica si el usuario pertenece a un grupo específico
-            esta_en_grupo = user.has_group('sales_team.group_sale_salesman_all_leads')
+            # Verifica si el usuario pertenece a un grupo específico ADMIN DE MARKETING social.group_social_manager
+            esta_en_grupo = user.has_group('social.group_social_manager')
+            group_id = 118  # ID interno del grupo
+            es_miembro = user.groups_id.filtered(lambda g: g.id == group_id)
+            
             #esta_en_grupo_2 = user.has_group('Usuario: Gerente Ventas documentos equipo')
-            _logger.error('esta_en_grupo {}'.format(esta_en_grupo))
-            record.es_admin = user.has_group('sales_team.group_sale_salesman_all_leads')
+            _logger.error('esta_en_grupo {} {}'.format(esta_en_grupo, es_miembro.id))
+           # if esta_en_grupo or es_miembro:
+            if esta_en_grupo or es_miembro:
+                _logger.error('TRUE')
+                record.es_admin = True
+            else:
+                _logger.error('FALSE')
+                record.es_admin = False
 
 
     @api.model_create_multi
@@ -73,3 +82,17 @@ class CrmLead(models.Model):
         result = super(CrmLead, self).write(vals)
         
         return result
+
+    @api.onchange('partner_id')
+    def _completa_info_cliente(self):
+        if self.partner_id:
+            #self.email_from = self.partner_id.email
+            #self.phone = self.partner_id.phone
+            _logger.error('self.partner_id.x_studio_por_segmento_de_vendedor {}'.format(self.partner_id.x_studio_por_segmento_de_vendedor))
+            self.contact_name = self.partner_id.name
+            self.source_id = self.partner_id.origen.id
+            self.segmento = self.partner_id.x_studio_por_segmento_de_vendedor
+            self.temporalidad = self.partner_id.x_studio_temporalidad
+            self.giro = self.partner_id.x_studio_giro_1
+            
+        
