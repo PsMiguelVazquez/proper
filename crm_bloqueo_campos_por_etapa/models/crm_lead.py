@@ -25,13 +25,14 @@ class CrmLead(models.Model):
             _logger.error('user {}'.format(user))
             # Verifica si el usuario pertenece a un grupo específico ADMIN DE MARKETING social.group_social_manager
             esta_en_grupo = user.has_group('social.group_social_manager')
+            esta_en_grupo2 = user.has_group('crm_bloqueo_campos_por_etapa.gerente_mostrar_documentos_equipo')
             group_id = 118  # ID interno del grupo
             es_miembro = user.groups_id.filtered(lambda g: g.id == group_id)
             
             #esta_en_grupo_2 = user.has_group('Usuario: Gerente Ventas documentos equipo')
             _logger.error('esta_en_grupo {} {}'.format(esta_en_grupo, es_miembro.id))
            # if esta_en_grupo or es_miembro:
-            if esta_en_grupo or es_miembro:
+            if esta_en_grupo or esta_en_grupo2:
                 _logger.error('TRUE')
                 record.es_admin = True
             else:

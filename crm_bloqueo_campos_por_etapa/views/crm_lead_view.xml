@@ -15,6 +15,9 @@
                     <field name="es_admin" invisible="1"/>
                 </group>
             </xpath>
+            <xpath expr="//field[@name='user_id']" position="attributes">
+                <attribute name="attrs">{'readonly': [('es_admin', '=', False)]}</attribute>
+            </xpath>
             
         </field>
     </record>
