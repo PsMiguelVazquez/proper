@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_endoso_wizard,endoso.wizard,model_endoso_wizard,base.group_user,1,1,1,1
+access_endoso,endoso.move,model_endoso_move,base.group_user,1,1,1,1
+access_factoraje_financiero_wizard,account.payment.register,model_account_payment_register,base.group_user,1,1,1,1

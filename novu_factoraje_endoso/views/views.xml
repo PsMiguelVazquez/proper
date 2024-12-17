@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="account_view_move_form_inherit" model="ir.ui.view">
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet/field[@name='move_type']" position="after">
+                <field name="ocultar_endoso" invisible="1"/>
+            </xpath>
+            <header>
+                <button string="Endosar factura" name="endosar_factura" type="object"
+                        attrs="{'invisible': ['|','|', ('state', '=', 'draft'), ('move_type', '!=', 'out_invoice'),('ocultar_endoso','=',True)]}"/>
+            </header>
+        </field>
+    </record>
+
+    <record id="endoso_tree_view" model="ir.ui.view">
+        <field name="model">endoso.move</field>
+        <field name="arch" type="xml">
+            <tree default_order="id desc">
+                <field name="name"/>
+                <field name="origin_invoice"/>
+                <field name="l10n_mx_edi_cfdi_uuid"/>
+                <field name="partner_id" string="Cliente del endoso"/>
+                <field name="origin_partner_id"/>
+                <field name="amount" string="Monto"/>
+                <field name="amount_paid" string="Monto pagado"/>
+                <field name="amount_residual" string="Monto restante"/>
+                <field name="create_date" string="Fecha del endoso"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'"/>
+                <field name="payment_state" widget="badge" decoration-danger="payment_state == 'not_paid'" decoration-warning="payment_state == 'partial'" decoration-success="payment_state == 'paid'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="endoso_form_view" model="ir.ui.view">
+        <field name="model">endoso.move</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                        <button name="action_post" string="Confirmar" type="object" class="oe_highlight"
+                                attrs="{'invisible': [('state', '!=', 'draft')]}" data-hotkey="v"/>
+                        <button name="action_draft" string="Restablecer a borrador" type="object" class="btn btn-secondary"
+                                attrs="{'invisible': [('state', 'not in', ('posted', 'cancel'))]}"
+                                groups="account.group_account_invoice" data-hotkey="w"/>
+                        <button name="action_cancel" string="Cancelar" type="object"
+                                attrs="{'invisible': [('state', '!=', 'draft')]}" data-hotkey="z"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="button_open_invoices" type="object" class="oe_stat_button" icon="fa-bars" >
+
+                        </button>
+                    </div>
+                    <field name="name" invisible="1"/>
+                    <field name="origin_invoice" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="origin_partner_id" invisible="1"/>
+                    <field name="amount" invisible="1"/>
+                    <field name="create_date" invisible="1"/>
+                    <field name="move_type" invisible="1"/>
+                    <field name="auto_post" invisible="1"/>
+                    <div class="oe_title">
+                            <h1 attrs="{'invisible': [('state', '!=', 'draft')]}"><span>Draft</span></h1>
+                            <h1 attrs="{'invisible': [('state', '=', 'draft')]}"><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group id="left_group">
+                            <field name="partner_id" string="Cliente del endoso" widget="res_partner_many2one" />
+                            <field name="origin_partner_id" widget="res_partner_many2one" readonly="1"/>
+                            <field name="create_date" string="Fecha" readonly="1"/>
+                            <field name="l10n_mx_edi_cfdi_uuid"/>
+                            <field name="edi_document_ids"/>
+                            <field name="l10n_mx_edi_cfdi_request"/>
+                        </group>
+                        <group id="right_group">
+                            <field name="origin_invoice" readonly="1"/>
+                            <field name="origin_invoice_date" readonly="1"/>
+                            <field name="origin_invoice_sale_id" readonly="1"/>
+                            <field name="origin_invoice_warehouse_id" readonly="1"/>
+                            <field name="origin_invoice_orden_compra" readonly="1"/>
+                            <field name="origin_invoice_referencia" readonly="1"/>
+                            <field name="origin_invoice_cfdi_uuid" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page id="invoice_tab" string="Invoice Lines">
+                            <field name="invoice_line_ids" widget="section_and_note_one2many" mode="tree">
+                                <tree editable="bottom" string="Journal Items">
+                                    <control>
+                                        <create name="add_line_control" string="Add a line"/>
+                                        <create name="add_section_control" string="Add a section"
+                                                context="{'default_display_type': 'line_section'}"/>
+                                        <create name="add_note_control" string="Add a note"
+                                                context="{'default_display_type': 'line_note'}"/>
+                                    </control>
+                                    <field name="account_id"/>
+                                    <field name="name"/>
+                                    <field name="debit"/>
+                                    <field name="credit"/>
+                                </tree>
+
+                            </field>
+
+                        </page>
+                    </notebook>
+
+                </sheet>
+                <div class="o_attachment_preview"/>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_view_endoso" model="ir.actions.act_window">
+        <field name="name">Endosos</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">endoso.move</field>
+        <field name="view_mode">tree,form</field>
+        <!--        <field name="domain">[('name','ilike', 'END')]</field>-->
+        <field name="view_ids" eval="[(5, 0, 0),
+                (0,0, {'view_mode': 'tree', 'view_id': ref('endoso_proper.endoso_tree_view')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('endoso_proper.endoso_form_view')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Endosos
+            </p>
+        </field>
+    </record>
+
+    <record id="endoso_view_search" model="ir.ui.view">
+            <field name="name">endoso.view.search</field>
+            <field name="model">endoso.move</field>
+            <field name="arch" type="xml">
+                <search string="Endoso">
+                    <field name="name"/>
+                    <field name="origin_invoice"/>
+                    <field name="partner_id" string="Cliente del endoso"/>
+                    <field name="origin_partner_id"/>
+                    <filter string="Publicados" name="posted" domain="[('state','=','posted')]"/>
+                    <filter string="Cancelados" name="cancel" domain="[('state','=','cancel')]"/>
+                    <filter string="Borrador" name="draft" domain="[('state','=','draft')]"/>
+                    <separator/>
+                    <filter string="Pagados" name="paid" domain="[('move_id.payment_state','in',('paid', 'partial'))]"/>
+                    <filter string="No pagados" name="not_paid" domain="[('move_id.payment_state','=','not_paid')]"/>
+                    <separator/>
+                    <filter name="date" string="Fecha del endoso" date="create_date"/>
+                    <filter name="invoice_date" string="Fecha de la factura" date="invoice_date"/>
+                    <separator/>
+                    <group expand="0" string="Group By">
+                        <filter string="Cliente de la factura" name="origin_partner_id" context="{'group_by':'origin_partner_id'}"/>
+                        <filter string="Cliente del endoso" name="partner_id" context="{'group_by':'partner_id'}"/>
+                        <filter name="status" string="Estado" context="{'group_by':'state'}"/>
+                        <separator/>
+                        <filter string="Fecha del endoso" name="date" context="{'group_by': 'create_date'}"/>
+                    </group>
+                </search>
+            </field>
+    </record>
+    <menuitem name="Endosos"
+              id="endoso_menu"
+              sequence="10"
+              parent="account.menu_finance_receivables"
+              action="action_view_endoso"/>
+
+
+</odoo>

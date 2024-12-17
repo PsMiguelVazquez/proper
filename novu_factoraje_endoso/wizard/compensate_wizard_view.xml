@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<odoo>
+<!--    <record model="ir.ui.view" id="account_payment_register_form_compensate">-->
+<!--        <field name="name">account.payment.register.compensate</field>-->
+<!--        <field name="model">account.payment.register</field>-->
+<!--        <field name="inherit_id" ref="account.view_account_payment_register_form"/>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <form>-->
+<!--                <field name="hide_button_payment_register" invisible="1"/>-->
+<!--                <group attrs="{'invisible': [('hide_button_payment_register','!=',True)]}">-->
+<!--                    <group>-->
+<!--                        <field name="partner_id"/>-->
+<!--                        <field name="factor_bill" string="Gasto" domain="[('partner_id', '=', financial_factor),-->
+<!--                                                                            ('move_type', '=', 'in_invoice')-->
+<!--                                                                            , ('state', '=', 'posted')-->
+<!--                                                                            ,('payment_state', 'in', ('not_paid', 'partial'))]"/>-->
+<!--                        <field name="amount_factor_bill" string="Monto"/>-->
+<!--                        <field name="amount_residual_compensation"/>-->
+<!--                    </group>-->
+<!--                    <field name="partner_bills" domain="[('partner_id', '=', partner_id),-->
+<!--                                                                            ('move_type', '=', 'out_invoice')-->
+<!--                                                                            , ('state', '=', 'posted')-->
+<!--                                                                            ,('payment_state', 'in', ('not_paid', 'partial'))]">-->
+<!--                        <tree create="0" delete="0" editable="bottom">-->
+<!--                            <field name="partner_id" optional="hide" readonly="1"/>-->
+<!--                            <field name="name" readonly="1"/>-->
+<!--                            <field name="amount_total_signed" string="Importe Total" readonly="1"/>-->
+<!--                            <field name="amount_residual" string="Importe adeudado" readonly="1" sum="Total adeudado"/>-->
+<!--                            <field name="balance_after_factoring" sum="Balance total adeudado"/>-->
+<!--                            <field name="factoring_amount" sum="Total por factoraje"/>-->
+<!--                            <field name="porcent_assign" sum="Total por depósito"/>-->
+<!--                        </tree>-->
+<!--                    </field>-->
+<!--                </group>-->
+<!--            </form>-->
+<!--            <xpath expr="//form/footer/button[@name='action_create_payments']" position="after">-->
+<!--                <button string="Compensar" type="object" name="compensate" attrs="{'invisible': [('hide_button_payment_register','!=',True)]}"/>-->
+<!--            </xpath>-->
+<!--            <xpath expr="//group[1]" position="attributes">-->
+<!--                <attribute name="attrs">-->
+<!--                    {'invisible': [('hide_button_payment_register','=',True)]}-->
+<!--                </attribute>-->
+<!--            </xpath>-->
+<!--            <xpath expr="//form/footer/button[@name='action_create_payments']" position="attributes">-->
+<!--                <attribute name="attrs">-->
+<!--                    {'invisible': [('hide_button_payment_register','=',True)]}-->
+<!--                </attribute>-->
+<!--            </xpath>-->
+<!--        </field>-->
+<!--    </record>-->
+        <record model="ir.ui.view" id="account_payment_register_form_compensate">
+        <field name="name">account.payment.register.compensate</field>
+        <field name="model">account.payment.register</field>
+<!--        <field name="inherit_id" ref="account.view_account_payment_register_form"/>-->
+        <field name="arch" type="xml">
+            <form>
+                <field name="hide_button_payment_register" invisible="1"/>
+                <field name="financial_factor" invisible="1"/>
+                <group attrs="{'invisible': [('hide_button_payment_register','!=',True)]}">
+                    <group>
+                        <field name="partner_id"/>
+                        <field name="factor_bill" string="Gasto" domain="[('partner_id', '=', financial_factor),
+                                                                            ('move_type', '=', 'in_invoice')
+                                                                            , ('state', '=', 'posted')
+                                                                            ,('payment_state', 'in', ('not_paid', 'partial'))]"/>
+                        <field name="amount_factor_bill" string="Monto"/>
+                        <field name="amount_residual_compensation"/>
+                    </group>
+                    <field name="partner_bills" domain="[('partner_id', '=', partner_id),
+                                                                            ('move_type', '=', 'out_invoice')
+                                                                            , ('state', '=', 'posted')
+                                                                            ,('payment_state', 'in', ('not_paid', 'partial'))]">
+                        <tree create="0" delete="0" editable="bottom">
+                            <field name="partner_id" optional="hide" readonly="1"/>
+                            <field name="name" readonly="1"/>
+                            <field name="amount_total_signed" string="Importe Total" readonly="1"/>
+                            <field name="amount_residual" string="Importe adeudado" readonly="1" sum="Total adeudado"/>
+                            <field name="balance_after_compensate" sum="Balance total adeudado"/>
+                            <field name="porcent_assign" sum="Total por depósito" string="Monto por compensación"/>
+                        </tree>
+                    </field>
+                </group>
+                <footer>
+                    <button string="Compensar" type="object" name="compensate" />
+                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
