@@ -1,0 +1,6 @@
+<odoo>
+    <record id="gerente_mostrar_documentos_equipo" model="res.groups">
+        <field name="name">Usuario: Gerente Mostrar documentos del equipo</field>
+        <field name="category_id">51</field>
+    </record>
+</odoo>
