@@ -1,0 +1,6 @@
+<odoo>
+    <record id="vendedor" model="res.groups">
+        <field name="name">Vendedor</field>
+    </record>
+    
+</odoo>
