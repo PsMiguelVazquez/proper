@@ -8,6 +8,7 @@
     'description': """
         Permite endosar facturas
     """,
+    'license': 'LGPL-3',
 
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",
