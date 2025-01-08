@@ -3,6 +3,8 @@ import odoo.exceptions
 from odoo import models, fields, api, _
 import json
 from odoo.exceptions import UserError
+import logging
+_logger = logging.getLogger(__name__)
 
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
@@ -112,12 +114,14 @@ class AccountPaymentWidget(models.TransientModel):
     def done(self):
         check_sum = sum(self.invoices_ids.mapped('porcent_assign'))
         move_line = self.env['account.move.line'].search([('payment_id', '=', self.payment.id), ('balance', '<', 0)])
+        _logger.error(f'move_line {move_line}')
         ###Redondea a dos decimales
         if round(check_sum,2) > self.amount_rest:
             raise odoo.exceptions.UserError("No se puede asignar mas del monto: "+str(self.amount_rest) + '. Intentando asignar ' + str(check_sum))
         else:
             if move_line:
-                if len(self.invoices_ids) == 1 and 'END/' in self.invoices_ids.name and self.invoices_ids.es_endoso:
+                if len(self.invoices_ids) < 1 and 'END/' in self.invoices_ids.name and self.invoices_ids.es_endoso:
+                    _logger.error('ENTRE 1')
                     move = self.invoices_ids
                     domain = [
                         ('parent_state', '=', 'posted'),
@@ -142,6 +146,7 @@ class AccountPaymentWidget(models.TransientModel):
                     move.amount_residual = end.amount_residual
                     move.amount_residual_signed = end.amount_residual
                 else:
+                    _logger.error('ENTRE 2')
                     for move in self.invoices_ids:
                         if 'END/' in move.name and move.es_endoso:
                             '''

@@ -164,7 +164,9 @@ class UploadInvoice(models.TransientModel):
 
                     journal_id = 1
                     invoice_origin = ', '.join(self.sale_ids.mapped('name'))
-                if self.client_id:
+                if self.client_id:                    
+                    self.sale_ids.partner_id = self.client_id
+                    self.sale_ids.partner_invoice_id = self.client_id
                     invoice_id = self.sale_ids._create_invoices()
                     invoice_id.ref = self.ref
                     invoice_id.x_referencia = self.ref

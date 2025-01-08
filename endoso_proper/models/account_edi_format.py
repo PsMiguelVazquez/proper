@@ -21,11 +21,11 @@ class AccountEdiFormat(models.Model):
         if 'END/' in move.name and move.es_endoso:
             print('END')
             inv = self.env['endoso.move'].search([('move_id','=',move.id)]).origin_invoice
-            name_numbers = list(re.finditer('\d+', inv.name))
+            name_numbers = list(re.finditer(r'\d+', inv.name))
             serie_number = inv.name[:name_numbers[-1].start()]
             folio_number = name_numbers[-1].group().lstrip('0')
         else:
-            name_numbers = list(re.finditer('\d+', move.name))
+            name_numbers = list(re.finditer(r'\d+', move.name))
             serie_number = move.name[:name_numbers[-1].start()]
             folio_number = name_numbers[-1].group().lstrip('0')
         return {
