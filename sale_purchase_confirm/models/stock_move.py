@@ -50,6 +50,6 @@ class productPr(models.Model):
                 move_in = self.env['stock.move.line'].search([['product_id', '=', record.id], ['location_id', '=', location_supplier]], order='id desc', limit=1)
                 if move_in.id:
                     picking_in = move_in.move_id.mapped('purchase_line_id.price_unit')[-1]
-                    if picking_in!=0:
-                        record.update({'x_studio_ultimo_costo': picking_in})
+                    # if picking_in!=0:
+                    #     record.update({'x_studio_ultimo_costo': picking_in})
             record.move_in = picking_in

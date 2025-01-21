@@ -153,18 +153,18 @@ class ProposalPurchase(models.Model):
             self.x_product_id = self.env['product.product'].search([('default_code', '=', self.x_modelo)])
             if len(self.x_product_id) > 1:
                 raise UserError('El producto que deseas confirmar está repetido.')
-        if not self.x_product_id.id:
-            # marca = env['x_fabricante'].search([['name','=', record.x_marca]])
-            self.x_product_id = self.env['product.product'].create(
-                {'standard_price': self.x_costo, 'x_studio_ultimo_costo': self.x_costo,
-                 'default_code': self.x_modelo, 'type': 'product', 'x_fabricante': marca.id if marca else False,
-                 'name': self.x_descripcion, 'description_sale': self.x_caracteristicas,
-                 'x_studio_many2one_field_0X3u9': self.x_grup_id.id, 'categ_id': self.x_categoria_id.id,
-                 'x_studio_many2one_field_RWuq7': self.x_familia_id.id,
-                 'x_studio_many2one_field_LZOP8': self.x_linea_id.id, 'image_1920': self.x_archivo,
-                 'x_num_pro': self.x_name,
-                 'x_notas_propuestas': self.x_note,
-                 'x_producto_propuesta': self.x_new_prod_prop})
+        # if not self.x_product_id.id:
+        #     # marca = env['x_fabricante'].search([['name','=', record.x_marca]])
+        #     self.x_product_id = self.env['product.product'].create(
+        #         {'standard_price': self.x_costo, 'x_studio_ultimo_costo': self.x_costo,
+        #          'default_code': self.x_modelo, 'type': 'product', 'x_fabricante': marca.id if marca else False,
+        #          'name': self.x_descripcion, 'description_sale': self.x_caracteristicas,
+        #          'x_studio_many2one_field_0X3u9': self.x_grup_id.id, 'categ_id': self.x_categoria_id.id,
+        #          'x_studio_many2one_field_RWuq7': self.x_familia_id.id,
+        #          'x_studio_many2one_field_LZOP8': self.x_linea_id.id, 'image_1920': self.x_archivo,
+        #          'x_num_pro': self.x_name,
+        #          'x_notas_propuestas': self.x_note,
+        #          'x_producto_propuesta': self.x_new_prod_prop})
         if self.rel_id.x_order_id.x_studio_nivel:
             margen = marca['x_studio_margen_' + str(self.rel_id.x_order_id.x_studio_nivel)] if marca else 12
         else:
