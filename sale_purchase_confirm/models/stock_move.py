@@ -52,4 +52,5 @@ class productPr(models.Model):
                     picking_in = move_in.move_id.mapped('purchase_line_id.price_unit')[-1]
                     # if picking_in!=0:
                     #     record.update({'x_studio_ultimo_costo': picking_in})
+                    #se comento para dejar usar el sistema 
             record.move_in = picking_in
