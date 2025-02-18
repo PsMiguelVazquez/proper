@@ -5,6 +5,9 @@ from datetime import datetime
 from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
+import logging
+_logger = logging.getLogger(__name__)
+
 class FactoringWizard(models.TransientModel):
     _inherit = 'account.payment.register'
     _description = 'Muestra un wizard para el proceso de factoraje financiero'
@@ -23,6 +26,7 @@ class FactoringWizard(models.TransientModel):
 
     def create_neteo(self):
         for record in self:
+            _logger.error(f"record {record}")
             journal = self.env['account.journal'].search([('name','ilike','neteo')])
             if not journal:
                 raise UserError('No existe diario para llevar a cabo la operación')
@@ -48,11 +52,12 @@ class FactoringWizard(models.TransientModel):
                 line_account_id = record.financial_factor.property_account_payable_id.id
             move_line_vals = {
                 'debit': sum(record.partner_bills.mapped('factoring_amount')),
-                "partner_id": record.financial_factor.id,
+                "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
                 "name": record.factor_bill.name,
                 "account_id": line_account_id,
             }
             move_lines_d.append((0, 0, move_line_vals))
+            #raise UserError(f'move_lines_d: {move_lines_d}')
             move.write({"line_ids": move_lines_d, 'l10n_mx_edi_payment_method_id': 12})
             move.action_post()
             for move_line in move.line_ids:
