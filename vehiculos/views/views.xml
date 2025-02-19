@@ -320,9 +320,9 @@
                         <page string="Detailed Operations"
                             name="detailed_operations"
                             attrs="{'invisible': [('show_operations', '=', False)]}">
-                            <field name="move_line_nosuggest_ids"
+                            <!-- <field name="move_line_nosuggest_ids"
                                    attrs="{'readonly': ['|', '|', ('show_operations', '=', False), ('state', '=', 'cancel'), '&amp;', ('state', '=', 'done'), ('is_locked', '=', True)], 'invisible': [('show_reserved', '=', True)]}"
-                                   context="{'tree_view_ref': 'stock.view_stock_move_line_detailed_operation_tree', 'default_picking_id': id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}"/>
+                                   context="{'tree_view_ref': 'stock.view_stock_move_line_detailed_operation_tree', 'default_picking_id': id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}"/> -->
                             <field name="move_line_ids_without_package"
                                    attrs="{'readonly': ['|', '|', ('show_operations', '=', False), ('state', '=', 'cancel'), '&amp;', ('state', '=', 'done'), ('is_locked', '=', True)], 'invisible': [('show_reserved', '=', False)]}"
                                    context="{'tree_view_ref': 'stock.view_stock_move_line_detailed_operation_tree', 'default_picking_id': id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}"/>
