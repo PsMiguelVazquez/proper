@@ -100,7 +100,7 @@
     </record>
 
     <!-- explicit list view definition -->
-    <record model="ir.ui.view" id="creacion_ruta_list">
+    <!-- <record model="ir.ui.view" id="creacion_ruta_list">
       <field name="name">creacion.ruta.list</field>
       <field name="model">creacion.ruta</field>
       <field name="arch" type="xml">
@@ -116,7 +116,7 @@
               <field name="EstadoPais"/>
           </tree>
       </field>
-    </record>
+    </record> -->
 
     <record model="ir.ui.view" id="ruta_form">
       <field name="name">creacion.ruta.form</field>
