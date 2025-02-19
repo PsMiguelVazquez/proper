@@ -348,7 +348,7 @@
                                     <!-- <field name="scrapped" invisible="1"/> -->
                                     <!-- <field name="picking_code" invisible="1"/> -->
                                     <!-- <field name="product_type" invisible="1"/> -->
-                                    <field name="show_details_visible" invisible="1"/>
+                                    <!-- <field name="show_details_visible" invisible="1"/> -->
                                     <!-- <field name="show_reserved_availability" invisible="1"/> -->
                                     <field name="show_operations" invisible="1" readonly="1"/>
                                     <field name="additional" invisible="1"/>
@@ -377,16 +377,16 @@
                                     <field name="product_qty" invisible="1" readonly="1"/>
                                     <!-- <field name="quantity_done" string="Done" attrs="{'readonly': [('is_quantity_done_editable', '=', False)], 'column_invisible':[('parent.state', '=', 'draft'), ('parent.immediate_transfer', '=', False)]}"/> -->
                                     <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft'), ('additional', '=', False)]}" options="{'no_open': True, 'no_create': True}" string="Unit of Measure" groups="uom.group_uom"/>
-                                    <field name="lot_ids" widget="many2many_tags"
+                                    <!-- <field name="lot_ids" widget="many2many_tags"
                                         groups="stock.group_production_lot"
                                         attrs="{'invisible': ['|', ('show_details_visible', '=', False), ('has_tracking', '!=', 'serial')]}"
                                         optional="hide"
                                         options="{'create': [('parent.use_create_lots', '=', True)]}"
                                         context="{'default_company_id': company_id, 'default_product_id': product_id, 'active_picking_id': parent.id}"
                                         domain="[('product_id','=',product_id)]"
-                                    />
-                                    <button name="action_show_details" type="object" icon="fa-list" width="0.1"
-                                            attrs="{'invisible': [('show_details_visible', '=', False)]}" options='{"warn": true}'/>
+                                    /> -->
+                                    <!-- <button name="action_show_details" type="object" icon="fa-list" width="0.1"
+                                            attrs="{'invisible': [('show_details_visible', '=', False)]}" options='{"warn": true}'/> -->
                                     <button name="action_assign_serial" type="object"
                                             icon="fa-plus-square"
                                             width="0.1"
