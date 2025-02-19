@@ -182,7 +182,7 @@
             </xpath>
         </field>
       </record> -->
-        <record id="sale_orde_proposal_requirement" model="ir.ui.view">
+        <!-- <record id="sale_orde_proposal_requirement" model="ir.ui.view">
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
@@ -191,7 +191,7 @@
             <field name="carrier_tracking_ref" attrs="{'invisible': [('carrier_tracking_ref', '=', False)]}" readonly="1"/>
         </xpath>
         </field>
-        </record>
+        </record> -->
       <record model="ir.ui.view" id="stock_alm_0_14_form">
           <field name="name">Form inherit alm0</field>
           <field name="model">stock.picking</field>
