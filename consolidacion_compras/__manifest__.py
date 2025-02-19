@@ -26,7 +26,7 @@
     # always loaded
     'data': [
         'views/views.xml',
-        'wizard/consolidacion_compras_view.xml',
+        #'wizard/consolidacion_compras_view.xml',
         'security/ir.model.access.csv'
     ],
 }
