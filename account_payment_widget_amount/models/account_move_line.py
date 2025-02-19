@@ -19,19 +19,19 @@ class AccountMove(models.Model):
                 ),
             ).js_assign_outstanding_line(line_id)
         return super(AccountMove, self).js_assign_outstanding_line(line_id)
-
-class SendForm(models.TransientModel):
-    _inherit = 'account.invoice.send'
-
-    def _send_email(self):
-        r = super(SendForm, self)._send_email()
-        return r
-        # for record in self:
-        #     arr = []
-        #     for att in record.attachment_ids:
-        #         if 'ubl' not in att.name:
-        #             arr.append(att)
-        #     record.attachment_ids = arr
+#comentado en migración a v18
+#class SendForm(models.TransientModel):
+#    _inherit = 'account.invoice.send'
+#
+#    def _send_email(self):
+#        r = super(SendForm, self)._send_email()
+#        return r
+#       # for record in self:
+#        #     arr = []
+#        #     for att in record.attachment_ids:
+#        #         if 'ubl' not in att.name:
+#        #             arr.append(att)
+#        #     record.attachment_ids = arr
 
 class AccountMoveLine(models.Model):
 
