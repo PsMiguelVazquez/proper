@@ -25,7 +25,7 @@
     # always loaded
     'data': [
         'security/ir.model.access.csv',
-        'wizard/upload_invoice_view.xml',
+        #'wizard/upload_invoice_view.xml',
         'views/views.xml'
         #'views/templates.xml',
     ],
