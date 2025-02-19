@@ -22,7 +22,7 @@
     'depends': ['base', 'stock', 'fleet', 'hr', 'sale', 'product', 'mrp'],
     'data': [
         'security/ir.model.access.csv',
-        #'views/views.xml',
+        'views/views.xml',
     ],
         'installable': True,
     'application': True,

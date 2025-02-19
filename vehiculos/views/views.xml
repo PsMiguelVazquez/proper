@@ -13,7 +13,7 @@
 
   <data>
     <!-- explicit list view definition -->
-    <record model="ir.ui.view" id="automovil_list">
+    <!-- <record model="ir.ui.view" id="automovil_list">
       <field name="name">automovil.list</field>
       <field name="model">automovil</field>
       <field name="arch" type="xml">
@@ -24,7 +24,7 @@
             <field name="fecha_adquisicion" modifiers="{}"/>
         </tree>
       </field>
-    </record>
+    </record> -->
   
     <record model="ir.ui.view" id="automovil_form">
       <field name="name">automovil.form</field>
