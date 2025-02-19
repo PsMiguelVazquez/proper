@@ -204,7 +204,7 @@
                 <field name="show_check_availability" invisible="1"/>
                 <!-- <field name="show_validate" invisible="1"/> -->
                 <field name="show_lots_text" invisible="1"/>
-                <field name="immediate_transfer" invisible="1"/>
+                <!-- <field name="immediate_transfer" invisible="1"/> -->
                 <field name="picking_type_code" invisible="1"/>
                 <field name="hide_picking_type" invisible="1"/>
                 <field name="show_operations" invisible="1" readonly="1"/>
