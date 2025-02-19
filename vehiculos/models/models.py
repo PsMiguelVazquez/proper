@@ -89,14 +89,14 @@ class StockPicking(models.Model):
 
 
 
-class StockPickingLL(models.TransientModel):
-    _inherit = 'stock.immediate.transfer'
-    evidencia = fields.Binary('Evidencia')
-    code = fields.Boolean(default=False)
+# class StockPickingLL(models.TransientModel):
+#     _inherit = 'stock.immediate.transfer'
+#     evidencia = fields.Binary('Evidencia')
+#     code = fields.Boolean(default=False)
 
-    def process(self):
-        r = super(StockPickingLL, self).process()
-        return r
+#     def process(self):
+#         r = super(StockPickingLL, self).process()
+#         return r
 
 class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'

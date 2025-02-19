@@ -173,7 +173,7 @@
     <menuitem name="Vehiculos" id="vehiculos_menu" parent="distribucion_menu" action="fleet.fleet_vehicle_action" />
     <menuitem name="Ruta" id="ruta_menu" parent="vehiculos.distribucion_menu" action="creacion_ruta_action_window" />
 
-      <record model="ir.ui.view" id="view_account_payment_form_update">
+      <!-- <record model="ir.ui.view" id="view_account_payment_form_update">
         <field name="name">stock.immediate.transfer.update</field>
         <field name="model">stock.immediate.transfer</field>
         <field name="inherit_id" ref="stock.view_immediate_transfer"/>
@@ -183,7 +183,7 @@
                 <field name="evidencia" attrs="{'invisible': [['code', '=', False]], 'required': [['code', '=', True]]}"/>
             </xpath>
         </field>
-      </record>
+      </record> -->
         <record id="sale_orde_proposal_requirement" model="ir.ui.view">
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
