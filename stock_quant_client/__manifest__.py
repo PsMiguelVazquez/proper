@@ -25,7 +25,7 @@
     'data': [
         'security/ir.model.access.csv',
         'wizard/change_client_view.xml',
-        'views/views.xml'
+        #'views/views.xml'
         #'views/templates.xml',
     ],
 
