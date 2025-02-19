@@ -24,8 +24,8 @@
 
     # always loaded
     'data': [
-        'views/views.xml',
-        'wizard/endoso_wizard_view.xml',
+        #'views/views.xml',
+        #'wizard/endoso_wizard_view.xml',
         'security/ir.model.access.csv',
         'data/sequence_data.xml'
     ],
