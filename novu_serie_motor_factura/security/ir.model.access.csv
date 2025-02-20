@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_wizard_serie_motor,wizard.serie.motor,model_wizard_serie_motor,base.group_user,1,1,1,1
+access_wizard_serie_motor_line,wizard.serie.motor.line,model_wizard_serie_motor_line,base.group_user,1,1,1,1
+,,,,,,,
