@@ -11,7 +11,7 @@
     'depends': ['base', 'account'],
     'assets': {},
     "data": [
-            'wizard/wizard_serie_motor_view.xml',
+            'views/account_move_view.xml',
             'security/ir.model.access.csv',
     ],
     'demo': [],
