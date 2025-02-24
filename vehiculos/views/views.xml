@@ -162,11 +162,12 @@
       </form>
       </field>
     </record> -->
+        <!--
     <record model="ir.actions.act_window" id="creacion_ruta_action_window">
       <field name="name">ruta</field>
       <field name="res_model">creacion.ruta</field>
       <field name="view_mode">tree,form</field>
-    </record>
+    </record>  -->
     <menuitem name="Distribucion" id="distribucion_menu" parent="stock.menu_stock_root" sequence="5"/>
     <menuitem name="Vehiculos" id="vehiculos_menu" parent="distribucion_menu" action="fleet.fleet_vehicle_action" />
     <menuitem name="Ruta" id="ruta_menu" parent="vehiculos.distribucion_menu" action="creacion_ruta_action_window" />
