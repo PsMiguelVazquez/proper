@@ -387,13 +387,13 @@
                                     /> -->
                                     <!-- <button name="action_show_details" type="object" icon="fa-list" width="0.1"
                                             attrs="{'invisible': [('show_details_visible', '=', False)]}" options='{"warn": true}'/> -->
-                                    <!-- <button name="action_assign_serial" type="object" -->
+                                    <!-- <button name="action_assign_serial" type="object" 
                                             icon="fa-plus-square"
                                             width="0.1"
                                             role="img" title="Assign Serial Numbers"
-                                            attrs="{'invisible': ['|', ('display_assign_serial', '=', False), ('show_operations', '=', False)]}"/>
+                                            attrs="{'invisible': ['|', ('display_assign_serial', '=', False), ('show_operations', '=', False)]}"/>   -->               </field>
                                 </tree>
-                        </field>
+                        
                                 <form string="Stock Moves">
                                     <header>
                                         <field name="state" widget="statusbar"/>
