@@ -445,7 +445,7 @@
                 </form>
           </field>
       </record>
-      <record model="ir.actions.act_window" id="action_alm0_alm14">
+     <!-- <record model="ir.actions.act_window" id="action_alm0_alm14">
           <field name="name">Solicitudes ALM14-ALM0</field>
           <field name="res_model">stock.picking</field>
           <field name="view_mode">tree,form</field>
@@ -454,7 +454,17 @@
           <field name="view_ids" eval="[(5, 0, 0),
                 (0,0, {'view_mode': 'tree', 'view_id': ref('stock.vpicktree')}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('vehiculos.stock_alm_0_14_form')})]"/>
-      </record>
+      </record> el ir.actions.act_windows de abajo es el mismo que el que está comentado solo que actualizado, no quise borrar esta parte por si se perdia algo o hacia algo mal xd -->
+      <record model="ir.actions.act_window" id="action_alm0_alm14">
+    <field name="name">Solicitudes ALM14-ALM0</field>
+    <field name="res_model">stock.picking</field>
+    <field name="view_mode">tree,form</field>  <!-- Definir aquí el view_mode -->
+    <field name="context">{'contact_display': 'partner_address', 'default_company_id': allowed_company_ids[0]}</field>
+    <field name="domain">[['location_id', 'ilike', 'ALM14'], ['location_dest_id', 'ilike', 'ALM-0']]</field>
+    <field name="view_ids" eval="[(5, 0, 0), 
+        (4, ref('stock.vpicktree')), 
+        (4, ref('vehiculos.stock_alm_0_14_form'))]"/>
+</record>
       <menuitem id="menu_item_actio_alm_0_14" action="action_alm0_alm14"  parent="stock.menu_stock_warehouse_mgmt"/>
 
   </data>
