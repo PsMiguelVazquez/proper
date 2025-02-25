@@ -152,8 +152,8 @@
                       <!-- <field name="carrier_tracking_ref" /> -->
                       <!-- <field name="guia" string="Guia de ventas" readonly="1"/> -->
                       <!-- <field name="evidencia" force_save="1" /> -->
-                      <button name="button_validate" t-attf-class="{'invisible': ['|', ('state', 'in', ('waiting','confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" class="oe_highlight" groups="stock.group_stock_user"/>
-                      <button name="button_validate" t-attf-class="{'invisible': ['|', ('state', 'not in', ('waiting', 'confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" groups="stock.group_stock_user" class="o_btn_validate"/>
+                      <!-- <button name="button_validate" t-attf-class="{'invisible': ['|', ('state', 'in', ('waiting','confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" class="oe_highlight" groups="stock.group_stock_user"/> -->
+                      <!-- <button name="button_validate" t-attf-class="{'invisible': ['|', ('state', 'not in', ('waiting', 'confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" groups="stock.group_stock_user" class="o_btn_validate"/> -->
                       <field name="state" invisible="1"/>
                       <field name="show_validate" invisible="1"/>
                   </tree>
