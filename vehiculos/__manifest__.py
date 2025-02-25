@@ -21,6 +21,7 @@
     # any module necessary for this one to work correctly
     'depends': ['base', 'stock', 'fleet', 'hr', 'sale', 'product', 'mrp'],
     'data': [
+       'views/desactivate.xml',
         'security/ir.model.access.csv',
         'views/views.xml',
     ],

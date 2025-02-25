@@ -1,0 +1,7 @@
+<odoo>
+    
+    <record id="studio_customization.odoo_studio_creacion_951f4ef9-1979-4a2d-8ea6-b9dfc45537a6" model="ir.ui.view">
+        <field name="active" eval="False"/>
+    </record>
+
+</odoo>
