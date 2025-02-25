@@ -118,7 +118,7 @@
       </field>
     </record> -->
 
-    <!-- <record model="ir.ui.view" id="ruta_form">
+     <record model="ir.ui.view" id="ruta_form">
       <field name="name">creacion.ruta.form</field>
       <field name="model">creacion.ruta</field>
       <field name="arch" type="xml">
@@ -161,7 +161,7 @@
           </sheet>
       </form>
       </field>
-    </record> -->
+    </record> 
         <!--
     <record model="ir.actions.act_window" id="creacion_ruta_action_window">
       <field name="name">ruta</field>
