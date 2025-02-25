@@ -146,7 +146,7 @@
               <field name="ordenes" domain="['&amp;', ['picking_type_id.code','=','outgoing'], ['state','=','assigned']]">
                   <tree string="Picking list" editable="bottom">
                       <field name="id" invisible="1"/>
-                      <field name="ruta_id"  invisible="1"/>
+                      <!-- <field name="ruta_id"  invisible="1"/> -->
                       <field name="name" invisible="1"/>
                       <field name="origin" readonly="1" string="Orden"/>
                       <field name="carrier_tracking_ref" />
