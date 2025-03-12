@@ -57,7 +57,7 @@ class FactoringWizard(models.TransientModel):
                 "account_id": line_account_id,
             }
             move_lines_d.append((0, 0, move_line_vals))
-            #raise UserError(f'move_lines_d: {move_lines_d}')
+            #raise UserError(f'move_lines_d: {move_lines_d}, record.financial_factor {record.financial_factor.id} - {record.financial_factor.name} - {record.financial_factor.property_account_creditor.name}')
             move.write({"line_ids": move_lines_d, 'l10n_mx_edi_payment_method_id': 12})
             move.action_post()
             for move_line in move.line_ids:
