@@ -57,7 +57,41 @@ class FactoringWizard(models.TransientModel):
                 "account_id": line_account_id,
             }
             move_lines_d.append((0, 0, move_line_vals))
-            #raise UserError(f'move_lines_d: {move_lines_d}, record.financial_factor {record.financial_factor.id} - {record.financial_factor.name} - {record.financial_factor.property_account_creditor.name}')
+
+            #Se agrega para validar si existe IVA en el gasto que compensa el endoso
+            has_iva_taxes = [tax for tax in record.factor_bill.invoice_line_ids.mapped('tax_ids') if 'iva' in tax.tax_group_id.name.lower()]
+            has_iva = bool(has_iva_taxes)            
+            _logger.error(f"has_iva: {has_iva}")
+            if has_iva:        
+                iva_tax = has_iva_taxes[0]  # Tomamos el primer impuesto que cumple la condición
+                _logger.error(f"iva_tax: {iva_tax}")
+                iva_account_id = iva_tax.cash_basis_transition_account_id.id if iva_tax.cash_basis_transition_account_id else None
+    
+                _logger.error(f"iva_account_id: {iva_account_id}")
+
+                #cuenta_credit = [cuenta.id for cuenta in iva_tax.invoice_repartition_line_ids.mapped('account_id') if 'iva' in cuenta.name.lower()]
+                #raise UserError(f'cuenta_credit: {cuenta_credit[0]}')
+                #if cuenta_credit:
+                move_line_vals = {
+                    'credit': record.factor_bill.amount_tax,
+                    "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
+                    "name": iva_tax.name,
+                    "account_id": 14,
+                }  
+                _logger.error(f"move_line_vals: {move_line_vals}")
+                move_lines_d.append((0, 0, move_line_vals))
+
+                move_line_vals = {
+                    'debit': record.factor_bill.amount_tax,
+                    "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
+                    "name": iva_tax.name,
+                    "account_id": 15,
+                }  
+                _logger.error(f"move_line_vals: {move_line_vals}")
+                move_lines_d.append((0, 0, move_line_vals))
+                #cuentas = iva_tax.invoice_repartition_line_ids
+            
+            #raise UserError(f'move_lines_d: {move_lines_d}')
             move.write({"line_ids": move_lines_d, 'l10n_mx_edi_payment_method_id': 12})
             move.action_post()
             for move_line in move.line_ids:
