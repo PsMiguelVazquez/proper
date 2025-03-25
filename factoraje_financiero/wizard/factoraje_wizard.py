@@ -76,7 +76,7 @@ class FactoringWizard(models.TransientModel):
                     'credit': record.factor_bill.amount_tax,
                     "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
                     "name": iva_tax.name,
-                    "account_id": 14,
+                    "account_id": 35323,
                 }  
                 _logger.error(f"move_line_vals: {move_line_vals}")
                 move_lines_d.append((0, 0, move_line_vals))
