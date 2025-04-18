@@ -48,7 +48,7 @@ class FactoringWizard(models.TransientModel):
                 line_account_id = record.financial_factor.property_account_payable_id.id
             move_line_vals = {
                 'debit': sum(record.partner_bills.mapped('factoring_amount')),
-                "partner_id": record.financial_factor.id,
+                "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
                 "name": record.factor_bill.name,
                 "account_id": line_account_id,
             }
