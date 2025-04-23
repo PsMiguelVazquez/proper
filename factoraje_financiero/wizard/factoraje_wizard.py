@@ -79,13 +79,16 @@ class FactoringWizard(models.TransientModel):
                 _logger.error(f"iva_tax: {iva_tax}")
                 iva_account_id = iva_tax.cash_basis_transition_account_id.id if iva_tax.cash_basis_transition_account_id else None
     
-                _logger.error(f"iva_account_id: {iva_account_id}")
-
+                #_logger.error(f"iva_account_id: {iva_account_id}")
                 #cuenta_credit = [cuenta.id for cuenta in iva_tax.invoice_repartition_line_ids.mapped('account_id') if 'iva' in cuenta.name.lower()]
                 #raise UserError(f'cuenta_credit: {cuenta_credit[0]}')
                 #if cuenta_credit:
+
+                tipo_iva = has_iva_taxes[0].amount / 100 if has_iva_taxes else 0.0
+                total_iva = sum(record.partner_bills.mapped('factoring_amount')) * tipo_iva
+                #raise UserError(f'total_iva: {total_iva}')
                 move_line_vals = {
-                    'credit': record.factor_bill.amount_tax,
+                    'credit': total_iva,
                     "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
                     "name": iva_tax.name,
                     "account_id": 35323,
@@ -94,7 +97,7 @@ class FactoringWizard(models.TransientModel):
                 move_lines_d.append((0, 0, move_line_vals))
 
                 move_line_vals = {
-                    'debit': record.factor_bill.amount_tax,
+                    'debit': total_iva,
                     "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
                     "name": iva_tax.name,
                     "account_id": 15,
