@@ -24,7 +24,7 @@ class FactoringWizard(models.TransientModel):
         for record in self:
             record.amount_residual_factor_bill = record.amount_factor_bill - sum(record.partner_bills.mapped('factoring_amount'))
 
-    def create_neteo(self):
+    def create_neteo(self, es_neteo = False):
         for record in self:
             _logger.error(f"record {record}")
             journal = self.env['account.journal'].search([('name','ilike','neteo')])
@@ -35,7 +35,11 @@ class FactoringWizard(models.TransientModel):
                 , 'journal_id': journal.id
             })
             move_lines = record.partner_bills.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable') and x.partner_id == record.partner_bills.mapped('partner_id'))
-            move_lines |= record.factor_bill.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable') and x.partner_id == record.financial_factor)
+            if not es_neteo:
+                move_lines |= record.factor_bill.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable') and x.partner_id == record.financial_factor)
+            else:
+                move_lines |= record.factor_bill.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable'))
+                
             move_lines_d = []
             for inv in record.partner_bills:
                 move_line_vals = {
@@ -45,11 +49,19 @@ class FactoringWizard(models.TransientModel):
                     "account_id": inv.partner_id.property_account_receivable_id.id,
                 }
                 move_lines_d.append((0, 0, move_line_vals))
-            factor_account_creditor = record.financial_factor.property_account_creditor
+            if not es_neteo:
+                factor_account_creditor = record.financial_factor.property_account_creditor
+            else:
+                factor_account_creditor = record.factor_bill.partner_id.property_account_creditor
+                
             if factor_account_creditor:
                 line_account_id = factor_account_creditor.id
             else:
-                line_account_id = record.financial_factor.property_account_payable_id.id
+                if not es_neteo:
+                    line_account_id = record.financial_factor.property_account_payable_id.id
+                else:
+                    line_account_id = record.factor_bill.partner_id.property_account_payable_id.id
+                    
             move_line_vals = {
                 'debit': sum(record.partner_bills.mapped('factoring_amount')),
                 "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
