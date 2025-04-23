@@ -17,6 +17,7 @@
     # for the full list
     'category': 'Accounting',
     'version': '0.1',
+    'license': 'OPL-1',
 
     'depends': ['base','account','l10n_mx_edi', 'sale'],
 

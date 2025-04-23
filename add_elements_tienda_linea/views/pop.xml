@@ -1,0 +1,41 @@
+<odoo>
+    <template id="popup_promo_template" name="Promo Popup" inherit_id="website.homepage">
+      <xpath expr="//div[@id='wrap']" position="after">
+
+           <div class="modal fade" id="promoModal" tabindex="-1" role="dialog" aria-labelledby="promoModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="promoModalLabel">¡Oferta del día!</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">lol</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        📣 ¡Solo por hoy! 20% de descuento en todos nuestros productos.
+                    </div>
+                    <div class="modal-footer">
+                        <a href="/shop?promo=1" class="btn btn-primary">Ir a la tienda</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<script type="text/javascript">
+<![CDATA[
+    document.addEventListener("DOMContentLoaded", function () {
+        setTimeout(function () {
+        
+                $('#promoModal').modal('show');
+                localStorage.setItem("promoShown", "true");
+          
+        }, 500);
+    });
+]]>
+</script>
+
+
+          
+        </xpath>
+    </template>
+</odoo>

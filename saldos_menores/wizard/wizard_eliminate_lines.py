@@ -7,7 +7,8 @@ from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
 class WizardEliminateLine(models.TransientModel):
     _name = 'wizard.eliminate.line'
-
+    _description = 'Wizard eliminate line'
+    
     invoice_name = fields.Char('Número')
     invoice_id = fields.Many2one('account.move', 'Movimiento')
     partner_id = fields.Many2one('res.partner','Cliente')

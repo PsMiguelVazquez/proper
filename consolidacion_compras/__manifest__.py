@@ -19,6 +19,7 @@
     # for the full list
     'category': 'Uncategorized',
     'version': '0.1',
+    'license': 'OPL-1',
 
     # any module necessary for this one to work correctly
     'depends': ['base', 'purchase'],

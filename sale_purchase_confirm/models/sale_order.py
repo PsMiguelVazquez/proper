@@ -6,6 +6,8 @@ from datetime import datetime
 from .. import extensions
 from odoo.exceptions import UserError
 from odoo.exceptions import ValidationError
+import logging
+_logger = logging.getLogger(__name__)
 
 
 class SaleOrder(models.Model):
@@ -127,12 +129,18 @@ class SaleOrder(models.Model):
                     if default_warehouse:
                         self.warehouse_id = default_warehouse
 
-    @api.onchange('partner_id')
-    def onchange_partner_id(self):
+    #@api.onchange('partner_id')
+    def otro_onchange_partner_id(self):
         r = super(SaleOrder, self).onchange_partner_id()
         self.update({'user_id': self.env.user.id})
         return r
 
+    @api.onchange('partner_id')
+    def onchange_partner_id(self):
+        super(SaleOrder, self).onchange_partner_id()
+        self.user_id = self.env.user.id
+    
+    
     def update_stock(self):
         for rec in self.order_line:
             rec.get_stock()
@@ -699,26 +707,37 @@ class SaleOrderLine(models.Model):
 
     @api.depends('product_uom_qty')
     def _compute_cantidad_asignada(self):
+        """
+        Calcula la cantidad asignada de un producto en una línea de pedido de venta.
+        La cantidad asignada depende de los movimientos de inventario relacionados con el pedido.
+        """
         for record in self:
-            # if record.product_id.categ_id.name == 'SERVICIOS':
-            if record.product_id.detailed_type == 'service':
+            # Si el producto es un servicio, la cantidad asignada es igual a la cantidad solicitada.
+            if record.product_id.type == 'service':  # Cambiado de detailed_type a type
                 record.cantidad_asignada = record.product_uom_qty
             else:
-                cant_asig = 0
-                orden = record.order_id
+                # Inicializa la cantidad asignada en 0.
                 record.cantidad_asignada = 0
-                picking_lines = orden.picking_ids.filtered(lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed'])\
-                    .mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
+                orden = record.order_id
+    
+                # Filtra los movimientos de inventario relacionados con el pedido.
+                picking_lines = orden.picking_ids.filtered(
+                    lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed']
+                ).mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
+    
+                # Si no hay movimientos de inventario relacionados, verifica si el producto es parte de un kit.
                 if not picking_lines:
-                    kit = record.product_id.bom_ids.bom_line_ids
-                    productos_kit = kit.mapped('product_id')
-                    necesarios_dic = {x.product_id.default_code: x.product_qty for x in kit }
+                    kit = record.product_id.bom_ids.bom_line_ids  # Obtiene las líneas de la lista de materiales (BOM) del producto.
+                    productos_kit = kit.mapped('product_id')  # Obtiene los productos del kit.
+                    necesarios_dic = {x.product_id.default_code: x.product_qty for x in kit}  # Diccionario con las cantidades necesarias por producto.
+    
+                    # Filtra los movimientos de inventario relacionados con los productos del kit.
                     picking_lines = orden.picking_ids.filtered(
-                        lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned',
-                                                                                                            'confirmed']) \
-                        .mapped('move_ids_without_package').filtered(lambda y: y.product_id in productos_kit)
+                        lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed']
+                    ).mapped('move_ids_without_package').filtered(lambda y: y.product_id in productos_kit)
+    
+                    # Calcula la cantidad asignada mínima entre los productos del kit.
                     asignados = []
-                    # for linea in picking_lines:
                     for producto in productos_kit:
                         asignados.append(sum(picking_lines.filtered(lambda x: x.product_id == producto).mapped('product_uom_qty')))
                     if asignados:
@@ -726,8 +745,11 @@ class SaleOrderLine(models.Model):
                     else:
                         record.cantidad_asignada = 0
                 else:
+                    # Si hay movimientos de inventario relacionados, calcula la cantidad asignada.
                     producto = picking_lines[0].product_id
-                    total_reservado = sum(picking_lines.mapped('reserved_availability'))
+                    move_lines = picking_lines.mapped('move_line_ids')
+                    _logger.info("Campos disponibles en stock.move.line: %s", move_lines[0].fields_get_keys() if move_lines else [])
+                    total_reservado = sum(getattr(ml, 'reserved_uom_qty', 0.0) for ml in move_lines)
                     lineas_pedido = record.order_id.order_line.filtered(lambda x: x.product_id == producto)
                     if len(lineas_pedido) > 1:
                         for linea in lineas_pedido:
@@ -739,7 +761,6 @@ class SaleOrderLine(models.Model):
                                 total_reservado = 0
                     else:
                         record.cantidad_asignada = total_reservado
-
 
 
     @api.depends('x_studio_nuevo_costo','price_unit')
@@ -785,20 +806,20 @@ class SaleOrderLine(models.Model):
 
     @api.onchange('product_id')
     def product_id_change(self):
-        r = super(SaleOrderLine, self).product_id_change()
+        #r = super(SaleOrderLine, self).product_id_change()
         self.limit_price()
-        return r
+        #return r
 
     @api.onchange('product_uom', 'product_uom_qty')
     def product_uom_change(self):
         #Se guarda el precio unitario antiguo para que en el caso de que se cambien las cantidades no se recalcule precio unitario
         old_price = self.price_unit
-        r = super(SaleOrderLine, self).product_uom_change()
+        #r = super(SaleOrderLine, self).product_uom_change()
         self.limit_price()
         #si cambia el precio unitario despues de limitarlo, lo regresa a como estaba originalmente
         if round(old_price,2) != round(self.price_unit, 2):
             self.price_unit = old_price
-        return r
+        #return r
 
     @api.depends('product_uom_qty','product_id')
     def _compute_existencia_html(self):

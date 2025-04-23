@@ -7,6 +7,7 @@ from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
 class WizardEliminateBalance(models.TransientModel):
     _name = 'wizard.eliminate.balance'
+    _description = 'Wizard eliminate balance'
 
     move_date = fields.Date(string='Fecha del movimiento')
     from_date = fields.Date(string='Desde')

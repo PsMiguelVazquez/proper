@@ -98,6 +98,8 @@ class AccountMove(models.Model):
 
 class AccountPaymentWidget(models.TransientModel):
     _name = 'account.payment.wizard.ex'
+    _description = 'Account payment wizard ex'
+    
     payment = fields.Many2one('account.payment')
     invoices_ids = fields.Many2many('account.move')
     partner_id = fields.Many2one('res.partner')
