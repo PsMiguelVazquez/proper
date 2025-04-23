@@ -83,9 +83,11 @@ class FactoringWizard(models.TransientModel):
                 #cuenta_credit = [cuenta.id for cuenta in iva_tax.invoice_repartition_line_ids.mapped('account_id') if 'iva' in cuenta.name.lower()]
                 #raise UserError(f'cuenta_credit: {cuenta_credit[0]}')
                 #if cuenta_credit:
-
-                tipo_iva = has_iva_taxes[0].amount / 100 if has_iva_taxes else 0.0
-                total_iva = sum(record.partner_bills.mapped('factoring_amount')) * tipo_iva
+                if not sum(record.partner_bills.mapped('factoring_amount')) == record.factor_bill.amount_total:
+                    tipo_iva = has_iva_taxes[0].amount / 100 if has_iva_taxes else 0.0
+                    total_iva = sum(record.partner_bills.mapped('factoring_amount')) * tipo_iva
+                else:
+                    total_iva = record.factor_bill.amount_tax
                 #raise UserError(f'total_iva: {total_iva}')
                 move_line_vals = {
                     'credit': total_iva,
