@@ -131,13 +131,13 @@ class SaleOrder(models.Model):
 
     #@api.onchange('partner_id')
     def otro_onchange_partner_id(self):
-        r = super(SaleOrder, self).onchange_partner_id()
+        #r = super(SaleOrder, self).onchange_partner_id()
         self.update({'user_id': self.env.user.id})
-        return r
+        #return r
 
     @api.onchange('partner_id')
     def onchange_partner_id(self):
-        super(SaleOrder, self).onchange_partner_id()
+        #super(SaleOrder, self).onchange_partner_id()
         self.user_id = self.env.user.id
     
     
@@ -313,7 +313,7 @@ class SaleOrder(models.Model):
                 if line.product_id.id in dic_cantidades_disponibles:
                     disponibles_total += dic_cantidades_disponibles[line.product_id.id]
                 if disponibles_total < 0.0:
-                    if line.product_id.detailed_type != 'service':
+                    if line.product_id.type != 'service':
                         message += '\n- No hay stock suficiente para el producto: ' + line.name.replace('\n', ' ') + '. Requiere ' + str(abs(disponibles_total))+ ' producto(s) más. línea(' + str(i) + ')'
                         valid = False
 
@@ -894,10 +894,17 @@ class SaleAdvancePay(models.TransientModel):
 
 
     def create_invoices(self):
+        _logger.error("Entre")
         sale_orders = self.env['sale.order'].browse(self._context.get('active_ids', []))
-        r = super(SaleAdvancePay, self).create_invoices()
+        
+        
         for s in sale_orders:
+            _logger.error("Entre")
+            _logger.error(f"l10n_mx_edi_usage {partner_id_uso_cfdi}")
+            
             s.invoice_ids.write({'l10n_mx_edi_usage': s.partner_id_uso_cfdi})
+            r = super(SaleAdvancePay, self).create_invoices()
+            _logger.error(f"r {r}")
         return r
 
     # def create_invoices(self):

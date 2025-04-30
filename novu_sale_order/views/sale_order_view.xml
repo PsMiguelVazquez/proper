@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <record id="res_partner_view_form" model="ir.ui.view">
+            <field name="name">sale.order.form</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="mode">extension</field>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='other_information']" position="after">
+                    <page string="Documentos de Entrega" name="documentos_entrega">
+                        <group>
+                            <group name="documentos_de_entrega" string="Documentos de Entrega">
+                                <field name="x_doc_entrega" widget="radio"/>
+                                <field name="x_studio_etiquetas"/>
+                            </group>
+                            <group name="info_adicional" string="Informacón Adicional">
+                                <field name="x_studio_orden_de_compra"/>
+                                <field name="x_studio_comentarios"/>
+                                <field name="x_otros_documentos" widget="many2many_binary"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group name="metodo_de_entrega" string="Método de Entrega">
+                                <field name="x_metodo_entrega" widget="radio"/>
+                                <field name="guia"/>
+                            </group>
+                            
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

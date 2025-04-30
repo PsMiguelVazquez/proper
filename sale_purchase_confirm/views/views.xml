@@ -37,7 +37,7 @@
                        widget="many2many"
                        domain="[('order_id', '=', sale_id)]"
                     >
-                        <tree create="false" delete="false" editable="top">
+                        <list create="false" delete="false" editable="top">
                             <field name="product_id" readonly="1"/>
                             <field name="product_uom_qty"  readonly="1"/>
                             <field name="price_unit"  readonly="1"/>
@@ -45,7 +45,7 @@
                             <field name="cantidad_faltante" readonly="1"/>
                             <field name="cantidad_a_comprar" />
                             <field name="atendido_por"  readonly="1"/>
-                        </tree>
+                        </list>
                     </field>
                     <field name="mensaje_bottom" readonly='1'/>
 
@@ -64,7 +64,7 @@
                 <field name="name" invisible="1"/>
                 <field name="sale_ids" invisible="1" force_save="1"/>
                 <field name="order_lines_ids" force_save="1">
-                    <tree editable="bottom" create="false" delete="false">
+                    <list editable="bottom" create="false" delete="false">
                         <field name="order_id"/>
                         <field name="product_id" readonly="1"/>
                         <field name="qty" readonly="1"/>
@@ -73,7 +73,7 @@
                         <field name="qty_sale_invoice" readonly="1"/>
                         <field name="qty_invoice"/>
                         <field name="check" />
-                    </tree>
+                    </list>
                 </field>
                 <footer>
                     <button string="Confirmar" name="confir" type="object" class="btn-primary" />
@@ -109,22 +109,24 @@
         </field>
         </record>
                 <record id="sale_orde_proposal_requirement" model="ir.ui.view">
+                    <field name="name">sale.order.form</field>
                     <field name="model">sale.order</field>
                     <field name="inherit_id" ref="sale.view_order_form"/>
                     <field name="arch" type="xml">
                         <xpath expr="//sheet/div[1]" position="after">
                             <field name="es_orden_parcial" invisible="1"/>
-                            <widget name="web_ribbon" bg_color="bg-danger" title="Asignado parcialmente" attrs="{'invisible': [('es_orden_parcial', '!=', True)]}"/>
+                            <widget name="web_ribbon" bg_color="bg-danger" title="Asignado parcialmente" 
+                                invisible="'es_orden_parcial' != True"/>
                         </xpath>
-                        <xpath expr="//field[@name='order_line']/tree" position="inside">
+                        <xpath expr="//field[@name='order_line']/list" position="inside">
                             <field name="x_utilidad_por" invisible="1"/>
                             <field name="utilidad_esperada" invisible="1"/>
                         </xpath>
-                        <xpath expr="//field[@name='order_line']/tree" position="attributes">
+                        <xpath expr="//field[@name='order_line']/list" position="attributes">
                             <attribute name="decoration-danger">x_utilidad_por &lt; utilidad_esperada</attribute>
                         </xpath>
                         <xpath expr="//field[@name='payment_term_id']" position="after">
-                            <field name="albaran" attrs="{'invisible': [('albaran', '=', False)]}"/>
+                            <field name="albaran" invisible="'albaran' == False"/>
                             <field name="partner_loc_ids" invisible="1"/>
                         </xpath>
                         <xpath expr="//field[@name='partner_shipping_id']" readonly="1" position="after">
@@ -141,8 +143,8 @@
                     <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
                         <page string="Requerimientos" name="studio_page_0ru5U">
                             <field name="requirements_line_ids">
-                                <tree string="Solicitud de requerimiento del cliente" editable="bottom">
-                                    <field name="x_name" force_save="True" attrs="{}" readonly="1" string="Nom. Requerimiento"/>
+                                <list string="Solicitud de requerimiento del cliente" editable="bottom">
+                                    <field name="x_name" force_save="True" readonly="1" string="Nom. Requerimiento"/>
                                     <field name="x_descripcion" optional="show" required="1"/>
                                     <field name="x_marca" optional="show"/>
                                     <field name="x_modelo" optional="show"/>
@@ -152,29 +154,31 @@
                                     <field name="x_proveedor" optional="show" string="Proveedor"/>
                                     <field name="x_link_sitio" optional="hide"/>
                                     <field name="x_comprar" optional="show"/>
-                                    <field name="x_count" optional="show" attrs="{}" invisible="1"/>
-                                    <field name="x_studio_estado" string="estado" attrs="{}" invisible="1"/>
-                                    <button name="cancel" string="Cancelar" type="object" class="btn-primary" attrs="{'invisible': [['x_studio_estado','=','cancel']]}"/>
-                                </tree>
+                                    <field name="x_count" optional="show" invisible="1"/>
+                                    <field name="x_studio_estado" string="estado" invisible="1"/>
+                                    <button name="cancel" string="Cancelar" type="object" class="btn-primary" 
+                                        invisible="'x_studio_estado' == 'cancel'"/>
+                                </list>
                             </field>
                         </page>
                         <page string="Propuestas" name="studio_page_qwbde">
                             <field name="proposal_line_ids">
-                                <tree string="Propuesta de Compras" decoration-success="x_state == 'done'" decoration-warning="x_state == 'confirmado'">
+                                <list string="Propuesta de Compras" decoration-success="x_state == 'done'" decoration-warning="x_state == 'confirmado'">
                                     <field name="x_name" modifiers="{}" string="Propuesta"/>
                                     <field name="x_descripcion" optional="show"/>
                                     <field name="x_cantidad" optional="show" string="Cantidad"/>
                                     <field name="x_costo" optional="show" string="Costo"/>
-                                    <field optional="show" name="x_studio_proveedor" string="Proveedor" attrs="{}"/>
-                                    <field name="x_state" optional="show" attrs="{}" invisible="1" string="Estado"/>
+                                    <field optional="show" name="x_studio_proveedor" string="Proveedor"/>
+                                    <field name="x_state" optional="show" invisible="1" string="Estado"/>
                                     <field name="x_proveedor" optional="show"  />
                                     <field name="x_note" optional="hide"></field>
                                     <field name="x_new_prod_prop" default="True" invisible="1"/>
-                                    <button name="confirm" string="Confirmar" type="object" class="btn-primary" attrs="{'invisible': [('x_state', 'not in', ['draft','atendido'])]}"/>
+                                    <button name="confirm" string="Confirmar" type="object" class="btn-primary" 
+                                        invisible="'x_state' not in ['draft','atendido']"/>
                                     <button name="cancel" string="Cancelar" type="object" class="btn-primary" />
                                     <button name="validar" string="Re-validar" type="object" class="btn-primary"/>
                                     <button name="autoriz" string="Compra autorizada" type="object" class="btn-primary"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </xpath>
@@ -204,13 +208,13 @@
                     <field name="numero_ordenes_compra_activas"  invisible="1"/>
                 </xpath>
                 <xpath expr="//button[@name='action_cancel']" position="attributes">
-                    <attribute name="attrs">{'invisible': ['|', '|',('state', 'not in', ['draft', 'sent','sale']), ('id', '=', False),('numero_ordenes_compra_activas', '>', 0)]}</attribute>
+                    <attribute name="invisible">['|', '|',('state', 'not in', ['draft', 'sent','sale']), ('id', '=', False),('numero_ordenes_compra_activas', '>', 0)]</attribute>
                 </xpath>
-                <xpath expr="//page/field[@name='order_line']/tree/field[@name='product_uom_qty']" position="after">
+                <xpath expr="//page/field[@name='order_line']/list/field[@name='product_uom_qty']" position="after">
                     <field name="existencia_alm_0" invisible="1"/>
                     <field name="existencia_html" string=" "  widget="html" readonly="1"/>
                 </xpath>
-                <xpath expr="//page/field[@name='order_line']/tree/field[@name='qty_delivered']" position="before">
+                <xpath expr="//page/field[@name='order_line']/list/field[@name='qty_delivered']" position="before">
                     <field name="cantidad_asignada" decoration-success="cantidad_asignada==product_uom_qty" decoration-danger="state=='sale' and cantidad_asignada&lt;product_uom_qty"/>
                 </xpath>
             </field>
@@ -224,7 +228,7 @@
                 <xpath expr="//field[@name='order_id']" position="before">
                     <field name="x_solicitud_atendida" invisible="1"/>
                 </xpath>
-                <xpath expr="//tree" position="attributes">
+                <xpath expr="//list" position="attributes">
                     <attribute name="decoration-primary">x_solicitud_atendida=='Atendido'</attribute>
                 </xpath>
             </field>
@@ -237,7 +241,8 @@
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
                 <header>
-                    <button string="Validar datos masivamente" name="validar_precio_masivo" type="object" attrs="{'invisible': [('state', 'not in', ['draft','send'])]}"/>
+                    <button string="Validar datos masivamente" name="validar_precio_masivo" type="object" 
+                        invisible="'state' not in ['draft','send']"/>
                 </header>
                 <xpath expr="//field[@name='partner_invoice_id']" position="before">
                     <field name="sales_agent" string="Vendedor asocialdo al cliente"/>
@@ -248,7 +253,7 @@
         <record id="mx_partner_address_form_inherit" model="ir.ui.view">
             <field name="name">mx.partner.addres.form.inherited</field>
             <field name="model">res.partner</field>
-            <field name="inherit_id" ref="l10n_mx_edi.mx_partner_address_form"/>
+            <field name="inherit_id" ref="l10n_mx_edi_extended.mx_partner_address_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='state_id']" position="replace">
                     <field name="state_id" string="Estado" class="o_address_state" placeholder="Estado" options="{&quot;no_open&quot;: True,'no_create': True, 'no_create_edit':True}}" />
@@ -297,7 +302,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='reason']" position="replace">
                 <field name="motivo"/>
-                <field name="reason" attrs="{'invisible': [('motivo', '!=', 'otros')]}"/>
+                <field name="reason" invisible="'motivo' != 'otros'"/>
             </xpath>
             <xpath expr="//field[@name='date']" position="after">
                 <field name="uso_cfdi"/>
@@ -312,7 +317,7 @@
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='payment_reference']" position="after">
-                <field name="tipo_nota" attrs="{'invisible': [('move_type', '!=', 'out_refund')]}"/>
+                <field name="tipo_nota" invisible="'move_type' != 'out_refund'"/>
             </xpath>
         </field>
     </record>

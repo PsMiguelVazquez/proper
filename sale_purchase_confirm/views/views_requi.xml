@@ -16,7 +16,7 @@
                                 <field name="x_studio_related_field_1eaGE" modifiers="{&quot;readonly&quot;: true}"/>
                                 <field name="x_presupuesto" modifiers="{}"/>
                                 <field name="x_name" modifiers="{}" readonly="1"
-                                       attrs="{'invisible': [('x_name', '=', False)]}"/>
+                                       invisible="'x_name'== False"/>
                                 <field name="x_cantidad" modifiers="{}" invisible="1"/>
                                 <field name="cantidad" modifiers="{}" invisible="1"/>
                                 <field name="x_descripcion" modifiers="{}"/>
@@ -48,41 +48,13 @@
             </field>
         </record>
 
-        <record model="ir.ui.view" id="requirement_tree_view">
-            <field name="name">Vista Tree</field>
-            <field name="model">requiriment.client</field>
-            <field name="arch" type="xml">
-                <tree string="Solicitud de requerimiento del cliente" default_order="id desc">
-                    <field name="x_order_id"/>
-                    <field name="x_name" modifiers="{}" string="Requerimiento" attrs="{'invisible': [('x_name', '=', False)]}"/>
-                    <field name="x_descripcion"/>
-                    <field name="x_marca"/>
-                    <field name="x_modelo"/>
-                    <field name="x_presupuesto"/>
-                    <field name="x_studio_related_field_1eaGE" string="Cliente"/>
-                    <field name="x_proveedor" string="Proveedor" options="{'no_create': True}"
-                           widget="res_partner_many2one"
-                           context="{'res_partner_search_mode': 'supplier', 'show_vat': True}" modifiers="{}"/>
-                    <field name="x_cantidad" invisible="1"/>
-                    <field name="cantidad"/>
-                    <field name="x_studio_related_field_ap2ah" string="Vendedor"/>
-                    <field name="x_studio_estado"/>
-                    <field name="create_date" string="Fecha de solicitud"/>
-                    <field name="x_count" attrs="{}" invisible="1"/>
-                    <button name="create_proposal" string="Create Propuesta" type="object" class="btn-primary"/>
-                    <button name="view_proposal" string="Ver Propuestas" type="object" class="btn-primary"
-                            attrs="{'invisible': [['x_count','=',0]]}"/>
-                </tree>
-            </field>
-        </record>
-
         <record model="ir.ui.view" id="wizard_proposal_form_view">
-            <field name="name">Form Tree</field>
+            <field name="name">Form Tree WP</field>
             <field name="model">wizard.proposal</field>
             <field name="arch" type="xml">
                 <form>
                     <group>
-                        <field name="x_detalle" readony="1" widget="html"/>
+                        <field name="x_detalle" readonly="1" widget="html"/>
                         <field name="rel_id" invisible="1"/>
                     </group>
                     <group>
@@ -133,25 +105,26 @@
         </record>
 
         <record model="ir.ui.view" id="proposal_purcahse_form_view">
-            <field name="name">Form Tree</field>
+            <field name="name">Form PP</field>
             <field name="model">proposal.purchases</field>
             <field name="arch" type="xml">
                 <form>
                     <header>
                         <field name="x_state" invisible="1"/>
                         <field name="state" modifiers="{}" widget="statusbar"/>
-                        <button name="create_purchase" string="Crear Orden" type="object" states="confirm"/>
+                        <button name="create_purchase" string="Crear Orden" type="object" 
+                            invisible="'state' != 'confirm'"/>
                     </header>
                     <sheet string="Propuesta de Compras">
                         <group>
-                            <field name="x_detalle" readony="1" widget="html"/>
+                            <field name="x_detalle" readonly="1" widget="html"/>
                             <field name="rel_id" invisible="1"/>
                         </group>
                         <group>
                             <group>
                                 <field name="x_studio_related_field_gKx5P" modifiers="{&quot;readonly&quot;: true}"
                                        readonly="1"/>
-                                <field name="x_name" modifiers="{}" attrs="{'invisible': [('x_name', '=', False)]}"
+                                <field name="x_name" modifiers="{}" invisible="'x_name' == False"
                                        readonly="1"/>
                                 <field name="x_studio_estado_de_cotizacin" modifiers="{&quot;readonly&quot;: true}"
                                        readonly="1"/>
@@ -195,7 +168,7 @@
                                 <!-- <field name="x_pro_aten" string="Propuesta Atendida" attrs="{'invisible': [('x_state','!=','validar')]}"/>-->
 
                                 <field name="x_pro_aten" string="Propuesta Atendida"
-                                       attrs="{'invisible': [('x_state','!=','validar')]}"/>
+                                       invisible="'x_state' != 'validar'"/>
                                 <!-- <field name="x_terminado" string="Regresar Propuesta" attrs="{'invisible': [('x_state','!=','validar')],[('x_state','!=','atendido')]}"/> -->
 
                                 <field name="x_documento" string="Documento" widget="pdf_viewer"/>
@@ -209,22 +182,20 @@
                 </form>
             </field>
         </record>
+        
         <record model="ir.ui.view" id="proposal_purcahse_tree_view">
-            <field name="name">Form Tree</field>
+            <field name="name">Tree PP</field>
             <field name="model">proposal.purchases</field>
             <field name="arch" type="xml">
-                <tree string="Propuesta de Compras" default_order="id desc">
-                    <!--                <header>-->
-                    <!--                    <button string="Generar orden" name="generar_orden" type="object"/>-->
-                    <!--                </header>-->
+                <list string="Propuesta de Compras" default_order="id desc">
                     <field name="create_date" string="Fecha de creación"/>
                     <field name="write_date" string="Fecha de modificación"/>
                     <field name="x_studio_related_field_gKx5P" string="Orden de venta" readonly="1"/>
                     <field name="rel_id" readonly="1" string="Requerimiento"/>
-                    <field name="x_name" modifiers="{}" readonly="1" string="Propuesta"/>
+                    <field name="x_name" readonly="1" string="Propuesta"/>
                     <field name="x_marca"/>
                     <field name="x_modelo"/>
-                    <field name="x_product_id" attrs="{}" invisible="1"/>
+                    <field name="x_product_id" invisible="1"/>
                     <field name="x_studio_proveedor"/>
                     <field name="x_proveedor" string="Proveedor" options="{'no_create': True}"/>
                     <field name="x_costo" string="Costo"/>
@@ -233,7 +204,7 @@
                     <field name="x_state" string="Estado" readonly="1"/>
                     <field name="x_studio_estado_de_cotizacin" string="Estado de Cotización" readonly="1"/>
                     <field name="x_studio_aprovacin_de_compras" string="Aprobación de Compras"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -241,18 +212,18 @@
             <field name="name">Propuestas de Compra</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">proposal.purchases</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record model="ir.actions.act_window" id="action_requiremt_client">
             <field name="name">Requerimientos</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">requiriment.client</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record model="ir.ui.view" id="wizard_cancel_form_view">
-            <field name="name">Form Tree</field>
+            <field name="name">Form Tree WC</field>
             <field name="model">wizard.cancel</field>
             <field name="arch" type="xml">
                 <form>
@@ -269,7 +240,7 @@
         </record>
 
         <record model="ir.ui.view" id="wizard_revalid_form_view">
-            <field name="name">Form Tree</field>
+            <field name="name">Form Tree WR</field>
             <field name="model">wizard.revali</field>
             <field name="arch" type="xml">
                 <form>
@@ -319,6 +290,34 @@
                     <filter name="date" string="Fecha" date="create_date"/>
                     <separator/>
                 </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="requirement_list_view">
+            <field name="name">Vista List</field>
+            <field name="model">requiriment.client</field>
+            <field name="arch" type="xml">
+                <list string="Solicitud de requerimiento del cliente" default_order="id desc">
+                    <field name="x_order_id"/>
+                    <field name="x_name" string="Requerimiento" invisible="'x_name' == False"/>
+                    <field name="x_descripcion"/>
+                    <field name="x_marca"/>
+                    <field name="x_modelo"/>
+                    <field name="x_presupuesto"/>
+                    <field name="x_studio_related_field_1eaGE" string="Cliente"/>
+                    <field name="x_proveedor" string="Proveedor" options="{'no_create': True}"
+                           widget="res_partner_many2one"
+                           context="{'res_partner_search_mode': 'supplier', 'show_vat': True}"/>
+                    <field name="x_cantidad" invisible="1"/>
+                    <field name="cantidad"/>
+                    <field name="x_studio_related_field_ap2ah" string="Vendedor"/>
+                    <field name="x_studio_estado"/>
+                    <field name="create_date" string="Fecha de solicitud"/>
+                    <field name="x_count" invisible="1"/>
+                    <button name="create_proposal" string="Create Propuesta" type="object" class="btn-primary"/>
+                    <button name="view_proposal" string="Ver Propuestas" type="object" class="btn-primary"
+                            invisible="'x_count' == 0"/>
+                </list>
             </field>
         </record>
 

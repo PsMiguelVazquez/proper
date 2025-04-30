@@ -21,15 +21,15 @@
     'license': 'OPL-1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'sale', 'purchase', 'stock', 'web_studio'],
+    'depends': ['base', 'sale', 'purchase', 'stock', 'web_studio', 'l10n_mx_edi_extended'],
 
     # always loaded
     'data': [
         'security/ir.model.access.csv',
-       # 'views/views.xml',
+       'views/views.xml',
         'views/templates.xml',
-        #'views/views_requi.xml',
+        'views/views_requi.xml',
         'views/product_template_view.xml',
-        #'views/account_move_view.xml'
+        'views/account_move_view.xml'
     ],
 }

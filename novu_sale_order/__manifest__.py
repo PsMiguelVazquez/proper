@@ -1,17 +1,17 @@
 {
-    'name': 'Novu Res Partner',
+    'name': 'Novu sale_order',
     'version': '18.0.0.1',
     'category': '',
     'license': 'OPL-1',
-    'summary': 'Agrega campos necesarios al contacto',
+    'summary': 'Agrega campos necesarios en la venta',
 
     'author': 'Mayra Carrillo',
     'maintainer': '',
     'website': '',
 
-    'depends': ['contacts','crm'],
+    'depends': ['sale', 'vehiculos'],
     'data': [
-            'views/res_partner_view.xml',
+            'views/sale_order_view.xml',
     ],
     'assets': {},
     'installable': True,
