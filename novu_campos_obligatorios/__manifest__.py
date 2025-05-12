@@ -24,7 +24,7 @@
 
     # always loaded
     'data': [
-        'views/stock_move_view.xml'
+        #'views/stock_move_view.xml'
         
     ],
 }
