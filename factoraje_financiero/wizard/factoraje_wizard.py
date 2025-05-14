@@ -5,6 +5,9 @@ from datetime import datetime
 from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
+import logging
+_logger = logging.getLogger(__name__)
+
 class FactoringWizard(models.TransientModel):
     _inherit = 'account.payment.register'
     _description = 'Muestra un wizard para el proceso de factoraje financiero'
@@ -21,8 +24,9 @@ class FactoringWizard(models.TransientModel):
         for record in self:
             record.amount_residual_factor_bill = record.amount_factor_bill - sum(record.partner_bills.mapped('factoring_amount'))
 
-    def create_neteo(self):
+    def create_neteo(self, es_neteo = False):
         for record in self:
+            #_logger.error(f"record {record}")
             journal = self.env['account.journal'].search([('name','ilike','neteo')])
             if not journal:
                 raise UserError('No existe diario para llevar a cabo la operación')
@@ -31,7 +35,11 @@ class FactoringWizard(models.TransientModel):
                 , 'journal_id': journal.id
             })
             move_lines = record.partner_bills.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable') and x.partner_id == record.partner_bills.mapped('partner_id'))
-            move_lines |= record.factor_bill.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable') and x.partner_id == record.financial_factor)
+            if not es_neteo:
+                move_lines |= record.factor_bill.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable') and x.partner_id == record.financial_factor)
+            else:
+                move_lines |= record.factor_bill.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable'))
+          
             move_lines_d = []
             for inv in record.partner_bills:
                 move_line_vals = {
@@ -41,11 +49,19 @@ class FactoringWizard(models.TransientModel):
                     "account_id": inv.partner_id.property_account_receivable_id.id,
                 }
                 move_lines_d.append((0, 0, move_line_vals))
-            factor_account_creditor = record.financial_factor.property_account_creditor
+            if not es_neteo:
+                factor_account_creditor = record.financial_factor.property_account_creditor
+            else:
+                factor_account_creditor = record.factor_bill.partner_id.property_account_creditor
+                
             if factor_account_creditor:
                 line_account_id = factor_account_creditor.id
             else:
-                line_account_id = record.financial_factor.property_account_payable_id.id
+                if not es_neteo:
+                    line_account_id = record.financial_factor.property_account_payable_id.id
+                else:
+                    line_account_id = record.factor_bill.partner_id.property_account_payable_id.id
+                    
             move_line_vals = {
                 'debit': sum(record.partner_bills.mapped('factoring_amount')),
                 "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
@@ -53,6 +69,46 @@ class FactoringWizard(models.TransientModel):
                 "account_id": line_account_id,
             }
             move_lines_d.append((0, 0, move_line_vals))
+
+            #Se agrega para validar si existe IVA en el gasto que compensa el endoso
+            has_iva_taxes = [tax for tax in record.factor_bill.invoice_line_ids.mapped('tax_ids') if 'iva' in tax.tax_group_id.name.lower()]
+            has_iva = bool(has_iva_taxes)            
+            _logger.error(f"has_iva: {has_iva}")
+            if has_iva:        
+                iva_tax = has_iva_taxes[0]  # Tomamos el primer impuesto que cumple la condición
+                _logger.error(f"iva_tax: {iva_tax}")
+                iva_account_id = iva_tax.cash_basis_transition_account_id.id if iva_tax.cash_basis_transition_account_id else None
+    
+                #_logger.error(f"iva_account_id: {iva_account_id}")
+                #cuenta_credit = [cuenta.id for cuenta in iva_tax.invoice_repartition_line_ids.mapped('account_id') if 'iva' in cuenta.name.lower()]
+                #raise UserError(f'cuenta_credit: {cuenta_credit[0]}')
+                #if cuenta_credit:
+                if not sum(record.partner_bills.mapped('factoring_amount')) == record.factor_bill.amount_total:
+                    tipo_iva = has_iva_taxes[0].amount / 100 if has_iva_taxes else 0.0
+                    total_iva = sum(record.partner_bills.mapped('factoring_amount')) * tipo_iva
+                else:
+                    total_iva = record.factor_bill.amount_tax
+                #raise UserError(f'total_iva: {total_iva}')
+                move_line_vals = {
+                    'credit': total_iva,
+                    "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
+                    "name": iva_tax.name,
+                    "account_id": 35323,
+                }  
+                _logger.error(f"move_line_vals: {move_line_vals}")
+                move_lines_d.append((0, 0, move_line_vals))
+
+                move_line_vals = {
+                    'debit': total_iva,
+                    "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
+                    "name": iva_tax.name,
+                    "account_id": 15,
+                }  
+                _logger.error(f"move_line_vals: {move_line_vals}")
+                move_lines_d.append((0, 0, move_line_vals))
+                #cuentas = iva_tax.invoice_repartition_line_ids
+            
+            #raise UserError(f'move_lines_d: {move_lines_d}')
             move.write({"line_ids": move_lines_d, 'l10n_mx_edi_payment_method_id': 12})
             move.action_post()
             for move_line in move.line_ids:
