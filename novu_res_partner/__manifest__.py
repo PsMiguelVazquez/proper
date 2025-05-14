@@ -9,7 +9,7 @@
     'maintainer': '',
     'website': '',
 
-    'depends': ['contacts','crm'],
+    'depends': ['contacts','crm','res_partner_fields', 'web_studio'],
     'data': [
             'views/res_partner_view.xml',
     ],

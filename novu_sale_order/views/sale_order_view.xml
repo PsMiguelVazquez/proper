@@ -11,7 +11,7 @@
                     <page string="Documentos de Entrega" name="documentos_entrega">
                         <group>
                             <group name="documentos_de_entrega" string="Documentos de Entrega">
-                                <field name="x_doc_entrega" widget="radio"/>
+                                <field name="x_doc_entrega" widget="radio" required="albaran"/>
                                 <field name="x_studio_etiquetas"/>
                             </group>
                             <group name="info_adicional" string="Informacón Adicional">
@@ -22,12 +22,167 @@
                         </group>
                         <group>
                             <group name="metodo_de_entrega" string="Método de Entrega">
-                                <field name="x_metodo_entrega" widget="radio"/>
+                                <field name="x_metodo_entrega" widget="radio" required="albaran"/>
                                 <field name="guia"/>
                             </group>
                             
                         </group>
                     </page>
+                    <page name="Orden Compra" string="Orden Compra">
+                        <group name="Orden Compra">
+                            <field name="purchase_ids"/>
+                        </group>
+                    </page>
+                </xpath>
+                <xpath expr="/form[1]/sheet[1]/group[1]/group[1]/field[1]" position="before">
+                    <field name="x_studio_rfc"/>
+                </xpath>
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="partner_loc_ids" invisible="1"/>
+                    <field name="partner_child" widget="res_partner_many2one" context="{'res_partner_search_mode': 'customer'}" domain="[('id', 'in', partner_loc_ids)]"/>
+                    <field name="x_studio_nivel"/>
+                    <field name="x_studio_solicit" invisible="1"/>
+                    <field name="x_studio_n_orden_de_compra"/>
+                    <field name="x_studio_origen_mkp" string="Origen MKP" invisible="x_studio_venta_mostrador == False"/>
+                    <field name="x_studio_venta_mostrador" invisible="1"/>
+                    <field name="x_studio_referencia_de_venta_marketplace" string="Referencia de venta Marketplace" invisible="x_studio_venta_mostrador == False"/>
+                    <field name="x_studio_con_tiempo_de_entrega" string="Con tiempo de entrega"/>
+                    <field name="x_num_pro"/>
+                </xpath>
+
+                <xpath expr="//field[@name='sale_order_template_id']" position="attributes">
+                    <attribute name="widget">radio</attribute>                    
+                </xpath>
+                
+                
+                <xpath expr="//field[@name='validity_date']" position="before">
+                    <field name="x_tipo_de_articulos"/>
+                    <field name="x_studio_grupo"/>
+                    <field name="x_fecha_factura"/>
+                </xpath>
+                <xpath expr="//field[@name='payment_term_id']" position="after">
+                    <!--  <field name="albaran" string="Referencia de surtido" attrs="{'invisible': [('albaran', '=', False)]}"/>-->
+                    <field name="x_estado_surtido" string="Estado de surtido" required="albaran != False" invisible="albaran == False"/>
+                    <field name="x_status_surtido" string="Estatus de surtido" invisible="1"/>
+                    <field name="commitment_date" string="Fecha Entrega" invisible="state not in ['draft', 'sent']"/>
+                    <!-- <field name="x_fecha_surtido" string="Fecha Surtido" attrs="{'required': [('state', 'in',  'sale')]}"/>-->
+                    <field name="x_fecha_devolucion" invisible="x_es_muestra == False"/>
+                    <field name="x_es_muestra"/>
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='order_lines']/field[@name='order_line']/list[1]/field[@name='product_template_id']" position="after">
+                    <!--<field name="x_studio_descripcin_comercial" optional="show" string="Desc.Comercial"/>-->
+                    <field name="x_modelo_producto" optional="show" string="Modelo"/>
+                    <field name="x_descripcion_corta"/>
+                    <field name="x_studio_cdigo_de_barras" optional="show" string="Cod.Barras"/>
+                    <field name="x_studio_cdigo_sat" optional="show" string="Cod.SAT"/>
+                    <field name="existencia" optional="show" widget="html" string="Cant.Disponible"/>
+                    <field name="x_studio_costo_promedio" string="Costo promedio" optional="show"/>
+                </xpath>
+                
+                <xpath expr="//field[@name='order_line']/list//field[@name='qty_to_deliver']" position="attributes">
+                    <attribute name="invisible">False</attribute>
+                    <attribute name="optional">show</attribute>
+                    <attribute name="column_invisible">False</attribute>
+                </xpath>
+                <xpath expr="//field[@name='date_order']" position="after">
+                    <field name="fecha_factura"/>
+                </xpath>
+                <xpath expr="//button[@name='action_view_mrp_production']" position="after">
+                    <button class="oe_stat_button" icon="fa-retweet" type="action" name="1084">
+                      <field widget="statinfo" name="x_sale_id_stock_picking_count" string="ALM14"/>
+                    </button>
+                </xpath>
+
+                <xpath expr="//field[@name='partner_id']" position="attributes">
+                    <attribute name="readonly">state not in ["draft","sent"]</attribute>
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="sale_stock_view_order_form_inherith_available_qty" model="ir.ui.view">
+            <field name="name">sale.order.line.tree.sale.stock.qty</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='order_line']/list//field[@name='existencia_html']" position="before">
+                    <xpath expr="//field[@name='order_line']/list//field[@name='price_unit']" position="move"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/list//field[@name='cantidad_asignada']" position="after">
+                    <xpath expr="//field[@name='order_line']/list//field[@name='price_subtotal']" position="move"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/list//field[@name='price_subtotal']" position="after">
+                    <xpath expr="//field[@name='order_line']/list//field[@name='x_utilidad_por']" position="move"/>
+                </xpath>
+                
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='order_lines']/field[@name='order_line']/list[1]/field[@name='x_utilidad_por']" position="after">
+                    <field name="x_Reservado" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/list//field[@name='qty_delivered']" position="after">
+                    <xpath expr="//field[@name='order_line']/list//field[@name='qty_to_deliver']" position="move"/>
+                </xpath>
+
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='order_lines']/field[@name='order_line']/list[1]/field[@name='qty_invoiced']" position="after">
+                    <button name="871" string="validar datos" type="action" class="btn-primary" optional="show"/>
+                    <field name="x_studio_nuevo_costo" optional="show" readonly="1" attrs="{'invisible':[('x_studio_nuevo_costo', '=', 0)]}"/>
+                    <field name="x_cantidad_disponible_compra" optional="show" readonly="1" attrs="{'invisible':[('x_cantidad_disponible_compra', '=', 0)]}"/>
+                    <field name="x_tiempo_entrega_compra" attrs="{'invisible':[('x_tiempo_entrega_compra', '=', 0)]}"/>
+                    <field name="x_vigencia_compra"/>
+                    <field name="x_obse_comprador" string="ObservacioesC" optional="show"/>
+                    
+                </xpath>
+                <xpath expr="//field[@name='order_line']/list//field[@name='x_obse_comprador']" position="after">
+                    <xpath expr="//field[@name='order_line']/list//field[@name='product_packaging_qty']" position="move"/>
+                    <xpath expr="//field[@name='order_line']/list//field[@name='product_packaging_id']" position="move"/>
+                    <xpath expr="//field[@name='order_line']/list//field[@name='tax_id']" position="move"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/list//field[@name='utilidad_esperada']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='albaran']" position="attributes">
+                    <attribute name="invisible">albaran == False</attribute>                    
+                </xpath>
+                <xpath expr="//field[@name='x_es_muestra']" position="after">
+                    <xpath expr="//field[@name='albaran']" position="move"/>                 
+                </xpath>    
+            </field>
+        </record>
+        <record model="ir.ui.view" id="sale_order_form_view_date_planed_line">
+            <field name="name">sale.order.form.date.planed.line</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="mode">extension</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='order_line']/list//field[@name='x_vigencia_compra']" position="after">
+                    <xpath expr="//field[@name='order_line']/list//field[@name='date_planned_line']" position="move"/>
+                    <xpath expr="//field[@name='order_line']/list//field[@name='date_planned_l']" position="move"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/list//field[@name='date_planned_l']" position="after">
+                    <field name="x_dias_habiles" optional="show"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- MUEVE EL TAB REQUERIMIENTOS DESPUES DE DOCUMENTOS DE ENTREGA -->
+        <record id="sale_orde_proposal_requirement" model="ir.ui.view">
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='other_information']" position="after">
+                    <xpath expr="//page[@name='studio_page_0ru5U']" position="move"/>
+                    <xpath expr="//page[@name='studio_page_qwbde']" position="move"/>
+                    
+                </xpath>
+            </field>
+        </record>
+
+        <record id="sale_order_form_quote" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.sale_management</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='optional_products']" position="attributes">
+                    <attribute name="invisible">True</attribute>
                 </xpath>
             </field>
         </record>

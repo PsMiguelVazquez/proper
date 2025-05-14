@@ -10,6 +10,79 @@
                 <xpath expr="//field[@name='user_id']" position="after">
                     <field name="team_id"/>
                 </xpath>
+                <xpath expr="//form[1]/sheet[1]/group[1]/group[2]" position="after">
+                    <group string="Horario de Atención" name="horario_atencion" class="o-row">
+                        <group>
+                          <div class="o_row" name="ha_div_101641">
+                            <span>Días</span>
+                            <field name="x_dia1" string="Día laboral"/>
+                            <span>a</span>
+                            <field name="x_dia2" string="Día laboral"/>
+                            <field name="x_hora1" string="Hora" placeholder="E.j. 9:00am a 10:00pm"/>
+                          </div>
+                        </group>
+                        <group>
+                          <div class="o_row" name="ha_div_721a2c">
+                            <span>Y</span>
+                            <field name="x_dia3" string="Dia laboral"/>
+                            <span>a</span>
+                            <field name="x_dia4" string="Dia laboral"/>
+                            <field name="x_hora2" string="Hora" placeholder="E.j. 9:00am a 10:00pm"/>
+                          </div>
+                        </group>
+                    </group>
+                  </xpath>
+                <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
+                    <group name="nivel_cliente">
+                      <group name="nivel_cliente_right" string="Nivel del cliente">
+                        <field name="x_nivel_cliente" widget="radio" readonly="'user_ids' == 'sales_team.group_sale_manager'" options="{&quot;horizontal&quot;:true}"/>
+                      </group>
+                    </group>
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
+                <group name="info_adi_NOnPe">
+                  <group name="Info_adi_left" string="Información adicional ">
+                    <!--<field name="x_tel_oficina" string="Teléfono de oficina"/>
+                    <field name="x_ext" string="Ext."/>
+                    <field name="x_otro_tel" string="Otro teléfono"/>
+                    <field name="x_otra_ext" string="Ext."/>
+                    -->
+                    <field name="x_studio_por_segmento_de_vendedor"/>
+                    <field name="x_studio_temporalidad"/>
+                    <field name="x_studio_giro_1"/>
+                  </group>
+                  <group name="studio_group_NOnPe_right" string="Tipos de compra ">
+                    <field name="x_studio_catlogos_revista_especial" string="Catálogos Revista Especial"/>
+                    <field name="x_studio_revista_asesoras"/>
+                    <field name="x_studio_incentivos_1" string="Incentivos "/>
+                    <field name="x_studio_reventa"/>
+                    <field name="x_studio_campaas_1" string="Campañas"/>
+                    <field name="x_studio_programa_especial" string="Programa especial"/>
+                    <field name="x_studio_consumo_interno"/>
+                    <field name="x_studio_catlogos" string="Catálogos"/>
+                    <field name="x_studio_regalos_de_fin_de_ao" string="Regalos fin de año"/>
+                  </group>
+                </group>
+                <group name="studio_group_sNbFb">
+                  <group name="studio_group_sNbFb_left"/>
+                  <group name="studio_group_sNbFb_right"/>
+                </group>
+                <group name="studio_group_tfkrW">
+                  <group name="studio_group_tfkrW_left">
+                    <!-- <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/field[@name='vat']" position="move"/>-->
+                    <!--  <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/field[@name='vat']" position="move"/>-->
+                    <field name="codigo_uso_cfdi" invisible="1"/>
+                    <field name="x_studio_uso_de_cfdi" string="Uso de CFDI"/>
+                    <!--<field name="x_studio_mtodo_de_pago" string="Método de Pago" context="{'show_code':True}" widget="selection"/>-->
+                  </group>
+                  <group name="info_fechaalta_write_date"/>
+                </group>
+              </xpath>
+            <xpath expr="//group[@name='info_fechaalta_write_date']" position="inside">
+                <xpath expr="//field[@name='property_account_position_id']" position="move"/>
+                <field name="x_fecha_alta" string="Fecha de alta"/>
+                <field name="write_date" string="Fecha de última edición"/>
+              </xpath>
             </field>
         </record>
     </data>

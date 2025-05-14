@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
     <data>
-        <record id="data_validate_tree_view" model="ir.ui.view">
-            <field name="name">data.validata.tree.view</field>
+        <record id="data_validate_list_view" model="ir.ui.view">
+            <field name="name">data.validata.list.view</field>
             <field name="model">data.validate</field>
             <field name="arch" type="xml">
-                <tree  default_order="id desc" editable="top">
+                <list default_order="id desc" editable="top">
                     <field name="product_id" readonly="1"/>
                     <field name="order_partner_id" readonly="1"/>
                     <field name="order_id" readonly="1"/>
@@ -22,7 +22,7 @@
                     <field name="note"/>
                     <field name="vigencia"/>
                     <field name="description"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -97,10 +97,10 @@
             <field name="name">Validación de datos</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">data.validate</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="context">{"search_default_no_answered":1}</field>
             <field name="view_ids" eval="[(5, 0, 0),
-                    (0,0, {'view_mode': 'tree', 'view_id': ref('sale_order_utilities.data_validate_tree_view')}),
+                    (0,0, {'view_mode': 'list', 'view_id': ref('sale_order_utilities.data_validate_list_view')}),
                     (0, 0, {'view_mode': 'form', 'view_id': ref('sale_order_utilities.data_validate_form_view')})]"/>
         </record>
 

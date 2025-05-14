@@ -5,9 +5,10 @@
       <field name="model">sale.order</field>
       <field name="inherit_id" ref="sale.view_order_form"/>
       <field name="arch" type="xml">
-          <xpath expr="//field[@name='order_line']/tree/field[@name='product_uom']" position="after">
-            <field name='date_planned_line'/>
-              <field name="partner_ids" invisible="1"/>
+          <xpath expr="//field[@name='order_line']/list/field[@name='qty_invoiced']" position="after">
+              <field name="date_planned_line"/>
+              <field name="date_planned_l"/>
+              <field name="partner_ids" optional="hide" invisible="1"/>
           </xpath>
           <xpath expr="//field[@name='order_line']" position="attributes">
               <attribute name="context">{'default_date_planned_line':partner_shipping_id}</attribute>

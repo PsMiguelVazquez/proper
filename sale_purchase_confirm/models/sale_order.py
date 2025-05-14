@@ -21,8 +21,8 @@ class SaleOrder(models.Model):
     states_proposals = fields.Many2many('proposal.state', string='Estados de propuestas', compute='set_states_proposal')
     requirements_line_ids = fields.One2many('requiriment.client', 'x_order_id', 'Requerimientos')
     proposal_line_ids = fields.Many2many('proposal.purchases', compute='get_proposals')
-    partner_loc_ids = fields.Many2many('res.partner', compute='get_partner')
-    partner_child = fields.Many2one('res.partner', 'Solicitante')
+    partner_loc_ids = fields.Many2many('res.partner', 'parent_id', compute='get_partner', order='name ASC')
+    partner_child = fields.Many2one('res.partner', 'Solicitante', order='name ASC')
     partner_id = fields.Many2one('res.partner', string='Customer', readonly=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
         required=True, change_default=True, index=True, tracking=1,
@@ -114,6 +114,7 @@ class SaleOrder(models.Model):
 
     @api.onchange('partner_child')
     def set_partner_id(self):
+        _logger.error("entre onchange partner_child")
         for record in self:
             if record.partner_child:
                 if record.partner_child.parent_id:
@@ -639,7 +640,7 @@ class SaleOrder(models.Model):
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
-    existencia = fields.Char('Cantidades', compute='get_stock')
+    existencia = fields.Html('Cantidades', compute='get_stock')
     check_price_reduce = fields.Boolean('Solicitud', default=False, store=True, compute='_compute_check_price_reduce')
     price_reduce_v = fields.Float('Precio solicitado')
     price_reduce_solicit = fields.Boolean('Solicitud', default=False)
@@ -651,7 +652,7 @@ class SaleOrderLine(models.Model):
     proposal_id = fields.Many2one('proposal.purchases','Propuesta de origen')
     utilidad_esperada = fields.Integer('Utilidad esperada', compute='_compute_utilidad_esperada')
     existencia_alm_0 = fields.Float(related='product_id.stock_quant_warehouse_zero')
-    existencia_html = fields.Char(string="", compute='_compute_existencia_html')
+    existencia_html = fields.Html(string="", compute='_compute_existencia_html')
     cantidad_asignada = fields.Integer(string="Cantidad asignada",compute='_compute_cantidad_asignada')
     facturas = fields.Char('Facturas', compute='_compute_facturas')
     existencias_mkp = fields.Html(compute='get_stock')
@@ -748,7 +749,7 @@ class SaleOrderLine(models.Model):
                     # Si hay movimientos de inventario relacionados, calcula la cantidad asignada.
                     producto = picking_lines[0].product_id
                     move_lines = picking_lines.mapped('move_line_ids')
-                    _logger.info("Campos disponibles en stock.move.line: %s", move_lines[0].fields_get_keys() if move_lines else [])
+                    #_logger.info("Campos disponibles en stock.move.line: %s", move_lines[0].fields_get_keys() if move_lines else [])
                     total_reservado = sum(getattr(ml, 'reserved_uom_qty', 0.0) for ml in move_lines)
                     lineas_pedido = record.order_id.order_line.filtered(lambda x: x.product_id == producto)
                     if len(lineas_pedido) > 1:
@@ -825,9 +826,9 @@ class SaleOrderLine(models.Model):
     def _compute_existencia_html(self):
         for record in self:
             if record.order_id.state != 'sale':
-                color = '#D23F3A' if record.product_id.stock_quant_warehouse_zero - record.product_uom_qty  < 0 else ' #00A09D'
+                color = '#D23F3A' if record.product_id.stock_quant_warehouse_zero - record.product_uom_qty  < 0 else '#00A09D'
             else:
-                color = '#D23F3A' if record.cantidad_asignada + record.qty_delivered + record.qty_invoiced - record.product_uom_qty < 0 else ' #00A09D'
+                color = '#D23F3A' if record.cantidad_asignada + record.qty_delivered + record.qty_invoiced - record.product_uom_qty < 0 else '#00A09D'
             record.existencia_html = '<img src="/sale_purchase_confirm/static/img/chart.png" style="width:15px; filter: opacity(0.5) drop-shadow(0 0 0 '+ color +') saturate(450%);;"/>'
     def limit_price(self):
         for record in self:
@@ -848,6 +849,8 @@ class SaleOrderLine(models.Model):
 
     @api.depends('product_id')
     def get_stock(self):
+        style = 'style="border: solid 1px #eeeded"'
+        style2 = 'style="border:none; background-color:#eeeded"'
         for record in self:
             existencia = ""
             existencia_mkp =""
@@ -858,7 +861,7 @@ class SaleOrderLine(models.Model):
                 # one=sum(record.product_id.stock_quant_ids.filtered(lambda x:x.location_id.id==18).mapped('available_quantity'))
                 market = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 80).mapped('available_quantity'))
                 market1 = sum(record.product_id.stock_quant_ids.filtered(lambda x: x.location_id.id == 80).mapped('reserved_quantity'))
-                existencia = "<table><thead><tr><th>A-0</th><th>A14</th></tr><tr><th>D/R</th><th>D/R</th></tr></thead><tbody><tr><td>" + str(int(zero)) + "/" + str(int(zero1)) + "</td><td>" + str(int(market)) + "/" + str(int(market1)) + "</td></tr></tbody>"
+                existencia = "<table><thead><tr " + style + "><th>A-0</th><th>A14</th></tr><tr " + style + "><th>D/R</th><th>D/R</th></tr></thead><tbody><tr " + style2 + "><td>" + str(int(zero)) + "/" + str(int(zero1)) + "</td><td>" + str(int(market)) + "/" + str(int(market1)) + "</td></tr></tbody>"
                 nombre = record.warehouse_id.name
                 if not nombre:
                     nombre = ''

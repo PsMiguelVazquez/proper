@@ -208,10 +208,10 @@
                     <field name="numero_ordenes_compra_activas"  invisible="1"/>
                 </xpath>
                 <xpath expr="//button[@name='action_cancel']" position="attributes">
-                    <attribute name="invisible">['|', '|',('state', 'not in', ['draft', 'sent','sale']), ('id', '=', False),('numero_ordenes_compra_activas', '>', 0)]</attribute>
+                    <attribute name="invisible">state not in ['draft', 'sent','sale'] or id == False or numero_ordenes_compra_activas > 0</attribute> 
                 </xpath>
                 <xpath expr="//page/field[@name='order_line']/list/field[@name='product_uom_qty']" position="after">
-                    <field name="existencia_alm_0" invisible="1"/>
+                    <field name="existencia_alm_0" optional="hide" invisible="1"/>
                     <field name="existencia_html" string=" "  widget="html" readonly="1"/>
                 </xpath>
                 <xpath expr="//page/field[@name='order_line']/list/field[@name='qty_delivered']" position="before">
@@ -242,7 +242,7 @@
             <field name="arch" type="xml">
                 <header>
                     <button string="Validar datos masivamente" name="validar_precio_masivo" type="object" 
-                        invisible="'state' not in ['draft','send']"/>
+                        invisible="state not in ['draft','send']"/>
                 </header>
                 <xpath expr="//field[@name='partner_invoice_id']" position="before">
                     <field name="sales_agent" string="Vendedor asocialdo al cliente"/>
@@ -256,10 +256,10 @@
             <field name="inherit_id" ref="l10n_mx_edi_extended.mx_partner_address_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='state_id']" position="replace">
-                    <field name="state_id" string="Estado" class="o_address_state" placeholder="Estado" options="{&quot;no_open&quot;: True,'no_create': True, 'no_create_edit':True}}" />
+                    <field name="state_id" string="Estado" class="o_address_state" placeholder="Estado" options="{&quot;no_open&quot;: True,'no_create': True, 'no_create_edit':True}" />
                 </xpath>
                 <xpath expr="//field[@name='city']" position="after">
-                    <field name="city_id" string="Ciudad" class="o_address_city" placeholder="Ciudad" options="{&quot;no_open&quot;: True,'no_create': True, 'no_create_edit':True}}" />
+                    <field name="city_id" string="Ciudad" class="o_address_city" placeholder="Ciudad" options="{&quot;no_open&quot;: True,'no_create': True, 'no_create_edit':True}" />
                 </xpath>
                 <xpath expr="//field[@name='city']" position="attributes">
                     <attribute name="invisible">1</attribute>
