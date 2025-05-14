@@ -8,7 +8,7 @@ class AccountAccount(models.Model):
     
     @api.onchange('name')
     def onchange_accunt_name(self):
-        _logger.error('Entre onchange_accunt_name {}'.format(self.name))
+        #_logger.error('Entre onchange_accunt_name {}'.format(self.name))
         if self.name:
             cuenta = self.search([('name', '=', self.name)], limit=1)
             if cuenta:

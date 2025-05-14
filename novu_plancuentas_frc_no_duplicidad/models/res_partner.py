@@ -8,7 +8,7 @@ class ResPartner(models.Model):
     
     @api.onchange('vat')
     def onchange_vat(self):
-        _logger.error('Entre onchange_vat {}'.format(self.vat))
+        #_logger.error('Entre onchange_vat {}'.format(self.vat))
         if self.vat:
             vat = self.search([('vat', '=', self.vat)], limit=1)
             if vat:
