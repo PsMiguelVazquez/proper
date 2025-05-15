@@ -1,9 +1,14 @@
 
-from odoo import models
+from odoo import models, fields
 
 class AccountMove(models.Model):
     _inherit = 'account.payment'
 
+    endosos_count = fields.Integer(compute="_compute_endosos")
+
+    def _compute_endosos(self):
+        for record in self: record['endosos_count'] = self.env['endoso.move'].search_count([('payment_id', '=', record.id)])
+            
 
     def action_draft(self):
         ''' posted -> draft '''

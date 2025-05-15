@@ -113,6 +113,7 @@ class AccountPaymentWidget(models.TransientModel):
 
     def done(self):
         check_sum = sum(self.invoices_ids.mapped('porcent_assign'))
+        #raise UserError(f'check_sum {check_sum}')
         move_line = self.env['account.move.line'].search([('payment_id', '=', self.payment.id), ('balance', '<', 0)])
         _logger.error(f'move_line {move_line}')
         ###Redondea a dos decimales
@@ -148,6 +149,7 @@ class AccountPaymentWidget(models.TransientModel):
                 else:
                     _logger.error('ENTRE 2')
                     for move in self.invoices_ids:
+                        _logger.error(f'move.name {move.name}')
                         if 'END/' in move.name and move.es_endoso:
                             '''
                                 Conciliar las líneas del endoso con el pago
@@ -157,12 +159,14 @@ class AccountPaymentWidget(models.TransientModel):
                             move.invoice_date = end.invoice_date
                             move.l10n_mx_edi_cfdi_request = 'on_invoice'
                             move.payment_reference = end.origin_invoice.name
+                            move.payment_id = self.payment.id
                             move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
                             # end.amount_paid += amount
                             # end.amount_residual = end.amount - end.amount_paid
                             # move.amount_paid = end.amount_paid
                             move.amount_residual = end.amount_residual
                             move.amount_residual_signed = end.amount_residual
+                            #move.payment_id = self.payment.id
                         else:
                             amount = move.porcent_assign
                             if self.env.company.currency_id == move.currency_id:
