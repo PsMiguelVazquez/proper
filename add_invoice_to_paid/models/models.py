@@ -159,7 +159,7 @@ class AccountPaymentWidget(models.TransientModel):
                             move.invoice_date = end.invoice_date
                             move.l10n_mx_edi_cfdi_request = 'on_invoice'
                             move.payment_reference = end.origin_invoice.name
-                            move.payment_id = self.payment.id
+                            #move.payment_id = self.payment.id
                             move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
                             # end.amount_paid += amount
                             # end.amount_residual = end.amount - end.amount_paid

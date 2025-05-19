@@ -68,11 +68,15 @@ class EndosoWizard(models.TransientModel):
                     }
                 ]
                 lineas = self.env['account.move.line'].create(line_ids_list)
+
+                #raise UserError(f'Reconciliada: {lineas[0].reconciled}, Cuenta: {lineas[0].account_id.id} "vs" {invoice.partner_id.property_account_receivable_id.id}, Publicado: {lineas[0].move_id.state}')
+                
                 if not lineas:
                     raise UserError('No se pudo crear el movimiento')
                 endoso.action_post()
                 endoso.move_id.invoice_origin = invoice.name
                 invoice.js_assign_outstanding_line(lineas[0].id)
+                #raise UserError(f'Estado de pago según factura: {invoice.payment_state}')
                 invoice_msg = (
                                   "Se generó el endoso: <a href=# data-oe-model=endoso.move data-oe-id=%d>%s</a> a partir de esta factura") % (
                                   endoso.id, endoso.name)

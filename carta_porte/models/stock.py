@@ -19,10 +19,13 @@ class StockPicking(models.Model):
             raise UserError('No hay cantidades hechas, no se puede generar la carta porte')
         self.date_done = fields.Datetime.now()
         r = super(StockPicking, self).l10n_mx_edi_action_send_delivery_guide()
+        #raise UserError(f'r {r}')
         if r:
             self.fecha_timbrado_carta = fields.Datetime.now()
         self.date_done = date_done_original
         return r
+
+
 
     @api.depends('l10n_mx_edi_cfdi_file_id')
     def get_xml_data_edi(self):

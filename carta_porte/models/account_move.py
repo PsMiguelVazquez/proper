@@ -30,6 +30,30 @@ class AccountMove(models.Model):
                             except:
                                 continue
 
+    def _l10n_mx_edi_create_cfdi(self):
+        raise UserError('Entre _l10n_mx_edi_create_cfdi')
+        cfdi_str = super()._l10n_mx_edi_create_cfdi()
+
+        # Convierte a árbol XML
+        if not cfdi_str:
+            return cfdi_str
+        cfdi_xml = etree.fromstring(cfdi_str.encode('UTF-8'))
+
+        # Buscar el complemento Carta Porte
+        complemento = cfdi_xml.find('{http://www.sat.gob.mx/cfd/4}Complemento')
+        if complemento is not None:
+            carta_porte = complemento.find('{http://www.sat.gob.mx/CartaPorte20}CartaPorte')
+            if carta_porte is not None:
+                # Buscar todos los nodos Mercancias/Mercancia
+                for mercancia in carta_porte.findall('.//{http://www.sat.gob.mx/CartaPorte20}Mercancia'):
+                    # Agregar el atributo BienesTransp opcionalmente si falta
+                    # Agregar MaterialPeligroso = "No"
+                    mercancia.set('MaterialPeligroso', 'No')
+
+        # Retornar el nuevo XML como string
+        return etree.tostring(cfdi_xml, pretty_print=True, encoding='UTF-8').decode('UTF-8')
+
+
 
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
