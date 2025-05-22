@@ -27,7 +27,7 @@ class FactoringWizard(models.TransientModel):
     def create_neteo(self, es_neteo = False):
         
         for record in self:
-            #_logger.error(f"record {record}")
+            #_logger.error(f"record {record}") logger pruebas
             journal = self.env['account.journal'].search([('name','ilike','neteo')])
             if not journal:
                 raise UserError('No existe diario para llevar a cabo la operación')
