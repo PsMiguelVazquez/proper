@@ -28,5 +28,6 @@
         'wizard/compensate_wizard_view.xml',
         'security/ir.model.access.csv',
         'data/cfdi4/pago.xml',
+        'views/account_payment.xml',
     ],
 }
