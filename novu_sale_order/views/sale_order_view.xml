@@ -97,6 +97,18 @@
                     <attribute name="readonly">state not in ["draft","sent"]</attribute>
                     <attribute name="invisible">1</attribute>
                 </xpath>
+
+                <xpath expr="//button[@name='action_draft']" position="after">
+                    <field name="x_aprovacion_compras" invisible="1"/>
+                    <field name="x_aprovar" invisible="1"/>
+                    <field name="check_solicitudes" invisible="1"/>
+                    <button name="solicitud_reduccion_send" string="Enviar peticiones de reduccion" invisible="check_solicitudes == False" type="object"/>
+                    <button name="conf_credito" string="Aprobación Credito" type="object" class="btn-primary" invisible=" state != 'credito_conf'" groups="account_payment_proper.group_credito_c"/>
+                    <button name="conf_ventas" string="Aprobación Venta" type="object" class="btn-primary" invisible=" state != 'sale_conf'" groups="account_payment_proper.group_sale_manager"/>
+                    <button name="conf_purchase" string="Aprobación Compras" type="object" class="btn-primary" invisible=" state != 'purchase_conf'" groups="purchase.group_purchase_manager"/>
+                    <button name="1277" string="Rechazar" type="action" class="btn-primary" invisible="state not in ['purchase_conf', 'sale_conf', 'credito_conf']" groups="purchase.group_purchase_manager,account_payment_proper.group_sale_manager, account_payment_proper.group_credito_c, account.group_account_invoice"/>
+                   
+                </xpath>
             </field>
         </record>
 
