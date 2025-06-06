@@ -166,8 +166,8 @@
             <field name="mode">extension</field>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='order_line']/list//field[@name='x_vigencia_compra']" position="after">
-                    <xpath expr="//field[@name='order_line']/list//field[@name='date_planned_line']" position="move"/>
-                    <xpath expr="//field[@name='order_line']/list//field[@name='date_planned_l']" position="move"/>
+                    <field name="date_planned_line"/>
+                    <field name="date_planned_l"/>
                 </xpath>
                 <xpath expr="//field[@name='order_line']/list//field[@name='date_planned_l']" position="after">
                     <field name="x_dias_habiles" optional="show"/>
