@@ -20,12 +20,12 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'account','l10n_mx_edi'],
+    'depends': ['base', 'account','l10n_mx_edi','sale_purchase_confirm',],
 
     # always loaded
     'data': [
-        #'views/views.xml',
-        #'wizard/endoso_wizard_view.xml',
+        'views/views.xml',
+        'wizard/endoso_wizard_view.xml',
         'security/ir.model.access.csv',
         'data/sequence_data.xml'
     ],

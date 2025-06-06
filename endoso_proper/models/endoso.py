@@ -10,6 +10,7 @@ class Endoso(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Endosos"
 
+    move_id = fields.Many2one('account.move', required=True, ondelete='cascade') #se agrega para V18
     origin_invoice = fields.Many2one('account.move', string='Factura endosada')
     origin_partner_id = fields.Many2one('res.partner', string="Cliente de la factura")
     # partner_id = fields.Many2one('res.partner', string="Cliente del endoso")

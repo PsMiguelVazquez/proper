@@ -9,7 +9,7 @@
             </xpath>
             <header>
                 <button string="Endosar factura" name="endosar_factura" type="object"
-                        attrs="{'invisible': ['|','|', ('state', '=', 'draft'), ('move_type', '!=', 'out_invoice'),('ocultar_endoso','=',True)]}"/>
+                        invisible="state == 'draft' or move_type != 'out_invoice' or ocultar_endoso == True"/>
             </header>
         </field>
     </record>
@@ -17,7 +17,7 @@
     <record id="endoso_tree_view" model="ir.ui.view">
         <field name="model">endoso.move</field>
         <field name="arch" type="xml">
-            <tree default_order="id desc">
+            <list default_order="id desc">
                 <field name="name"/>
                 <field name="origin_invoice"/>
                 <field name="l10n_mx_edi_cfdi_uuid"/>
@@ -29,7 +29,7 @@
                 <field name="create_date" string="Fecha del endoso"/>
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'"/>
                 <field name="payment_state" widget="badge" decoration-danger="payment_state == 'not_paid'" decoration-warning="payment_state == 'partial'" decoration-success="payment_state == 'paid'"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -39,12 +39,12 @@
             <form>
                 <header>
                         <button name="action_post" string="Confirmar" type="object" class="oe_highlight"
-                                attrs="{'invisible': [('state', '!=', 'draft')]}" data-hotkey="v"/>
+                                invisible="state != 'draft'" data-hotkey="v"/>
                         <button name="action_draft" string="Restablecer a borrador" type="object" class="btn btn-secondary"
-                                attrs="{'invisible': [('state', 'not in', ('posted', 'cancel'))]}"
+                                invisible="state not in ['posted', 'cancel']"
                                 groups="account.group_account_invoice" data-hotkey="w"/>
                         <button name="action_cancel" string="Cancelar" type="object"
-                                attrs="{'invisible': [('state', '!=', 'draft')]}" data-hotkey="z"/>
+                                invisible="state != 'draft'" data-hotkey="z"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                 <sheet>
@@ -62,8 +62,8 @@
                     <field name="move_type" invisible="1"/>
                     <field name="auto_post" invisible="1"/>
                     <div class="oe_title">
-                            <h1 attrs="{'invisible': [('state', '!=', 'draft')]}"><span>Draft</span></h1>
-                            <h1 attrs="{'invisible': [('state', '=', 'draft')]}"><field name="name" readonly="1"/></h1>
+                            <h1 invisible="state != 'draft'"><span>Draft</span></h1>
+                            <h1 invisible="state == 'draft'"><field name="name" readonly="1"/></h1>
                     </div>
                     <group>
                         <group id="left_group">
@@ -87,7 +87,7 @@
                     <notebook>
                         <page id="invoice_tab" string="Invoice Lines">
                             <field name="invoice_line_ids" widget="section_and_note_one2many" mode="tree">
-                                <tree editable="bottom" string="Journal Items">
+                                <list editable="bottom" string="Journal Items">
                                     <control>
                                         <create name="add_line_control" string="Add a line"/>
                                         <create name="add_section_control" string="Add a section"
@@ -99,7 +99,7 @@
                                     <field name="name"/>
                                     <field name="debit"/>
                                     <field name="credit"/>
-                                </tree>
+                                </list>
 
                             </field>
 
@@ -121,10 +121,10 @@
         <field name="name">Endosos</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">endoso.move</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <!--        <field name="domain">[('name','ilike', 'END')]</field>-->
         <field name="view_ids" eval="[(5, 0, 0),
-                (0,0, {'view_mode': 'tree', 'view_id': ref('endoso_proper.endoso_tree_view')}),
+                (0,0, {'view_mode': 'list', 'view_id': ref('endoso_proper.endoso_tree_view')}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('endoso_proper.endoso_form_view')})]"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
