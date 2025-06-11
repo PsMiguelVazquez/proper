@@ -8,7 +8,7 @@
     'description': """Se agregan campos en la oportunidad y se bloquea el cambio de etapa si falta alguno por llenar""",
 
     'depends': [
-        'crm','contacts',
+        'crm','contacts', 'web_studio', 'website_sale'
     ],
     'assets': {
         
@@ -19,11 +19,12 @@
             'views/crm_lead_kanban_view.xml',
             'views/res_user_view.xml',
             'security/groups_view.xml',
+            'data/bloqueo_cambio_etapa_automation.xml',
     ],
     'demo': [],
     'external_dependencies': {
     },
-    'application': True,
+    'application': False,
     'installable': True,
-    'auto_install': True
+    'auto_install': False
 }

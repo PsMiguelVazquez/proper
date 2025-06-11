@@ -2,23 +2,75 @@
 <odoo>
     <data>
     <record id="view_crm_lead_form" model="ir.ui.view">
-        <field name="name">	crm.lead.form</field>
+        <field name="name">crm.lead.form</field>
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_lead_view_form" />
         <field name="mode">extension</field>
         <field name="arch" type="xml">
-            <xpath expr="//group[@name='opportunity_info']" position="after">
+            <!-- <xpath expr="//form/sheet/group[2]" position="after">
                 <group name="info_adicional">
                     <field name="giro"/>
                     <field name="segmento"/>
                     <field name="temporalidad"/>
                     <field name="es_admin" invisible="1"/>
                 </group>
+            </xpath> -->
+            <xpath expr="//group[@name='lead_partner']" position="after">
+                <!--<field name="x_studio_descripcin_de_segmento" string="Descripción de segmento"/>-->
+                <field name="x_probabilidad_lead" invisible="type == 'opportunity'"/>
+                <field name="x_probabilidad_etapa" invisible="type == 'lead'"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="string">Cliente</attribute>
             </xpath>
             <xpath expr="//field[@name='user_id']" position="attributes">
-                <attribute name="attrs">{'readonly': [('es_admin', '=', False)]}</attribute>
+                <attribute name="readonly">es_admin == False</attribute>
+            </xpath>
+            <xpath expr="//form[1]/sheet[1]/group[1]/group[@name='opportunity_partner']/field[@name='partner_id']" position="after">
+                <field name="x_studio_related_field_KECm2" widget="many2one"/>
+                <field name="x_producto_almacen" widget="many2many">
+                    <list string="Product Variants" multi_edit="1" duplicate="false" sample="1" create="false">
+                        <field name="default_code" optional="show" readonly="1" string="Modelo"/>
+                        <field name="x_studio_many2one_field_AqNlU" optional="hide" invisible="1"/>
+                        <field name="barcode" optional="hide" readonly="1"/>
+                        <field name="name" readonly="1"/>
+                        <field name="description_sale"/>
+                        <field name="description_purchase" optional="hide" invisible="1"/>
+                        <field name="website_id" groups="website.group_multi_website" optional="hide" invisible="1"/>
+                        <field name="is_published" string="Is Published" optional="hide"/>
+                        <field name="product_template_attribute_value_ids" widget="many2many_tags" groups="product.group_product_variant" readonly="1" optional="hide" invisible="1"/>
+                        <field name="company_id" groups="base.group_multi_company" optional="hide" readonly="1"/>
+                        <field name="lst_price" optional="show" string="Sales Price"/>
+                        <field name="standard_price" optional="hide" invisible="1"/>
+                        <field name="categ_id" optional="hide"/>
+                        <field name="type" optional="hide" readonly="1"/>
+                        <!-- <field name="price" invisible="not context.get('pricelist',False)"/> -->
+                        <field name="qty_available" invisible="type != 'product'" optional="show" decoration-danger="virtual_available &lt; 0" decoration-warning="virtual_available == 0" decoration-bf="1"/>
+                        <field name="virtual_available" invisible="type != 'product'" string="Forecasted Quantity" optional="show" decoration-danger="virtual_available &lt; 0" decoration-warning="virtual_available == 0"/>
+                        <field name="uom_id" options="{'no_open': True, 'no_create': True}" groups="uom.group_uom" optional="hide" readonly="1" invisible="1"/>
+                        <field name="product_tmpl_id" optional="hide" invisible="1" readonly="1"/>
+                        <field name="active" optional="hide" invisible="1"/>
+                    </list>
+                </field>
+            </xpath>
+            <xpath expr="//form[1]/sheet[1]/group[1]/group[@name='opportunity_partner']" position="inside">
+                <xpath expr="//field[@name='user_id']" position="move"/>
+                <field name="team_id"/>
+                <field name="giro"/>
+                <field name="segmento"/>
+                <field name="temporalidad"/>
+                <field name="es_admin" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='tag_ids']" position="before">
+                <xpath expr="//field[@name='priority']" position="move"/>
+            </xpath>
+            <xpath expr="//field[@name='priority']" position="attributes">
+                <attribute name="string">Prioridad</attribute>
             </xpath>
             
+            <xpath expr="//group[@name='Misc']" position="inside">
+                <field name="referred"/>
+            </xpath>
         </field>
     </record>
     </data>

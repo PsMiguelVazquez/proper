@@ -12,7 +12,8 @@ class AccountMove(models.Model):
     es_endoso = fields.Boolean(string='Es endoso')
 
     def is_inbound(self, include_receipts=True):
-        if 'END/' in self.name and self.es_endoso:
+        #if 'END/' in self.name and
+        if self.es_endoso:
             return True
         return self.move_type in self.get_inbound_types(include_receipts)
 
