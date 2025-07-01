@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
 <odoo>
-
-
     <record id="view_upload_invoice_sale_form" model="ir.ui.view">
         <field name="name">upload.invoice.wizard.form</field>
         <field name="model">upload.invoice.wizard</field>
@@ -14,24 +12,24 @@
                     <group>
                         <field name="client_id" required="1" domain="[('vat','=','rfc_receptor')]"
                                options="{'no_create': True, 'no_create_edit':True}"
-                               attrs="{'invisible':[('tipo', '!=', 'sale_order')]}" readonly="1"/>
+                               invisible="tipo != 'sale_order'" readonly="1"/>
                         <field name="provider_id" domain="[('vat','=','rfc_emisor')]"
                                options="{'no_create': True, 'no_create_edit':True}"
-                               attrs="{'invisible':[('tipo', '!=', 'purchase_order')]}"/>
-                        <field name="fecha_factura"  readonly="1"/>
-                        <field name="rfc_emisor"  readonly="1"/>
-                        <field name="rfc_receptor"  readonly="1"/>
+                               invisible="tipo != 'purchase_order'"/>
+                        <field name="fecha_factura" readonly="1"/>
+                        <field name="rfc_emisor" readonly="1"/>
+                        <field name="rfc_receptor" readonly="1"/>
                     </group>
                     <group>
-                        <field name="uso_cfdi"  readonly="1"/>
-                        <field name="metodo_pago"  readonly="1"/>
-                        <field name="forma_pago"  readonly="1"/>
-                        <field name="version_cfdi"  readonly="1"/>
+                        <field name="uso_cfdi" readonly="1"/>
+                        <field name="metodo_pago" readonly="1"/>
+                        <field name="forma_pago" readonly="1"/>
+                        <field name="version_cfdi" readonly="1"/>
                     </group>
                     <field name="order_lines" string="Líneas de las órdenes"
                            options="{'no_create': True}"
-                            attrs="{'invisible':[('tipo', '!=', 'sale_order')]}">
-                        <tree editable="bottom">
+                            invisible="tipo != 'sale_order'">
+                        <list editable="bottom">
                             <field name="x_descripcion_corta" readonly="1"/>
                             <field name="order_id" readonly="1" string="Orden"/>
                             <field name="product_uom_qty" readonly="1"/>
@@ -39,19 +37,19 @@
                             <field name="price_subtotal" readonly="1"/>
                             <field name="price_tax" readonly="1"/>
                             <field name="price_total" readonly="1"/>
-                        </tree>
+                        </list>
                     </field>
                     <field name="purchase_lines" string="Líneas de las órdenes"
                            options="{'no_create': True}"
-                            attrs="{'invisible':[('tipo', '!=', 'purchase_order')]}">
-                        <tree editable="bottom">
+                            invisible="tipo != 'purchase_order'">
+                        <list editable="bottom">
                             <field name="order_id" readonly="1" string="Orden"/>
                             <field name="product_uom_qty" readonly="1"/>
                              <field name="price_unit"/>
                             <field name="price_subtotal" readonly="1"/>
                             <field name="price_tax" readonly="1"/>
                             <field name="price_total" readonly="1"/>
-                        </tree>
+                        </list>
                     </field>
                     <group>
                         <field name="total_lineas"  widget="monetary"  readonly="1"/>

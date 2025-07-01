@@ -20,13 +20,13 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base','stock','sale','account','purchase'],
+    'depends': ['base','stock','sale','account','purchase','web_studio',],
 
     # always loaded
     'data': [
         'security/ir.model.access.csv',
-        #'wizard/upload_invoice_view.xml',
-        #'views/views.xml'
+        'wizard/upload_invoice_view.xml',
+        'views/views.xml'
         #'views/templates.xml',
     ],
 

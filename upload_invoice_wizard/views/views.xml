@@ -4,11 +4,11 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="studio_customization.odoo_studio_sale_ord_24d44f78-6430-46dc-a961-0f92b2feaf0b"/>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <header>
                     <button string="Subir factura externa" name="upload_invoice" type="object"/>
                 </header>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -16,11 +16,11 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <header>
                     <button string="Subir factura externa" name="upload_invoice" type="object"/>
                 </header>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -28,11 +28,11 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_tree"/>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <header>
                     <button string="Subir factura externa" name="upload_invoice" type="object"/>
                 </header>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -40,11 +40,11 @@
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <header>
                     <button string="Subir factura externa" name="upload_invoice" type="object"/>
                 </header>
-            </tree>
+            </list>
         </field>
     </record>
 </odoo>
