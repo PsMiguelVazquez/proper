@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="0">
+    <record id="action_pedidos_mkp" model="ir.actions.act_window">
+      <field name="name">Pedido de MKP</field>
+      <field name="res_model">sale.order</field>
+      <field name="view_mode">list,form</field>
+      <field name="domain">[("x_studio_venta_mostrador","=",True)]</field>
+      <field name="view_ids" eval="[(5, 0, 0), 
+                                  (0, 0, {'view_mode': 'list', 'view_id': ref('sale_order_mkp_view_list')}), 
+                                  (0, 0, {'view_mode': 'form', 'view_id': ref('sale_order_mkp_view_form')})]"/>
+    </record>
+      
+    <menuitem id="menu_pedidos_mkp" parent="sale.sale_order_menu" name="Pedidos MKP V18" sequence="2" action="action_pedidos_mkp"/>
+  </data>
+</odoo>

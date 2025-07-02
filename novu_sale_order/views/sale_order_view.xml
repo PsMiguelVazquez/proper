@@ -46,19 +46,12 @@
                     <field name="x_studio_solicit" invisible="1"/>
                     <field name="x_studio_n_orden_de_compra"/>
                     <field name="x_studio_origen_mkp" string="Origen MKP" invisible="x_studio_venta_mostrador == False"/>
-                    <field name="x_studio_venta_mostrador"/>
+                    <field name="x_studio_venta_mostrador" invisible="1"/>
                     <field name="x_studio_referencia_de_venta_marketplace" string="Referencia de venta Marketplace" invisible="x_studio_venta_mostrador == False"/>
                     <field name="x_studio_con_tiempo_de_entrega" string="Con tiempo de entrega"/>
                     <field name="x_num_pro"/>
                 </xpath>
-                <xpath expr="//group[@name='sale_header']" position="after">
-                    <group name="group_warehouse">
-                      <group name="group_warehouse_left">
-                        <field name="warehouse_id"/>
-                      </group>
-                      <group name="group_warehouse_right"/>
-                    </group>
-                  </xpath>
+                
 
                 <xpath expr="//field[@name='sale_order_template_id']" position="attributes">
                     <attribute name="widget">radio</attribute>                    
@@ -105,7 +98,7 @@
 
                 <xpath expr="//field[@name='partner_id']" position="attributes">
                     <attribute name="readonly">state not in ["draft","sent"]</attribute>
-                    <attribute name="invisible">0</attribute>
+                    <attribute name="invisible">1</attribute>
                 </xpath>
 
                 <xpath expr="//button[@name='action_draft']" position="after">
@@ -119,6 +112,9 @@
                     <button name="1277" string="Rechazar" type="action" class="btn-primary" invisible="state not in ['purchase_conf', 'sale_conf', 'credito_conf']" groups="purchase.group_purchase_manager,account_payment_proper.group_sale_manager, account_payment_proper.group_credito_c, account.group_account_invoice"/>
                    
                 </xpath>
+                <!-- <xpath expr="//div[contains(@class, 'oe_chatter')]" position="replace">
+                    <chatter/>
+                </xpath> -->
             </field>
         </record>
 

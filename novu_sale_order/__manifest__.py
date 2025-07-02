@@ -13,6 +13,8 @@
     'data': [
             'views/sale_order_view.xml',
             'views/sale_order_mkp.xml',
+            'views/sale_order_action_mkp.xml',
+            'security/sale_order_groups.xml',
     ],
     'assets': {},
     'installable': True,

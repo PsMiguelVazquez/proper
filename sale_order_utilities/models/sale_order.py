@@ -9,13 +9,13 @@ from datetime import datetime
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
     edit_blocked = fields.Boolean('Bloqueado', default=False, compute='_compute_edit_blocked')
-    invoice_status = fields.Selection([
-        ('upselling', 'Upselling Opportunity'),
-        ('invoiced', 'Fully Invoiced'),
-        ('to invoice', 'To Invoice'),
-        ('reverted', 'Nota de crédito aplicada'),
-        ('no', 'Nothing to Invoice')
-    ], string='Invoice Status', compute='_get_invoice_status', store=True)
+    # invoice_status = fields.Selection([
+    #     ('upselling', 'Upselling Opportunity'),
+    #     ('invoiced', 'Fully Invoiced'),
+    #     ('to invoice', 'To Invoice'),
+    #     ('reverted', 'Nota de crédito aplicada'),
+    #     ('no', 'Nothing to Invoice')
+    # ], string='Invoice Status', compute='_get_invoice_status', store=True)
     credit_notes = fields.Many2many('account.move', string='Notas de crédito relacionadas', compute='get_credit_notes')
     block_invoicing = fields.Boolean(compute='_compute_block_invoicing')
     invoice_approved = fields.Boolean(default=False)

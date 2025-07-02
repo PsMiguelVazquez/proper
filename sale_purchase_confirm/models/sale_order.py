@@ -129,6 +129,7 @@ class SaleOrder(models.Model):
                     default_warehouse = self.env['stock.warehouse'].search([('name', '=', 'MARKETPLACE')])
                     if default_warehouse:
                         self.warehouse_id = default_warehouse
+            _logger.error("Sali onchange partner_child")
 
     #@api.onchange('partner_id')
     def otro_onchange_partner_id(self):
@@ -138,8 +139,10 @@ class SaleOrder(models.Model):
 
     @api.onchange('partner_id')
     def onchange_partner_id(self):
+        _logger.error("entre onchange_partner_id")
         #super(SaleOrder, self).onchange_partner_id()
         self.user_id = self.env.user.id
+        _logger.error("sali onchange_partner_id")
     
     
     def update_stock(self):

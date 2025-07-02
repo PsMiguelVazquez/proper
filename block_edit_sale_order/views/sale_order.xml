@@ -13,20 +13,15 @@
                 <field name="approve_invoicing_requested" invisible="1"/>
             </xpath>
             <xpath expr="//form/header/button[@name='328']" position="attributes">
-                <attribute name="attrs">{'invisible': [
-                    '|',
-                    ('invoice_status', '!=', 'to invoice'),
-                    ('block_invoicing', '=', True)
-                    ]}</attribute>
+                <attribute name="invisible">invoice_status != 'to invoice' or block_invoicing == True</attribute>
             </xpath>
             <header>
                 <button name="approve_invoicing" string="Aprobar facturación" type="object"
-                        attrs="{'invisible': [('approve_invoicing_requested','!=',True)]}"/>
-                <button name="request_approve_invoicing" string="Solicitar Aprobación de facturación" type="object"
-                        attrs="{'invisible': ['|','|',('state','!=','sale'), ('block_invoicing','!=',True), ('approve_invoicing_requested','=',True)]}"/>
+                        invisible="approve_invoicing_requested != True"/>
+                <button name="request_approve_invoicing" string="Solicitar Aprobación de facturación" type="object" invisible="state != 'sale' or block_invoicing != True or approve_invoicing_requested == True"/>
             </header>
             <xpath expr="//form/sheet/notebook/page/field[@name='order_line']" position="attributes">
-                <attribute name="attrs">{'readonly':[('edit_blocked','=',True)]}</attribute>
+                <attribute name="readonly">edit_blocked == True</attribute>
             </xpath>
         </field>
     </record>
