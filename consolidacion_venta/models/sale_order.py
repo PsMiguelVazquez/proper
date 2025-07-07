@@ -3,12 +3,14 @@
 from odoo import models, fields, _
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
-
+import logging
+_logger = logging.getLogger(__name__)
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
-    
+    _logger.error("entroxd a sale order ")
     
     def view_consolidate_lines_wizard(self):
+        _logger.error("entroxd")
         sale_orders = self.env['sale.order'].browse(self.env.context.get('active_ids'))
         order_lines = sale_orders.mapped('order_line')
         consolidacion_lines = []

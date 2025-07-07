@@ -20,6 +20,6 @@ class CompensateWizard(models.TransientModel):
     def compensate(self):
         for inv in self.partner_bills:
             inv.write({'factoring_amount': inv.porcent_assign})
-        r = self.create_neteo()
+        r = self.create_neteo(True)
         return r
 

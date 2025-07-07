@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
-
+import logging
+_logger = logging.getLogger(__name__)
 
 class DataValidate(models.Model):
     _name = 'data.validate'
@@ -26,6 +27,7 @@ class DataValidate(models.Model):
 
 
     def migrate_lines(self):
+        _logger.error("entro")
         lines_to_migrate = self.env['sale.order.line'].search([
             ('x_validacion_precio', '=' , True )
         ],order="id asc")

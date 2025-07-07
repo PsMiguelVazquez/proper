@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <record id="view_stock_picking_validation_wizard" model="ir.ui.view">
+            <field name="name">wizard.usuario.valida.traslado.form</field>
+            <field name="model">wizard.usuario.valida.traslado</field>
+            <field name="arch" type="xml">
+                <form string="Confirmar Validación">
+                    <group>
+                        <field name="user_id"/>
+                    </group>
+                    <footer>
+                        <button string="Validar" type="object" name="confirm_validation" class="btn-primary"/>
+                        <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
