@@ -97,130 +97,130 @@ class CrmLead(models.Model):
             self.giro = self.partner_id.x_studio_giro_1
 
 
-    #METODO QUE EJECUTA LA ACCION AUTOMATIZADA Novu: CRM - bloquea cambio de etapa por falta de información
-    def validar_informacion(self):
+
+    def validar_informacion_alta(self):
         for record in self:
-            #se obtiene la info del partner actual
             partner = record.partner_id
-        
-            # Verificar si la etapa del registro es 'Seguimiento'
-            if record.stage_id.display_name == 'Oportunidad':
-              # Lista para recolectar los campos faltantes
-              campos_faltantes = []
-              
-              # Verificar si los campos esenciales están rellenados (no son None o cadena vacía) GIRO, TIPO COMPRA, INE, UBICACION
-              if not partner.x_studio_giro_1:
+            campos_faltantes = []
+            
+            #CAMPOS DE SEGUIMIENTO
+            if not partner.x_studio_giro_1:
                 campos_faltantes.append('Giro')
-              if not partner.tipo_compra:
+            if not partner.tipo_compra:
                 campos_faltantes.append('Tipo de Compra')
-              #if not partner.ine:
+            #if not partner.ine:
                 #campos_faltantes.append('INE')
-              if record.quotation_count == 0:
+            if record.quotation_count == 0:
                 campos_faltantes.append('Cotizacion')
-              if record.expected_revenue == 0.0:
+            if record.expected_revenue == 0.0:
                 campos_faltantes.append('Ingresos esperados')
                 
-              # Lanzar un error si hay campos faltantes
-              if campos_faltantes:
-                  raise UserError(f'Los siguientes campos son requeridos para cambiar a la etapa {record.stage_id.display_name}: {", ".join(campos_faltantes)}')
-                  
-                    
-            if record.stage_id.display_name == 'Evaluación':
-              # Lista para recolectar los campos faltantes
-              campos_faltantes = []
-              
-              #CAMPOS DE SEGUIMIENTO
-              if not partner.x_studio_giro_1:
-                  campos_faltantes.append('Giro')
-              if not partner.tipo_compra:
-                campos_faltantes.append('Tipo de Compra')
-              #if not partner.ine:
-                #campos_faltantes.append('INE')
-              if record.quotation_count == 0:
-                campos_faltantes.append('Cotizacion')
-              if record.expected_revenue == 0.0:
-                campos_faltantes.append('Ingresos esperados')
-                
-              #CAMPOS DE EVALUACION
-              if not partner.opinion_cumplimiento:
+            #CAMPOS DE EVALUACION
+            if not partner.opinion_cumplimiento:
                 campos_faltantes.append('Opinion de cumplimiento')
-              if not partner.identificacion_representante_legal:
+            if not partner.identificacion_representante_legal:
                 campos_faltantes.append('Identificación de representante legal')
-              if not partner.comprobante_domicilio:
+            if not partner.comprobante_domicilio:
                 campos_faltantes.append('Comprobante de domicilio')
-              if not partner.llenado_solicitud:
+            if not partner.llenado_solicitud:
                 campos_faltantes.append('Llenado de solicitud de credito')
-                
-              # Lanzar un error si hay campos faltantes
-              if campos_faltantes:
-                raise UserError(f'Los siguientes campos son requeridos para cambiar a la etapa {record.stage_id.display_name}: {", ".join(campos_faltantes)}')
-                
-                
-            if record.stage_id.display_name == 'Alta':
-              # Lista para recolectar los campos faltantes
-              campos_faltantes = []
-              
-              #CAMPOS DE SEGUIMIENTO
-              if not partner.x_studio_giro_1:
-                  campos_faltantes.append('Giro')
-              if not partner.tipo_compra:
-                campos_faltantes.append('Tipo de Compra')
-              #if not partner.ine:
-                #campos_faltantes.append('INE')
-              if record.quotation_count == 0:
-                campos_faltantes.append('Cotizacion')
-              if record.expected_revenue == 0.0:
-                campos_faltantes.append('Ingresos esperados')
-                
-              #CAMPOS DE EVALUACION
-              if not partner.opinion_cumplimiento:
-                campos_faltantes.append('Opinion de cumplimiento')
-              if not partner.identificacion_representante_legal:
-                campos_faltantes.append('Identificación de representante legal')
-              if not partner.comprobante_domicilio:
-                campos_faltantes.append('Comprobante de domicilio')
-              if not partner.llenado_solicitud:
-                campos_faltantes.append('Llenado de solicitud de credito')
-                
-              # Lanzar un error si hay campos faltantes
-              if campos_faltantes:
-                raise UserError(f'Los siguientes campos son requeridos para cambiar a la etapa {record.stage_id.display_name}: {", ".join(campos_faltantes)}')
-                
-                  
-            if record.stage_id.display_name == 'Ganado':
-              # Lista para recolectar los campos faltantes
-              campos_faltantes = []
-              
-              #CAMPOS DE SEGUIMIENTO
-              if not partner.x_studio_giro_1:
-                campos_faltantes.append('Giro')
-              if not partner.tipo_compra:
-                campos_faltantes.append('Tipo de Compra')
-              #if not partner.ine:
-                #campos_faltantes.append('INE')
-              #if record.quotation_count == 0:
-                #campos_faltantes.append('Cotizacion')
-              if record.expected_revenue == 0.0:
-                campos_faltantes.append('Ingresos esperados')
-                
-              #CAMPOS DE EVALUACION
-              if not partner.opinion_cumplimiento:
-                campos_faltantes.append('Opinion de cumplimiento')
-              if not partner.identificacion_representante_legal:
-                campos_faltantes.append('Identificación de representante legal')
-              if not partner.comprobante_domicilio:
-                campos_faltantes.append('Comprobante de domicilio')
-              if not partner.llenado_solicitud:
-                campos_faltantes.append('Llenado de solicitud de credito')
-              
-              #CAMPOS GANADO
-              if not record.sale_amount_total:
-                campos_faltantes.append('Orden de Venta')
-                
-              # Lanzar un error si hay campos faltantes
-              if campos_faltantes:
+            
+            # Lanzar un error si hay campos faltantes
+            if campos_faltantes:
                 raise UserError(f'Los siguientes campos son requeridos para cambiar a la etapa {record.stage_id.display_name}: {", ".join(campos_faltantes)}')
 
+    def validar_informacion_evaluacion(self):
+        # Lista para recolectar los campos faltantes
+        for record in self:
+            partner = record.partner_id
+            campos_faltantes = []
+            
+            #CAMPOS DE SEGUIMIENTO
+            if not partner.x_studio_giro_1:
+              campos_faltantes.append('Giro')
+            if not partner.tipo_compra:
+                campos_faltantes.append('Tipo de Compra')
+            #if not partner.ine:
+                #campos_faltantes.append('INE')
+            if record.quotation_count == 0:
+                campos_faltantes.append('Cotizacion')
+            if record.expected_revenue == 0.0:
+                campos_faltantes.append('Ingresos esperados')
+            
+            #CAMPOS DE EVALUACION
+            if not partner.opinion_cumplimiento:
+                campos_faltantes.append('Opinion de cumplimiento')
+            if not partner.identificacion_representante_legal:
+                campos_faltantes.append('Identificación de representante legal')
+            if not partner.comprobante_domicilio:
+                campos_faltantes.append('Comprobante de domicilio')
+            if not partner.llenado_solicitud:
+                campos_faltantes.append('Llenado de solicitud de credito')
+            
+            # Lanzar un error si hay campos faltantes
+            if campos_faltantes:
+                raise UserError(f'Los siguientes campos son requeridos para cambiar a la etapa {record.stage_id.display_name}: {", ".join(campos_faltantes)}')
+
+
+    def validar_informacion_ganado(self):
+        # Lista para recolectar los campos faltantes
+        for record in self:
+            partner = record.partner_id
+            campos_faltantes = []
+            
+            #CAMPOS DE SEGUIMIENTO
+            if not partner.x_studio_giro_1:
+                campos_faltantes.append('Giro')
+            if not partner.tipo_compra:
+                campos_faltantes.append('Tipo de Compra')
+            #if not partner.ine:
+                #campos_faltantes.append('INE')
+            #if record.quotation_count == 0:
+                #campos_faltantes.append('Cotizacion')
+            if record.expected_revenue == 0.0:
+                campos_faltantes.append('Ingresos esperados')
+            
+            #CAMPOS DE EVALUACION
+            if not partner.opinion_cumplimiento:
+                campos_faltantes.append('Opinion de cumplimiento')
+            if not partner.identificacion_representante_legal:
+                campos_faltantes.append('Identificación de representante legal')
+            if not partner.comprobante_domicilio:
+                campos_faltantes.append('Comprobante de domicilio')
+            if not partner.llenado_solicitud:
+                campos_faltantes.append('Llenado de solicitud de credito')
+            
+            #CAMPOS GANADO
+            if not record.sale_amount_total:
+                campos_faltantes.append('Orden de Venta')
+            
+            # Lanzar un error si hay campos faltantes
+            if campos_faltantes:
+                raise UserError(f'Los siguientes campos son requeridos para cambiar a la etapa {record.stage_id.display_name}: {", ".join(campos_faltantes)}')
+
+
+    def validar_informacion_oportunidad(self):
+        # Lista para recolectar los campos faltantes
+        for record in self:
+            partner = record.partner_id
+            campos_faltantes = []
+            
+            # Verificar si los campos esenciales están rellenados (no son None o cadena vacía) GIRO, TIPO COMPRA, INE, UBICACION
+            if not partner.x_studio_giro_1:
+                campos_faltantes.append('Giro')
+            if not partner.tipo_compra:
+                campos_faltantes.append('Tipo de Compra')
+            #if not partner.ine:
+                #campos_faltantes.append('INE')
+            if record.quotation_count == 0:
+                campos_faltantes.append('Cotizacion')
+            if record.expected_revenue == 0.0:
+                campos_faltantes.append('Ingresos esperados')
+            
+            # Lanzar un error si hay campos faltantes
+            if campos_faltantes:
+                raise UserError(f'Los siguientes campos son requeridos para cambiar a la etapa {record.stage_id.display_name}: {", ".join(campos_faltantes)}')
+            
 
             
         
