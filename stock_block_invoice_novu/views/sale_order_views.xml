@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Añade un banner de alerta en la vista formulario de la orden de venta -->
+        <record id="view_order_form_inherit_stock_block_novu" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit.stock.block.novu</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="before">
+                    <div class="alert alert-warning" role="alert" attrs="{'invisible': [('warning_message', '=', False)]}">
+                        <field name="warning_message"/>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
