@@ -1,0 +1,12 @@
+<odoo>
+    <data noupdate="1">
+        <record id="seq_poliza_diario" model="ir.sequence">
+            <field name="name">Póliza de Diario</field>
+            <field name="code">poliza.diario.seq</field>
+            <field name="prefix">001 - </field>
+            <field name="padding">5</field>
+            <field name="number_increment">1</field>
+            <field name="implementation">no_gap</field>
+        </record>
+    </data>
+</odoo>
