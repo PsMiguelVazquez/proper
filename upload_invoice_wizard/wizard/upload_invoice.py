@@ -26,7 +26,7 @@ class UploadInvoice(models.TransientModel):
     fecha_factura = fields.Date('Fecha de adjuntos')
     ref = fields.Char('Referencia')
     terminos_pago = fields.Char('Términos de pago')
-    terminos_pago_id = fields.Many2one('Id Términos de pago')
+    terminos_pago_id = fields.Many2one('account.payment.term','Id Términos de pago')
     tipo_movimiento = fields.Char('Tipo de movimiento')
     id_metodo_pago = fields.Integer('Id Método de pago')
     codigos_producto = fields.Char('Códigos de producto')

@@ -27,8 +27,8 @@ class SaleOrderLine(models.Model):
             else:
                 record.partner_ids = [(6, 0, [])]
 
-class ProcurementRule(models.Model):
-    _inherit = 'procurement.group'
+# class ProcurementRule(models.Model):
+#     _inherit = 'procurement.group'
 
     # @api.model
     # def run(self, procurements):
