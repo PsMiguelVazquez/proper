@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="account_move_view_form_inherit" model="ir.ui.view">
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet/field[@name='move_type']" position="after">
+                <field name="poliza_generada" invisible="1"/>
+            </xpath>
+            <header>
+                <button string="Descargar Poliza" name="descarga_poliza" type="object"
+                        attrs="{'invisible': [('poliza_generada', '=', False)]}"/>
+            </header>
+        </field>
+    </record>
+</odoo>
