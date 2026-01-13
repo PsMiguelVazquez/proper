@@ -83,114 +83,86 @@ class AccountMove(models.Model):
         dia = date_obj.day
         row = 8
 
-        # Obtener las líneas contables de la factura
-        lines = self.line_ids.filtered(lambda l: l.account_id)
+        #Obtener las lineas de la factura
+        invoice_lines = self.line_ids
 
-        receivable_lines = self.line_ids.filtered(
+        #obener lineas consiliables
+        reconcilable = invoice_lines.filtered(
             lambda l: l.account_id.internal_type in ('receivable', 'payable')
         )
         
-        payment_lines = self.env['account.move.line']
-        
-        for line in receivable_lines:
-            matched = (
-                line.matched_debit_ids.mapped('debit_move_id') +
-                line.matched_credit_ids.mapped('credit_move_id')
-            )
-            payment_lines |= matched.filtered(lambda l: l.move_id != self)
-        
-        # Unir factura + pago
-        lines |= payment_lines
-
-
-        # Filtrar similares a la lógica del wizard
-        lines_clientes = lines.filtered(lambda m: m.account_id.code and m.account_id.code.startswith('105'))
-        lines_otros = lines.filtered(lambda m: not (m.account_id.code and m.account_id.code.startswith('105')))
-
+        #Obtener lo conciliado
+        related_lines = self.env['account.move.line']
+        related_lines |= invoice_lines
+    
+        for line in reconcilable:
+            related_lines |= line.matched_debit_ids.mapped('debit_move_id')
+            related_lines |= line.matched_credit_ids.mapped('credit_move_id')
+    
+        #Lineas extras como pagos
+        all_moves = related_lines.mapped('move_id')
+        all_lines = all_moves.mapped('line_ids')
+    
+        #Ordenar las lineas
+        all_lines = all_lines.sorted(
+            lambda l: (l.date, l.move_id.id, l.id)
+        )
+    
+        #Escribir las lineas en el reporte
+        row = 9
         suma_debitos = 0.0
         suma_creditos = 0.0
-
-        mov_ant = ''
-        for mov in lines_clientes:
-            factura = self.name
-            if mov_ant == factura:
+        last_move = False
+    
+        for line in all_lines:
+            #Línea en blanco entre asientos
+            if last_move and last_move != line.move_id:
                 row += 1
-            else:
-                mov_ant = factura
-                row += 2
-
-            if mov.debit and float(mov.debit) > 0:
-                sheet[f"A{row}"] = mov.account_id.code
-                sheet[f"B{row}"] = mov.partner_id.name
-                sheet[f"C{row}"] = self.name
-                sheet[f"D{row}"] = dia
-                cell_debit = sheet[f"G{row}"]
-                cell_debit.value = float(mov.debit or 0.0)
-                cell_debit.number_format = '#,##0.00'
-                suma_debitos += float(mov.debit or 0.0)
-
-        row += 1
-        resumen_por_cuenta = {}
-        for mov in lines_otros:
-            code = mov.account_id.code or ''
-            name = mov.account_id.name or ''
-            resumen_por_cuenta.setdefault(code, {"name": name, "debit": 0.0, "credit": 0.0})
-            resumen_por_cuenta[code]["debit"] += float(mov.debit or 0.0)
-            resumen_por_cuenta[code]["credit"] += float(mov.credit or 0.0)
-            suma_debitos += float(mov.debit or 0.0)
-            suma_creditos += float(mov.credit or 0.0)
-
-        total_debito = 0.0
-        total_credito = 0.0
-        for code, datos in sorted(resumen_por_cuenta.items()):
-            total_debito = datos["debit"]
-            total_credito = datos["credit"]
-            sheet[f"A{row}"] = code
-            sheet[f"B{row}"] = datos["name"]
+    
+            sheet[f"A{row}"] = line.account_id.code or ''
+            sheet[f"B{row}"] = line.account_id.name or ''
+            sheet[f"C{row}"] = line.move_id.name or ''
             sheet[f"D{row}"] = dia
-
-            if total_debito > total_credito:
-                cell_total_debit = sheet[f"G{row}"]
-                cell_total_debit.value = float(total_debito - total_credito or 0.0)
-                cell_total_debit.number_format = '#,##0.00'
-            elif total_credito > total_debito:
-                cell_total_credit = sheet[f"H{row}"]
-                cell_total_credit.value = float(total_credito - total_debito or 0.0)
-                cell_total_credit.number_format = '#,##0.00'
-            else:
-                sheet[f"G{row}"] = 0
-                sheet[f"H{row}"] = 0
-            row += 2
-
-        # Totales
+    
+            if line.debit:
+                sheet[f"G{row}"] = float(line.debit)
+                sheet[f"G{row}"].number_format = '#,##0.00'
+                suma_debitos += line.debit
+    
+            if line.credit:
+                sheet[f"H{row}"] = float(line.credit)
+                sheet[f"H{row}"].number_format = '#,##0.00'
+                suma_creditos += line.credit
+    
+            last_move = line.move_id
+            row += 1
+    
+        #Totales generales del reporte
         sheet[f"F{row}"] = "Totales"
-        cell_suma_total_debit = sheet[f"G{row}"]
-        cell_suma_total_debit.value = float(suma_debitos or 0.0)
-        cell_suma_total_debit.number_format = '#,##0.00'
+        sheet[f"G{row}"] = suma_debitos
+        sheet[f"H{row}"] = suma_creditos
+        sheet[f"G{row}"].number_format = '#,##0.00'
+        sheet[f"H{row}"].number_format = '#,##0.00'
 
-        cell_suma_total_credit = sheet[f"H{row}"]
-        cell_suma_total_credit.value = float(suma_creditos or 0.0)
-        cell_suma_total_credit.number_format = '#,##0.00'
-
-        # Guardar en memoria
+        #Guardar cambios y adjuntarlo al move
         output = io.BytesIO()
         workbook.save(output)
         output.seek(0)
 
-        
-        _logger.error("Sali de generar, ire a adjuntar")
         attachment = self.env['ir.attachment'].create({
-            'name': f'Poliza_de_diario_{self.name or self.id}_{timestamp}.xlsx',
+            'name': f'Poliza_de_diario_{self.name}_{timestamp}.xlsx',
             'type': 'binary',
             'datas': base64.b64encode(output.read()),
             'res_model': 'account.move',
             'res_id': self.id,
             'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         })
+
         output.close()
-        _logger.error("Sali de adjuntar y termine")
-        
-        _logger.info('Se generó poliza (attachment id=%s) para factura %s', attachment.id, self.name)
+
+        self.poliza_generada = True
+
+        _logger.info(f"Póliza generada correctamente (attachment id={attachment.id}) para {self.name}")
         return True
 
 
@@ -216,7 +188,7 @@ class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
     
     def reconcile(self):
-        _logger.error("🔥 ENTRO A reconcile")
+        _logger.error("ENTRO A reconcile")
 
         moves = self.mapped('move_id')
         res = super().reconcile()
@@ -231,9 +203,7 @@ class AccountMoveLine(models.Model):
                     move._generate_poliza_attachment()
                     move.poliza_generada = True
                 except Exception:
-                    _logger.exception(
-                        'Error generando póliza para factura %s', move.name
-                    )
+                    _logger.exception(f'Error generando póliza para factura {move.name}')
 
         return res
 
@@ -253,9 +223,7 @@ class AccountMoveLine(models.Model):
 
             if attachments:
                 _logger.info(
-                    'Eliminando %s póliza(s) de la factura %s por desconciliación',
-                    len(attachments), move.name
-                )
+                    f'Eliminando {len(attachments)} póliza(s) de la factura {move.name} por desconciliación')
                 attachments.sudo().unlink()
 
         return res
