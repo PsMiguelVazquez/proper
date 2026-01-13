@@ -86,6 +86,23 @@ class AccountMove(models.Model):
         # Obtener las líneas contables de la factura
         lines = self.line_ids.filtered(lambda l: l.account_id)
 
+        receivable_lines = self.line_ids.filtered(
+            lambda l: l.account_id.internal_type in ('receivable', 'payable')
+        )
+        
+        payment_lines = self.env['account.move.line']
+        
+        for line in receivable_lines:
+            matched = (
+                line.matched_debit_ids.mapped('debit_move_id') +
+                line.matched_credit_ids.mapped('credit_move_id')
+            )
+            payment_lines |= matched.filtered(lambda l: l.move_id != self)
+        
+        # Unir factura + pago
+        lines |= payment_lines
+
+
         # Filtrar similares a la lógica del wizard
         lines_clientes = lines.filtered(lambda m: m.account_id.code and m.account_id.code.startswith('105'))
         lines_otros = lines.filtered(lambda m: not (m.account_id.code and m.account_id.code.startswith('105')))
