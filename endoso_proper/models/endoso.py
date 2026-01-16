@@ -34,8 +34,15 @@ class Endoso(models.Model):
 
     def _compute_amount_paid(self):
         for record in self:
+            # V18 --------------------------------------------------------------------------------------------------------------------------
+            # pay_rec_lines = record.line_ids.filtered(
+            #     lambda line: line.account_internal_type in ('receivable', 'payable')).filtered(lambda y: y.partner_id == record.partner_id)
+            # V18 --------------------------------------------------------------------------------------------------------------------------
+            # V19 --------------------------------------------------------------------------------------------------------------------------
             pay_rec_lines = record.line_ids.filtered(
-                lambda line: line.account_internal_type in ('receivable', 'payable')).filtered(lambda y: y.partner_id == record.partner_id)
+                lambda line: line.account_type in ('asset_receivable', 'liability_payable')).filtered(lambda y: y.partner_id == record.partner_id)
+            # V19 --------------------------------------------------------------------------------------------------------------------------
+            
             record.amount_paid = sum(pay_rec_lines.mapped('matched_credit_ids.amount'))
             record.move_id.amount_residual = record.amount - record.amount_paid
             record.move_id.amount_residual_signed = record.amount - record.amount_paid

@@ -51,7 +51,14 @@ class AccountEdiFormat(models.Model):
 
         # Process reconciled invoices.
         invoice_vals_list = []
-        pay_rec_lines = move.line_ids.filtered(lambda line: line.account_internal_type in ('receivable'))
+        # V18 -----------------------------------------------------------------------------------------------------------------------
+        #pay_rec_lines = move.line_ids.filtered(lambda line: line.account_internal_type in ('receivable'))
+        # V18 -----------------------------------------------------------------------------------------------------------------------
+
+        # V19 -----------------------------------------------------------------------------------------------------------------------
+        pay_rec_lines = move.line_ids.filtered(lambda line: line.account_type in ('asset_receivable'))
+        # V19 -----------------------------------------------------------------------------------------------------------------------
+        
         paid_amount = abs(sum(pay_rec_lines.mapped('amount_currency')))
 
         mxn_currency = self.env["res.currency"].search([('name', '=', 'MXN')], limit=1)

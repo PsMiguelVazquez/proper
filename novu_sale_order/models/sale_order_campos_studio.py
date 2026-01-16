@@ -27,5 +27,11 @@ class SaleOrder(models.Model):
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
     x_Reservado = fields.Float(string="Reservado", readonly=True, store=True, related="order_id.picking_ids.move_line_ids.quantity")
-
+    # product_uom_category_id = product_uom_category_id = fields.Many2one(
+    #     'uom.category',
+    #     string='Categoría de Unidad de Medida',
+    #     related='product_id.uom_id.category_id',
+    #     readonly=True,
+    #     store=True  # O True si quieres que se almacene en BD
+    # )
     

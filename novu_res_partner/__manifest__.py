@@ -1,6 +1,6 @@
 {
     'name': 'Novu Res Partner',
-    'version': '18.0.0.1',
+    'version': '19.0.0.1',
     'category': '',
     'license': 'OPL-1',
     'summary': 'Agrega campos necesarios al contacto',

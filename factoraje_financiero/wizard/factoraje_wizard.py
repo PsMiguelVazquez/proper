@@ -112,11 +112,22 @@ class FactoringWizard(models.TransientModel):
             en el campo porcent_assign
         '''
         if len(self.partner_bills) > 1:
+            # V18 ---------------------------------------------------------------------------------------------------------------------------------------------------
+            # domain = [
+            #     ('parent_state', '=', 'posted'),
+            #     ('account_internal_type', 'in', ('receivable', 'payable')),
+            #     ('reconciled', '=', False),
+            # ]
+            # V18 ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+            # V19 ---------------------------------------------------------------------------------------------------------------------------------------------------
             domain = [
                 ('parent_state', '=', 'posted'),
-                ('account_internal_type', 'in', ('receivable', 'payable')),
+                ('account_type', 'in', ('asset_receivable', 'liability_payable')),
                 ('reconciled', '=', False),
             ]
+            # V19 ---------------------------------------------------------------------------------------------------------------------------------------------------
+            
             for vals in to_process:
                 payment_lines = vals['payment'].line_ids.filtered_domain(domain)
                 lines = vals['to_reconcile']

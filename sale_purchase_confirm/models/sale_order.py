@@ -452,8 +452,16 @@ class SaleOrder(models.Model):
             group = self.env.ref('sales_team.group_sale_salesman')
             group_s = self.env.ref('sales_team.group_sale_salesman_all_leads')
             grup_ss = self.env.ref('sales_team.group_sale_manager')
-            if self.env.user.id in group.users.ids and not self.env.user.id in group_s.users.ids and not self.env.user.id in grup_ss.users.ids:
+
+            # V18 -------------------------------------------------------------------------------------------------------------------------------------------------------------
+            # if self.env.user.id in group.users.ids and not self.env.user.id in group_s.users.ids and not self.env.user.id in grup_ss.users.ids:
+            #     partner = self.env['res.partner'].search(['|','|', ['x_nombre_agente_venta', '=', self.env.user.name], ['agente_temporal', '=', self.env.user.name], ['x_nombre_agente_venta', '=', False]])
+            # V18 -------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+            # V19 -------------------------------------------------------------------------------------------------------------------------------------------------------------
+            if self.env.user.id in group.user_ids.ids and not self.env.user.id in group_s.user_ids.ids and not self.env.user.id in grup_ss.user_ids.ids:
                 partner = self.env['res.partner'].search(['|','|', ['x_nombre_agente_venta', '=', self.env.user.name], ['agente_temporal', '=', self.env.user.name], ['x_nombre_agente_venta', '=', False]])
+            # V19 -------------------------------------------------------------------------------------------------------------------------------------------------------------
             else:
                 partner = self.env['res.partner'].search([])
             partner_general = self.env["res.partner"].search([("name", '=', "\"PUBLICO EN GENERAL\"")])
@@ -725,9 +733,17 @@ class SaleOrderLine(models.Model):
                 orden = record.order_id
     
                 # Filtra los movimientos de inventario relacionados con el pedido.
+                # V18 -----------------------------------------------------------------------------------------------------------------------------------------------------
+                # picking_lines = orden.picking_ids.filtered(
+                #     lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed']
+                # ).mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
+                # V18 -----------------------------------------------------------------------------------------------------------------------------------------------------
+
+                # V19 -----------------------------------------------------------------------------------------------------------------------------------------------------
                 picking_lines = orden.picking_ids.filtered(
                     lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed']
-                ).mapped('move_ids_without_package').filtered(lambda y: y.product_id == record.product_id)
+                ).mapped('move_ids').filtered(lambda y: y.product_id == record.product_id)
+                # V19 -----------------------------------------------------------------------------------------------------------------------------------------------------
     
                 # Si no hay movimientos de inventario relacionados, verifica si el producto es parte de un kit.
                 if not picking_lines:
@@ -736,9 +752,17 @@ class SaleOrderLine(models.Model):
                     necesarios_dic = {x.product_id.default_code: x.product_qty for x in kit}  # Diccionario con las cantidades necesarias por producto.
     
                     # Filtra los movimientos de inventario relacionados con los productos del kit.
+                    # V18 -----------------------------------------------------------------------------------------------------------------------------------------------------
+                    # picking_lines = orden.picking_ids.filtered(
+                    #     lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed']
+                    # ).mapped('move_ids_without_package').filtered(lambda y: y.product_id in productos_kit)
+                    # V18 -----------------------------------------------------------------------------------------------------------------------------------------------------
+                    
+                    # V19 -----------------------------------------------------------------------------------------------------------------------------------------------------
                     picking_lines = orden.picking_ids.filtered(
                         lambda x: ('PICK' in x.name or 'PACK' in x.name or 'OUT' in x.name) and x.state in ['assigned', 'confirmed']
-                    ).mapped('move_ids_without_package').filtered(lambda y: y.product_id in productos_kit)
+                    ).mapped('move_ids').filtered(lambda y: y.product_id in productos_kit)
+                    # V19 -----------------------------------------------------------------------------------------------------------------------------------------------------
     
                     # Calcula la cantidad asignada mínima entre los productos del kit.
                     asignados = []

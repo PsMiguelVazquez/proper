@@ -39,8 +39,14 @@ class AccountPayment(models.Model):
     def get_endosos(self):
         for record in self:
             endosos = self.env['account.move']
+            # V18 ---------------------------------------------------------------------------------
+            # pay_rec_lines = record.line_ids.filtered(
+            #     lambda line: line.account_internal_type in ('receivable', 'payable'))
+            # V18 ---------------------------------------------------------------------------------
+            # V19 ---------------------------------------------------------------------------------
             pay_rec_lines = record.line_ids.filtered(
-                lambda line: line.account_internal_type in ('receivable', 'payable'))
+                lambda line: line.account_internal_group in ('asset', 'liability'))
+            # V19 ---------------------------------------------------------------------------------
             for field1, field2 in (('debit', 'credit'), ('credit', 'debit')):
                 for partial in pay_rec_lines[f'matched_{field1}_ids']:
                     invoice_line = partial[f'{field1}_move_id']
@@ -64,7 +70,15 @@ class AccountPayment(models.Model):
             #                 if payments.id == record.id:
             #                     totals += payment['amount']
             # record.amount_rest = record.amount - totals
-            pay_rec_lines = record.line_ids.filtered(lambda line: line.account_internal_type in ('receivable', 'payable'))
+
+            # V18 ---------------------------------------------------------------------------------
+            # pay_rec_lines = record.line_ids.filtered(lambda line: line.account_internal_type in ('receivable', 'payable'))
+            # V18 ---------------------------------------------------------------------------------
+            # V19 ---------------------------------------------------------------------------------
+            pay_rec_lines = record.line_ids.filtered(
+                lambda line: line.line.account_type in ('asset_receivable', 'liability_payable'))
+            # V19 ---------------------------------------------------------------------------------
+            
             for field1, field2 in (('debit', 'credit'), ('credit', 'debit')):
                 for partial in pay_rec_lines[f'matched_{field1}_ids']:
                     payment_line = partial[f'{field2}_move_id']
@@ -125,11 +139,21 @@ class AccountPaymentWidget(models.TransientModel):
                 if len(self.invoices_ids) < 1 and 'END/' in self.invoices_ids.name and self.invoices_ids.es_endoso:
                     _logger.error('ENTRE 1')
                     move = self.invoices_ids
+                    
+                    # V18 -------------------------------------------------------------------------------------------------------------
+                    # domain = [
+                    #     ('parent_state', '=', 'posted'),
+                    #     ('account_internal_type', 'in', ('receivable', 'payable')),
+                    #     ('reconciled', '=', False),
+                    # ]
+                    # V18 -------------------------------------------------------------------------------------------------------------
+                    # V19 -------------------------------------------------------------------------------------------------------------
                     domain = [
                         ('parent_state', '=', 'posted'),
-                        ('account_internal_type', 'in', ('receivable', 'payable')),
+                        ('account_type', 'in', ('asset_receivable', 'liability_payable')),
                         ('reconciled', '=', False),
                     ]
+                    # V19 -------------------------------------------------------------------------------------------------------------
                     to_reconcile = move_line
                     amount = move.porcent_assign
                     end = self.env['endoso.move'].search([('move_id', '=', move.id)])

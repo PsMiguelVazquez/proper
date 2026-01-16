@@ -117,25 +117,10 @@
         </field>
     </record>
 
-    <record id="action_view_endoso" model="ir.actions.act_window">
-        <field name="name">Endosos</field>
-        <field name="type">ir.actions.act_window</field>
-        <field name="res_model">endoso.move</field>
-        <field name="view_mode">list,form</field>
-        <!--        <field name="domain">[('name','ilike', 'END')]</field>-->
-        <field name="view_ids" eval="[(5, 0, 0),
-                (0,0, {'view_mode': 'list', 'view_id': ref('endoso_proper.endoso_tree_view')}),
-                (0, 0, {'view_mode': 'form', 'view_id': ref('endoso_proper.endoso_form_view')})]"/>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Endosos
-            </p>
-        </field>
-    </record>
-
     <record id="endoso_view_search" model="ir.ui.view">
             <field name="name">endoso.view.search</field>
             <field name="model">endoso.move</field>
+            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Endoso">
                     <field name="name"/>
@@ -162,6 +147,25 @@
                 </search>
             </field>
     </record>
+    
+    <record id="action_view_endoso" model="ir.actions.act_window">
+        <field name="name">Endosos</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">endoso.move</field>
+        <field name="view_mode">list,form</field>
+        <!-- <field name="search_view_id" ref="endoso_proper.endoso_view_search"/> -->
+        <!-- <field name="search_view_id" ref="endoso_proper.endoso_view_search"/> -->
+        <!--        <field name="domain">[('name','ilike', 'END')]</field>-->
+        <field name="view_ids" eval="[(5, 0, 0),
+                (0,0, {'view_mode': 'list', 'view_id': ref('endoso_proper.endoso_tree_view')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('endoso_proper.endoso_form_view')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Endosos
+            </p>
+        </field>
+    </record>
+    
     <menuitem name="Endosos"
               id="endoso_menu"
               sequence="10"
