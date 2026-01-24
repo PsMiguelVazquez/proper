@@ -2,7 +2,11 @@
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models, _
-from odoo.osv import expression
+
+# V18 -----------------------------------------------
+# Se comenta por que en la V19 ya no es valido
+#from odoo.osv import expression
+# V18 -----------------------------------------------
 
 class Sale(models.Model):
     _inherit = 'sale.order'
@@ -10,7 +14,13 @@ class Sale(models.Model):
     guia = fields.Char('No de Guia')
 
     def write(self, values):
-        r = super(Sale, self).write(values)
+        # V18 ----------------------------------------------------------------------
+        # r = super(Sale, self).write(values)
+        # V18 ----------------------------------------------------------------------
+
+        # V19 ----------------------------------------------------------------------
+        r = super().write(values)
+        # V19 ----------------------------------------------------------------------
         if 'guia' in values:
             for pi in self.picking_ids:
                 pi.write({'guia': values['guia']})

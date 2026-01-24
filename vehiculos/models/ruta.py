@@ -25,7 +25,16 @@ class CreacionRuta(Model):
     #picking_type=fields.Many2many('stock.picking.type')
     usuarios = fields.Many2many('res.users')
     arreglo=fields.Char()
-    active = fields.Boolean('Active', default=True, track_visibility=True)
+
+    # V18------------------------------------------------------------------------------
+    # Cambia la propiedad track_visibility
+    # active = fields.Boolean('Active', default=True, track_visibility=True)
+    # V18------------------------------------------------------------------------------
+
+    # V19------------------------------------------------------------------------------
+    active = fields.Boolean('Active', default=True, tracking=True)
+    # V19------------------------------------------------------------------------------
+    
 
     def confirmar(self):
         if len(self.ordenes) > 0:

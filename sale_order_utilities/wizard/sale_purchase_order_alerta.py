@@ -7,6 +7,7 @@ from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
 class SalePurchaseOrderAlerta(models.TransientModel):
     _name = 'sale.purchase.order.alerta'
+    _description='compra alerta'
     message_top = fields.Html()
     message_bottom = fields.Html()
     lines = fields.Many2many('sale.order.line')

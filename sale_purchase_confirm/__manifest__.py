@@ -21,7 +21,7 @@
     'license': 'OPL-1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'sale', 'purchase', 'stock', 'web_studio', 'l10n_mx_edi_extended'],
+    'depends': ['base', 'sale', 'sale_stock', 'purchase', 'stock', 'web_studio', 'l10n_mx_edi_extended'],
 
     # always loaded
     'data': [

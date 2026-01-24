@@ -1,6 +1,6 @@
 <odoo>
     <record id="gerente_mostrar_documentos_equipo" model="res.groups">
         <field name="name">Usuario: Gerente Mostrar documentos del equipo</field>
-        <field name="category_id">51</field>
+        <field name="privilege_id">6</field>
     </record>
 </odoo>

@@ -5,6 +5,7 @@ from odoo.exceptions import UserError
 
 class RequerimientClient(models.Model):
     _name = 'requiriment.client'
+    _description='Cliente req'
     _inherit = 'mail.thread'
     
     x_cantidad = fields.Float("cantidad")
@@ -71,6 +72,7 @@ class RequerimientClient(models.Model):
 
 class ProposalPurchase(models.Model):
     _name = 'proposal.purchases'
+    _description='propuesta compras'
     _inherit = 'mail.thread'
     
     rel_id = fields.Many2one('requiriment.client')
@@ -236,6 +238,7 @@ class ProposalPurchase(models.Model):
 
 class WizarPropo(models.TransientModel):
     _name = 'wizard.proposal'
+    _description='wizard de propuesta'
     
     x_agente_compra = fields.Char("Agente de Compra")
     x_archivo = fields.Binary("Imagen del producto")
@@ -318,6 +321,7 @@ class WizarPropo(models.TransientModel):
 
 class WizardCancel(models.TransientModel):
     _name = 'wizard.cancel'
+    _description='wizard de cancelacion'
     
     check = fields.Boolean('Check')
     description = fields.Char('Descripcion')
@@ -328,6 +332,7 @@ class WizardCancel(models.TransientModel):
 
 class WizardRevalid(models.TransientModel):
     _name = 'wizard.revali'
+    _description='wizard revali'
     
     description = fields.Char('Descripcion')
     proposal_id = fields.Many2one('proposal.purchases')
@@ -338,6 +343,7 @@ class WizardRevalid(models.TransientModel):
 
 class PurchaseCreateWizard(models.TransientModel):
     _name = 'wizard.purchase.create'
+    _description='wizard creacion compra'
     
     proposal_ids = fields.Many2many('proposal.purchases')
     partner_id = fields.Many2one('res.partner')

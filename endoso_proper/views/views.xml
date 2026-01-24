@@ -117,7 +117,7 @@
         </field>
     </record>
 
-    <record id="endoso_view_search" model="ir.ui.view">
+    <!-- <record id="endoso_view_search" model="ir.ui.view">
             <field name="name">endoso.view.search</field>
             <field name="model">endoso.move</field>
             <field name="type">search</field>
@@ -146,7 +146,54 @@
                     </group>
                 </search>
             </field>
+    </record> -->
+
+    <record id="endoso_view_search" model="ir.ui.view">
+        <field name="name">endoso.view.search</field>
+        <field name="model">endoso.move</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Endoso">
+                <field name="name"/>
+                <field name="origin_invoice"/>
+                <field name="partner_id" string="Cliente del endoso"/>
+                <field name="origin_partner_id"/>
+                
+                <!-- Filtros de estado -->
+                <filter string="Publicados" name="posted" domain="[('state','=','posted')]"/>
+                <filter string="Cancelados" name="cancel" domain="[('state','=','cancel')]"/>
+                <filter string="Borrador" name="draft" domain="[('state','=','draft')]"/>
+                <separator/>
+                
+                <!-- Filtros de pago - CORREGIDO -->
+                <!-- Asumo que el campo se llama 'payment_state' directamente en endoso.move -->
+                <filter string="Pagados" name="paid" domain="[('move_id.payment_state','in',('paid', 'partial'))]"/>
+                <filter string="No pagados" name="not_paid" domain="[('move_id.payment_state','=','not_paid')]"/>
+                
+                <!-- Si payment_state está en una relación con account.move, sería: -->
+                <!-- <filter string="Pagados" name="paid" domain="[('account_move_id.payment_state','in',('paid', 'partial'))]"/> -->
+                <!-- <filter string="No pagados" name="not_paid" domain="[('account_move_id.payment_state','=','not_paid')]"/> -->
+                
+                <separator/>
+                
+                <!-- Filtros de fecha - CORREGIDO -->
+                <filter name="date" string="Fecha del endoso" date="date"/>  <!-- Cambié create_date por date, si existe -->
+                <!-- Si tienes fecha de factura original, usar el campo correcto -->
+                <filter name="invoice_date" string="Fecha de la factura" date="create_date"/>
+                
+                <separator/>
+                
+                <group>
+                    <filter string="Cliente de la factura" name="origin_partner_id" context="{'group_by':'origin_partner_id'}"/>
+                    <filter string="Cliente del endoso" name="partner_id" context="{'group_by':'partner_id'}"/>
+                    <filter name="status" string="Estado" context="{'group_by':'state'}"/>
+                    <separator/>
+                    <filter string="Fecha del endoso" name="date" context="{'group_by': 'create_date'}"/>  <!-- Cambié create_date por date -->
+                </group>
+            </search>
+        </field>
     </record>
+    
     
     <record id="action_view_endoso" model="ir.actions.act_window">
         <field name="name">Endosos</field>

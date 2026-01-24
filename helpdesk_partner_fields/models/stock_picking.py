@@ -2,7 +2,10 @@
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models, _
-from odoo.osv import expression
+# V18 --------------------------------------------------
+# Se comenta por que esta deprecado para la V19 y no se usa en ninguna parte
+#from odoo.osv import expression
+# V18 --------------------------------------------------
 
 
 class StockPicking(models.Model):

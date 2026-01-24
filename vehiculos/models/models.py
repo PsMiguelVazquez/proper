@@ -2,7 +2,10 @@
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models, _
-from odoo.osv import expression
+# V18---------------------------------------
+# Se comenta por que ya no es valido para V19
+# from odoo.osv import expression
+# V18---------------------------------------
 
 
 class MarcaAutomovil(models.Model):
@@ -25,11 +28,28 @@ class Automovil(models.Model):
     _name = 'automovil'
     _description = 'Automovil'
     name = fields.Char(store=True)
-    active = fields.Boolean('Active', default=True, track_visibility="onchange")
+    # V18------------------------------------------------------------------------------
+    # Cambia la propiedad track_visibility
+    # active = fields.Boolean('Active', default=True, track_visibility="onchange")
+    # V18------------------------------------------------------------------------------
+
+    # V19------------------------------------------------------------------------------
+    active = fields.Boolean('Active', default=True, tracking=True)
+    # V19------------------------------------------------------------------------------
+    
     compania = fields.Many2one('res.company', 'Company')
     license_plate = fields.Char()
     vin_sn = fields.Char('Chassis Number')
-    driver_id = fields.Many2one('res.partner', 'Driver', track_visibility="onchange", help='Driver of the vehicle', copy=False, auto_join=True)
+
+    # V18------------------------------------------------------------------------------
+    # Cambia la propiedad track_visibility
+    # driver_id = fields.Many2one('res.partner', 'Driver', track_visibility="onchange", help='Driver of the vehicle', copy=False, auto_join=True)
+    # V18------------------------------------------------------------------------------
+
+    # V19------------------------------------------------------------------------------
+    driver_id = fields.Many2one('res.partner', 'Driver', tracking=True, help='Driver of the vehicle', copy=False, auto_join=True)
+    # V19------------------------------------------------------------------------------
+    
     modelo = fields.Many2one('modelo.automovil', 'Model')
     fecha_adquisicion = fields.Date('Fecha de Adquisición')
     color = fields.Char(help='Color')

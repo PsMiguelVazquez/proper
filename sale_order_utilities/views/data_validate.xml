@@ -68,7 +68,7 @@
             <field name="name">data.validate.search.view</field>
             <field name="model">data.validate</field>
             <field name="arch" type="xml">
-                <search>
+                <search string="Buscar">
                     <field name="order_id" string="Orden"/>
                     <field name="order_partner_id" string="Cliente"/>
                     <field name="salesman_id" string="Vendedor"/>
@@ -76,9 +76,17 @@
                     <filter name="answered" string="Atendido" domain="[('request_answered', '=', 'Atendido')]"/>
                     <separator/>
                     <filter name="no_answered" string="No Atendido" domain="[('request_answered', '!=', 'Atendido')]"/>
-                    <group expand="0" string="Group By">
+                    <!-- <group expand="0" string="Group By"> -->
+                    <!-- V19 -->
+                    <group>
+                    <!-- V19 -->
+                        <!-- Comentados por que no sirven para la V19
                         <filter string="Cotización" name="cotizacion" domain="[]" context="{'group_by': 'order_id'}"/>
-                        <filter string="Cliente" name="cliente" domain="[]" context="{'group_by': 'order_partner_id'}"/>
+                        <filter string="Cliente" name="cliente" domain="[]" context="{'group_by': 'order_partner_id'}"/> -->
+                        <!-- V19 -->
+                        <filter string="Cotización" name="cotizacion" context="{'group_by': 'order_id'}"/>
+                        <filter string="Cliente" name="cliente"  context="{'group_by': 'order_partner_id'}"/>
+                        <!-- V19 -->
                     </group>
                 </search>
             </field>

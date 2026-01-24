@@ -7,7 +7,14 @@ class SaleOrderAlerta(models.TransientModel):
     _inherit = 'sale.order.alerta'
 
     def confirmar_validacion(self):
-        r = super(SaleOrderAlerta, self).confirmar_validacion()
+        # V18 ------------------------------------------------------------------------------------------------------------
+        # r = super(SaleOrderAlerta, self).confirmar_validacion()
+        # V18 ------------------------------------------------------------------------------------------------------------
+
+        # V19 ------------------------------------------------------------------------------------------------------------
+        r = super().confirmar_validacion()
+        # V19 ------------------------------------------------------------------------------------------------------------
+        
         order_lines = self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero
                                                                   + x.x_cantidad_disponible_compra
                                                                   - x.product_uom_qty) < 0)

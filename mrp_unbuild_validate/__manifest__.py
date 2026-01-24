@@ -1,6 +1,6 @@
 {
     'name': "Validación de desmantelación",
-
+    'license': 'LGPL-3',
     'summary': """
         Valida la desmantelación de kits""",
 

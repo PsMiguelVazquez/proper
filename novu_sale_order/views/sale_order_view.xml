@@ -109,7 +109,7 @@
                     <button name="conf_credito" string="Aprobación Credito" type="object" class="btn-primary" invisible=" state != 'credito_conf'" groups="account_payment_proper.group_credito_c"/>
                     <button name="conf_ventas" string="Aprobación Venta" type="object" class="btn-primary" invisible=" state != 'sale_conf'" groups="account_payment_proper.group_sale_manager"/>
                     <button name="conf_purchase" string="Aprobación Compras" type="object" class="btn-primary" invisible=" state != 'purchase_conf'" groups="purchase.group_purchase_manager"/>
-                    <button name="1277" string="Rechazar" type="action" class="btn-primary" invisible="state not in ['purchase_conf', 'sale_conf', 'credito_conf']" groups="purchase.group_purchase_manager,account_payment_proper.group_sale_manager, account_payment_proper.group_credito_c, account.group_account_invoice"/>
+                    <button name="1277" string="Rechazar" type="action" class="btn-primary" invisible="state not in ['purchase_conf', 'sale_conf', 'credito_conf']" groups="purchase.group_purchase_manager,account_payment_proper.group_sale_manager,account_payment_proper.group_credito_c,account.group_account_invoice"/>
                    
                 </xpath>
                 <!-- <xpath expr="//div[contains(@class, 'oe_chatter')]" position="replace">
@@ -194,13 +194,14 @@
             </field>
         </record>
 
-        <!-- <record id="sale_order_form_quote" model="ir.ui.view">
-            <field name="name">sale.order.form.inherit.sale_management</field>
+        <!-- <record id="sale_order_list_quote" model="ir.ui.view">
+            <field name="name">sale.order.list.inherit.quotation</field>
             <field name="model">sale.order</field>
-            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="inherit_id" ref="sale.view_quotation_tree"/>
                 <field name="arch" type="xml">
-                    <xpath expr="//page[@name='optional_products']" position="attributes">
-                        <attribute name="invisible">True</attribute>
+                    
+                    <xpath expr="//field[@name='name']" position="after">
+                        <field name="warehouse_id" optional="show"/>
                     </xpath>
                 </field>
         </record> -->

@@ -17,7 +17,15 @@ class AccountMove(models.Model):
     reason = fields.Char("Motivo")
     tipo_nota = fields.Selection(string='Tipo de nota de crédito', selection=[('01','01 - Descuentos o bonificaciones'),('03','03 - Devolición de mercancia')])
     invoice_datetime = fields.Char('Fecha y hora de timbrado', compute='_compute_invoice_datetime')
-    x_estado_actuali_cli = fields.Selection(string='Estado de actualizacion del cliente',selection=[('3.3','3.3'),('4.0','4.0')], related='partner_id.x_estado_cli_actua')
+    # V18 --------------------------------------------------------------------------------------------------------------------------
+    #Se comenta y cambia mas abajo para la V19
+    #x_estado_actuali_cli = fields.Selection(string='Estado de actualizacion del cliente',selection=[('3.3','3.3'),('4.0','4.0')], related='partner_id.x_estado_cli_actua')
+    # V18 --------------------------------------------------------------------------------------------------------------------------
+
+    # V19 --------------------------------------------------------------------------------------------------------------------------
+    x_estado_actuali_cli = fields.Selection(string='Estado de actualizacion del cliente', related='partner_id.x_estado_cli_actua', related_sudo=True)
+    # V19 --------------------------------------------------------------------------------------------------------------------------
+    
     supervisor_credito = fields.Many2one(string='Supervisor de crédito',related='partner_id.x_nombre_supervisor_credito', store=True)
     documento_entrega_venta = fields.Selection(string='Documento de entrega',related='sale_id.x_doc_entrega')
     invoice_datetime_date = fields.Date('Fecha de timbrado', compute="_compute_invoice_datetime_date", store=True)
@@ -98,7 +106,8 @@ class AccountMove(models.Model):
 
 class Requirement(models.Model):
     _name = 'x_client_requirement'
-
+    _description='cliente requerimiento'
+    
     @api.model
     def create(self, val):
         r = super(Requirement, self).create(val)
@@ -107,6 +116,7 @@ class Requirement(models.Model):
 
 class Proposal(models.Model):
     _name = 'x_proposal_purchase'
+    _description='propuesta compra'
 
     @api.model
     def create(self, vals_list):

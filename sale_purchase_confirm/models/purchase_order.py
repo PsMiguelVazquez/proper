@@ -25,6 +25,7 @@ class PurchaseOrder(models.Model):
 
 class PurchaseWizard(models.TransientModel):
     _name = 'purchase.wizard.conf'
+    _description = 'wizard compra conf'
 
     def confirm(self):
         purchases = self.env['purchase.order'].browse(self._context.get('active_ids', []))
@@ -33,7 +34,8 @@ class PurchaseWizard(models.TransientModel):
 
 class PurchaseWizardMerge(models.TransientModel):
     _name = 'purchase.wizard.merge'
-
+    _description = 'wizard compra merge'
+    
     def confirm(self):
         purchases = self.env['purchase.order'].browse(self._context.get('active_ids', [])).filtered(lambda x: x.state == 'draft')
         partners = purchases.mapped('partner_id')

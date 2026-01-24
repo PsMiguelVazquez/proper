@@ -4,9 +4,12 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_compare, float_round
-from odoo.osv import expression
-
 from collections import defaultdict
+
+# V18 --------------------------------------------------
+# Se comenta por que esta deprecado para la V19 y no se usa en ninguna parte
+#from odoo.osv import expression
+# V18 --------------------------------------------------
 
 
 class MrpUnbuild(models.Model):

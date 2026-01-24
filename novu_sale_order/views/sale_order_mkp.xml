@@ -2,7 +2,7 @@
 <odoo>  
     <data>
         <record id="sale_order_mkp_view_form" model="ir.ui.view">
-            <field name="name">	sale.order.form.mkp</field>
+            <field name="name">sale.order.form.mkp</field>
             <field name="model">sale.order</field>
             <field name="arch" type="xml">
                 <form string="Sales Order" class="o_sale_order">
@@ -23,7 +23,7 @@
                         <field name="x_aprovacion_compras" invisible="1"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,sent,sale"/>
                         <button name="conf_credito" string="Aprobación Credito" type="object" class="btn-primary" invisible="state !=  'credito_conf'" groups="account_payment_proper.group_credito_c"/>
-                        <button name="1277" string="Rechazar" type="action" class="btn-primary" invisible="state not in ['sale_conf', 'credito_conf' ]" groups="purchase.group_purchase_manager,account_payment_proper.group_sale_manager, account_payment_proper.group_credito_c, account.group_account_invoice"/>
+                        <button name="1277" string="Rechazar" type="action" class="btn-primary" invisible="state not in ['sale_conf', 'credito_conf' ]" groups="purchase.group_purchase_manager,account_payment_proper.group_sale_manager,account_payment_proper.group_credito_c,account.group_account_invoice"/>
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
@@ -46,8 +46,15 @@
                             <group name="partner_details">
                                 <field name="partner_child"/>
                                 <field name="partner_id" widget="res_partner_many2one" context="{'res_partner_search_mode': 'customer', 'show_address': 1, 'show_vat': True}" options="{&quot;always_reload&quot;: True}" readonly="state not in ['draft', 'sent']"/>
+                                
+                                <!-- V18 se comentan por que para la V19 yano existe el grupo
                                 <field name="partner_invoice_id" groups="sale.group_delivery_invoice_address" context="{'default_type':'invoice'}" options="{&quot;always_reload&quot;: True}"/>
-                                <field name="partner_shipping_id" groups="sale.group_delivery_invoice_address" context="{'default_type':'delivery'}" options="{&quot;always_reload&quot;: True}"/>
+                                <field name="partner_shipping_id" groups="sale.group_delivery_invoice_address" context="{'default_type':'delivery'}" options="{&quot;always_reload&quot;: True}"/> -->
+                                <!-- V19 -->
+                                <field name="partner_invoice_id" context="{'default_type':'invoice'}" options="{&quot;always_reload&quot;: True}"/>
+                                <field name="partner_shipping_id" context="{'default_type':'delivery'}" options="{&quot;always_reload&quot;: True}"/>
+                                <!-- V19 -->
+                                
                                 <field name="x_studio_venta_mostrador"/>
                                 <field name="x_studio_referencia_de_venta_marketplace"/>
                                 <field name="x_studio_n_orden_de_compra"/>
@@ -84,7 +91,7 @@
                             </group>
                         <notebook>
                             <page string="Order Lines" name="order_lines">
-                                <field name="order_line" widget="section_and_note_one2many" mode="list,kanban" readonly="state in ['done','cancel']">
+                                <field name="order_line" widget="section_and_note_one2many" mode="list" readonly="state in ['done','cancel']">
                                     <form>
                                         <field name="display_type" invisible="1"/>
                                         <!--
@@ -121,10 +128,18 @@
                                                 <!-- <field name="product_packaging_id"  invisible="product_id == False" context="{'default_product_id': product_id, 'tree_view_ref':'product.product_packaging_tree_view', 'form_view_ref':'product.product_packaging_form_view'}" groups="product.group_stock_packaging"/> -->
                                                 <field name="price_unit"/>
                                                 <field name="tax_ids" widget="many2many_tags" options="{'no_create': True}" context="{'search_view_ref': 'account.account_tax_view_search'}" domain="[('type_tax_use','=','sale'), ('company_id','=',parent.company_id), ('country_id', '=', parent.tax_country_id)]" readonly="qty_invoiced > 0"/>
+                                                <!-- 
+                                                V18
                                                 <label for="discount" groups="product.group_discount_per_so_line"/>
-                                                <div name="discount" groups="product.group_discount_per_so_line">
+                                                <div name="discount" groups="product.group_discount_per_so_line"> 
+                                                
+                                                -->
+                                                <!-- V19  -->
+                                                <label for="discount" groups="sale.group_discount_per_so_line"/>
+                                                <div name="discount" groups="sale.group_discount_per_so_line">
                                                     <field name="discount" class="oe_inline"/> %
                                                 </div>
+                                                <!-- V19  -->
                                                 <!--
                                                     We need the sequence field to be here
                                                     because we want to be able to overwrite the default sequence value in the JS
@@ -170,8 +185,16 @@
                                         <field name="name" widget="section_and_note_text" optional="hide" invisible="1"/>
                                         <field name="x_descripcion_corta"  optional="show"/>
                                         <field name="existencias_mkp" optional="show"/>
-                                        <!-- <field name="analytic_tag_ids" optional="hide" groups="analytic.group_analytic_tags" widget="many2many_tags" options="{'color_field': 'color'}" domain="['|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]"/> YA NO EXISTE EL CAMPO -->
-                                        <field name="analytic_distribution" optional="hide" groups="analytic.group_analytic_tags" widget="many2many_tags" options="{'color_field': 'color'}"/> 
+                                        <!-- 
+                                        V18
+                                        <field name="analytic_tag_ids" optional="hide" groups="analytic.group_analytic_tags" widget="many2many_tags" options="{'color_field': 'color'}" domain="['|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]"/> YA NO EXISTE EL CAMPO -->
+                                        <!-- <field name="analytic_distribution" optional="hide" groups="analytic.group_analytic_tags" widget="many2many_tags" options="{'color_field': 'color'}"/> 
+                                        V18 -->
+
+                                        <!-- V19 -->
+                                        <field name="analytic_distribution" optional="hide" groups="analytic.group_analytic_accounting" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                                        <!-- V19 -->
+                                        
                                         <field name="product_uom_qty" decoration-info="(not display_type and invoice_status == 'to invoice')" decoration-bf="(not display_type and invoice_status == 'to invoice')" context="{'partner_id': parent.partner_id, 'quantity': product_uom_qty, 'pricelist': parent.pricelist_id, 'uom': product_uom_id, 'company_id': parent.company_id}"/>
                                         <field name="qty_delivered" invisible="1" decoration-info="(not display_type and invoice_status == 'to invoice')" decoration-bf="(not display_type and invoice_status == 'to invoice')" string="Delivered" column_invisible="parent.state not in ['sale', 'done']" readonly="qty_delivered_method != 'manual'" optional="hide"/>
                                         <!-- <field name="qty_delivered_manual" invisible="1"/> YA NO EXISTE EL CAMPO-->
@@ -194,7 +217,15 @@
                                         <field name="price_unit" readonly="qty_invoiced &gt; 0"/>
                                         <field name="tax_ids" widget="many2many_tags" options="{'no_create': True}" domain="[('type_tax_use','=','sale'),('company_id','=',parent.company_id), ('country_id', '=', parent.tax_country_id)]" context="{'active_test': True}"  readonly="qty_invoiced &gt; 0" optional="show"/>
                                         <!--<field name="discount" string="Disc.%" groups="product.group_discount_per_so_line" optional="show" widget="product_discount"/>-->
-                                        <field name="discount" string="Disc.%" groups="product.group_discount_per_so_line" optional="hide" widget="product_discount" invisible="1" />
+                                        
+                                        <!--
+                                        V18
+                                        <field name="discount" string="Disc.%" groups="product.group_discount_per_so_line" optional="hide" widget="product_discount" invisible="1" /> 
+                                        V18
+                                        -->
+                                        <!-- V19 -->
+                                        <field name="discount" string="Disc.%" groups="sale.group_discount_per_so_line" optional="hide" widget="product_discount" invisible="1" />
+                                        <!-- V19 -->
                                         <field name="price_subtotal" widget="monetary" groups="novu_sale_order.group_show_line_subtotals_tax_excluded"/>
 
                                         <field name="x_utilidad" optional="show"/>
@@ -208,7 +239,7 @@
                                         <field name="price_tax" invisible="1" optional="hide"/>
                                         <field name="company_id" invisible="1" optional="hide"/>
                                     </list>
-                                    <kanban class="o_kanban_mobile">
+                                    <!-- <kanban class="o_kanban_mobile">
                                         <field name="name"/>
                                         <field name="product_id"/>
                                         <field name="product_uom_qty"/>
@@ -223,6 +254,13 @@
                                         <field name="company_id" invisible="1"/>
                                         <templates>
                                             <t t-name="kanban-box">
+                                                <div class="oe_kanban_global_click">
+                                                    <strong><field name="name"/></strong>
+                                                    <div>Qty: <field name="product_uom_qty"/></div>
+                                                    <div>Price: <field name="price_unit"/></div>
+                                                </div>
+                                            </t> -->
+                                            <!-- <t t-name="kanban-box">
                                                 <div t-attf-class="oe_kanban_card oe_kanban_global_click pl-0 pr-0 {{ record.display_type.raw_value ? 'o_is_' + record.display_type.raw_value : '' }}">
                                                     <t t-if="!record.display_type.raw_value">
                                                         <div class="row no-gutters">
@@ -264,9 +302,9 @@
                                                         </div>
                                                     </t>
                                                 </div>
-                                            </t>
-                                        </templates>
-                                    </kanban>
+                                            </t> -->
+                                        <!-- </templates>
+                                    </kanban> -->
                                 </field>
                                 <group name="note_group" col="6" class="mt-2 mt-md-0">
                                     <group colspan="4">
@@ -283,7 +321,7 @@
                                 <group>
                                     <group name="sales_person" string="Sales">
                                         <field name="user_id" widget="many2one_avatar_user"/>
-                                        <field name="team_id" kanban_view_ref="468" options="{'no_create': True}"/>
+                                        <field name="team_id" options="{'no_create': True}"/>
                                         <field name="company_id" options="{'no_create': True}" groups="base.group_multi_company"/>
                                         <field name="require_signature"/>
                                         <field name="require_payment"/>

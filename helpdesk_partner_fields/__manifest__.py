@@ -7,6 +7,7 @@
     'description': """
     Agrega alguno campos a helpdesk
     """,
+    'license': 'LGPL-3',
 
     'author': "My Company",
     'website': "http://www.yourcompany.com",

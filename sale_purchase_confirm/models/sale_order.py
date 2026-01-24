@@ -14,7 +14,20 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
     total_in_text = fields.Char(compute='set_amount_text', string='Total en letra')
     # state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('purchase_conf', 'Validación compras'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
-    state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('purchase_conf', 'Validación compras'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
+    # V18 ---------------------------------------------------------------------------------------------------------------------------
+    # Se mejora para V19
+    # state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('purchase_conf', 'Validación compras'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
+    # V18 ---------------------------------------------------------------------------------------------------------------------------
+
+    # V19 ---------------------------------------------------------------------------------------------------------------------------
+    state = fields.Selection(
+        selection_add=[
+            ('sale_conf', 'Validación ventas'),
+            ('purchase_conf', 'Validación compras'),
+            ('credito_conf', 'Validación crédito'),
+        ])
+    # V19 ---------------------------------------------------------------------------------------------------------------------------
+    
     purchase_ids = fields.Many2many('purchase.order', string='OC', readonly=True)
     check_solicitudes = fields.Boolean(default=False, compute='solicitud_reduccion')
     albaran = fields.Many2one('stock.picking', 'Albaran')
@@ -86,10 +99,18 @@ class SaleOrder(models.Model):
 
 
     def _prepare_invoice(self):
-        vals = super(SaleOrder,self)._prepare_invoice()
+        # V18 ------------------------------------------------------------------------------------------------------------
+        #vals = super(SaleOrder,self)._prepare_invoice()
+        # V18 ------------------------------------------------------------------------------------------------------------
+
+        # V19 ------------------------------------------------------------------------------------------------------------
+        vals = super()._prepare_invoice()
+        # V19 ------------------------------------------------------------------------------------------------------------
+        
         vals.update({'l10n_mx_edi_usage':self.partner_id.x_studio_uso_de_cfdi})
         vals.update({'l10n_mx_edi_payment_method_id':self.partner_id.x_studio_mtodo_de_pago})
         return vals
+        
 
     # @api.onchange('requirements_line_ids')
     # def onchange_requirements_line_ids(self):
@@ -149,16 +170,19 @@ class SaleOrder(models.Model):
         for rec in self.order_line:
             rec.get_stock()
 
-    @api.model
-    def create(self, vals):
-        if 'user_id' in vals:
-            vals['user_id'] = self.env.user.id
-        res =  super(SaleOrder, self).create(vals)
-        if not res.payment_term_id:
-            res.write({'payment_term_id': res.partner_id.property_payment_term_id })
-        adjuntos = res.x_otros_documentos
-        for adjunto in adjuntos:
-            adjunto.write({'res_model': self._name, 'res_id': res.id})
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if 'user_id' in vals:
+                vals['user_id'] = self.env.user.id
+        records =  super().create(vals_list)
+        # res =  super().create(vals)
+        for res in records:
+            if not res.payment_term_id:
+                res.write({'payment_term_id': res.partner_id.property_payment_term_id })
+            adjuntos = res.x_otros_documentos
+            for adjunto in adjuntos:
+                adjunto.write({'res_model': self._name, 'res_id': res.id})
         return res
 
     @api.depends('amount_total')
@@ -443,7 +467,13 @@ class SaleOrder(models.Model):
     def action_view_invoice(self):
         if len(self)==1:
             self.invoice_ids.write({'sale_id': self.id})
-        return super(SaleOrder, self).action_view_invoice()
+        # V18 ------------------------------------------------------------------------------------------------------------
+        # return super(SaleOrder, self).action_view_invoice()
+        # V18 ------------------------------------------------------------------------------------------------------------
+    
+        # V19 ------------------------------------------------------------------------------------------------------------
+        return super().action_view_invoice()
+        # V19 ------------------------------------------------------------------------------------------------------------
 
     @api.depends('partner_id', 'partner_child')
     def get_partner(self):
@@ -479,7 +509,14 @@ class SaleOrder(models.Model):
                 record.check_solicitudes = False
 
     def write(self, vals):
-        res = super(SaleOrder, self).write(vals)
+        # V18 ------------------------------------------------------------------------------------------
+        #res = super(SaleOrder, self).write(vals)
+        # V18 ------------------------------------------------------------------------------------------
+
+        # V19 ------------------------------------------------------------------------------------------
+        res = super().write(vals)
+        # V19 ------------------------------------------------------------------------------------------
+        
         if self.picking_ids:
             stock_pick = self.picking_ids.filtered(lambda x: '/PICK/' in x.name and x.state != 'cancel')
             if len(stock_pick) == 1:
@@ -600,7 +637,13 @@ class SaleOrder(models.Model):
             if self.solicito_validacion:
                 self.write({'state': 'sale_conf', 'solicito_validacion': False})
             else:
-                r = super(SaleOrder, self).action_confirm()
+                # V18 -------------------------------------------------------------------------------
+                # r = super(SaleOrder, self).action_confirm()
+                # V18 -------------------------------------------------------------------------------
+
+                # V19 -------------------------------------------------------------------------------
+                r = super().action_confirm()
+                # V19 -------------------------------------------------------------------------------
                 # for ol in self.order_line:
                 #     ol.product_id.qty_available = ol.product_id.qty_available - ol.product_uom_qty
                 #     self.env['stock.quant']._update_available_quantity(ol.product_id, self.warehouse_id.lot_stock_id, -(ol.product_id.qty_available - ol.product_uom_qty))
@@ -641,12 +684,24 @@ class SaleOrder(models.Model):
         else:
             if self.purchase_ids:
                 if self.env.user.has_group ('purchase.group_purchase_manager'):
-                    return super(SaleOrder, self).action_cancel()
+                    # V18 --------------------------------------------------------------
+                    #return super(SaleOrder, self).action_cancel()
+                    # V18 --------------------------------------------------------------
+
+                    # V19 --------------------------------------------------------------
+                    return super().action_cancel()
+                    # V19 --------------------------------------------------------------
                 else:
                     self.message_post(body="Existen OC en proceso", type='notification')
                     self.write({'state': 'done', 'x_aprovacion_compras': True})
             else:
-                return super(SaleOrder, self).action_cancel()
+                # V18 --------------------------------------------------------------
+                # return super(SaleOrder, self).action_cancel()
+                # V18 --------------------------------------------------------------
+
+                # V19 --------------------------------------------------------------
+                return super().action_cancel()
+                # V19 --------------------------------------------------------------
 
 
 class SaleOrderLine(models.Model):
@@ -838,7 +893,7 @@ class SaleOrderLine(models.Model):
         self.limit_price()
         #return r
 
-    @api.onchange('product_uom', 'product_uom_qty')
+    @api.onchange('product_uom_id', 'product_uom_qty')
     def product_uom_change(self):
         #Se guarda el precio unitario antiguo para que en el caso de que se cambien las cantidades no se recalcule precio unitario
         old_price = self.price_unit
@@ -933,7 +988,13 @@ class SaleAdvancePay(models.TransientModel):
             _logger.error(f"l10n_mx_edi_usage {partner_id_uso_cfdi}")
             
             s.invoice_ids.write({'l10n_mx_edi_usage': s.partner_id_uso_cfdi})
-            r = super(SaleAdvancePay, self).create_invoices()
+            # V18 --------------------------------------------------------------
+            # r = super(SaleAdvancePay, self).create_invoices()
+            # V18 --------------------------------------------------------------
+
+            # V19 --------------------------------------------------------------
+            r = super().create_invoices()
+            # V19 --------------------------------------------------------------
             _logger.error(f"r {r}")
         return r
 
@@ -1145,6 +1206,7 @@ class SaleInvoice(models.TransientModel):
 
 class SaleInvoiceWizard(models.TransientModel):
     _name = 'sale.line.wizar'
+    _description = 'Wizard linea orden'
     sale_line_id = fields.Many2one('sale.order.line')
     order_id = fields.Many2one(related='sale_line_id.order_id')
     product_id = fields.Many2one(related='sale_line_id.product_id')
@@ -1158,6 +1220,7 @@ class SaleInvoiceWizard(models.TransientModel):
 
 class ProposalState(models.Model):
     _name = 'proposal.state'
+    _description = 'Estado de propuesta'
     name = fields.Char()
 
 class ProductInherit(models.Model):

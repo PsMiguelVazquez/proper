@@ -10,6 +10,22 @@
                 <xpath expr="//field[@name='user_id']" position="after">
                     <field name="team_id"/>
                 </xpath>
+
+                
+                <!-- <xpath expr="//field[@name='tipo_compra']" position="before"> -->
+                <xpath expr="//form[1]/sheet[1]/group[1]/group[1]" position="inside">
+                    <group>
+                        <div class="col-lg-12">
+                            <field name="x_studio_entre_las_calles" nolabel="1"/>
+                            <field name="x_studio_plano" nolabel="1"/>
+                            <field name="x_sector" nolabel="1"/>
+                            <field name="x_es_cliente" string="Tipo de compañía" nolabel="1"/>
+                            <field name="x_estado_cli_actua" string="Estado de Actualización" nolabel="1"/>
+                            <field name="x_conductor" string="Es conductor" invisible="is_company== True" nolabel="1"/>
+                        </div>
+                    </group>
+                  </xpath>
+                
                 <xpath expr="//form[1]/sheet[1]/group[1]/group[2]" position="after">
                     <group string="Horario de Atención" name="horario_atencion" class="o-row">
                         <group>

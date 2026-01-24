@@ -6,16 +6,23 @@ from datetime import datetime
 
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
-    state = fields.Selection([
-        ('draft', 'RFQ'),
-        ('sent', 'RFQ Sent'),
-        ('to approve', 'To Approve'),
-        ('purchase', 'Purchase Order'),
-        ('done', 'Locked'),
-        ('cancel', 'Cancelled'),
-        ('consolidate', 'Consolidada'),
-    ], string='Status', readonly=True, index=True, copy=False, default='draft', tracking=True)
+    # V18 ---------------------------------------------------------------------------------
+    # Se comenta campo state por que no es la forma correcta de agregar un valor al campo.
+    # state = fields.Selection([
+    #     ('draft', 'RFQ'),
+    #     ('sent', 'RFQ Sent'),
+    #     ('to approve', 'To Approve'),
+    #     ('purchase', 'Purchase Order'),
+    #     ('done', 'Locked'),
+    #     ('cancel', 'Cancelled'),
+    #     ('consolidate', 'Consolidada'),
+    # ], string='Status', readonly=True, index=True, copy=False, default='draft', tracking=True)
+    # V18 ---------------------------------------------------------------------------------
 
+    # V19 ---------------------------------------------------------------------------------
+    state = fields.Selection(selection_add=[
+        ('consolidate', 'Consolidada')])
+    # V19 ---------------------------------------------------------------------------------
     def view_consolidate_purchase_wizard(self):
         purchase_orders = self.env['purchase.order'].browse(self.env.context.get('active_ids'))
         for po in purchase_orders:

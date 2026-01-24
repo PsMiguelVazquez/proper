@@ -1,6 +1,6 @@
 {
     'name': "Almacén de refacturación",
-
+    'license': 'LGPL-3',
     'summary': """
         Almacén de refacturación""",
 

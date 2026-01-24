@@ -9,7 +9,7 @@
     'maintainer': '',
     'website': '',
 
-    'depends': ['sale', 'vehiculos', 'web_studio', 'sale_purchase_confirm','sale_stock','sale_line_date_planned','sale_management','mail'],
+    'depends': ['sale', 'vehiculos', 'web_studio', 'sale_purchase_confirm','sale_stock','sale_line_date_planned','sale_management','mail', 'account','base'],
     'data': [
             'views/sale_order_view.xml',
             'views/sale_order_mkp.xml',
