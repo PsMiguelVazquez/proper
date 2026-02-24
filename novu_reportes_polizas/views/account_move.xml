@@ -8,8 +8,30 @@
                 <field name="poliza_generada" invisible="1"/>
             </xpath>
             <header>
-                <button string="Descargar Poliza" name="descarga_poliza" type="object"
+                <!-- <button string="Descargar Poliza" name="descarga_poliza" type="object"
                         attrs="{'invisible': [('poliza_generada', '=', False)]}"/>
+                -->
+                <button string="Descargar Poliza" name="descarga_poliza" type="object"
+                        invisible="1"/>
+                <button name="descargar_poliza_provision" 
+                    string="Descargar Póliza Diario" 
+                    type="object" 
+                    class="oe_highlight"
+                    attrs="{'invisible': ['|',('state', '!=', 'posted'), ('move_type', 'not in', ['out_invoice', 'in_invoice'])]}"/>
+
+                 <button name="descargar_poliza_pago" 
+                    string="Descargar Póliza Ingreso" 
+                    type="object" 
+                    class="oe_highlight"
+                     attrs="{'invisible': ['|',('payment_state', 'not in', ['in_payment', 'paid']),('move_type', 'not in', ['out_invoice'])]}"
+                />
+                <button name="descargar_poliza_pago"
+                    string="Descargar Póliza Egreso"
+                    type="object"
+                    class="oe_highlight"
+                    attrs="{'invisible': ['|',('payment_state', 'not in', ['in_payment', 'paid']),('move_type', '!=', 'in_invoice')]}"/>
+
+                
             </header>
         </field>
     </record>

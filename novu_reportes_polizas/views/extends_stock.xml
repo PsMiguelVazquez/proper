@@ -1,0 +1,18 @@
+<odoo>
+    <data>
+        <record id="view_picking_form_inherit_poliza" model="ir.ui.view">
+            <field name="name">stock.picking.form.inherit.poliza</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button name="action_descargar_poliza_diario" 
+                            string="Descargar Póliza Contable" 
+                            type="object" 
+                            class="oe_highlight"
+                            attrs="{'invisible': [('state', '!=', 'done')]}"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

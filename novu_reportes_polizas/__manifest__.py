@@ -13,6 +13,7 @@
          'security/ir.model.access.csv',
          'data/secuencia_poliza_diario.xml',
          'views/reportes_polizas_wizard.xml',
+        'views/extends_stock.xml',
         'views/account_move.xml',
     ],
     'installable': True,
