@@ -117,11 +117,14 @@ def successful_response(status, data=None):
 
     """
     try:
-        data = data.ids
+        _logger.error(f"data: {data}")
+        data1 = data.ids
     except AttributeError:
         pass
 
-    return request.make_json_response(data, status=status)
+    return request.make_response(json.dumps(data),
+        headers=[('Content-Type', 'application/json')])
+    # return request.make_json_response(data, status=status)
 
 
 ##########################
@@ -141,18 +144,21 @@ def authenticate_token_for_user(token):
     :raise: werkzeug.exceptions.HTTPException if user not found.
     """
     user = request.env["res.users"].sudo().search([("openapi_token", "=", token)])
-    _logger.error("compañias")
-    _logger.error(user.company_ids)
+    # _logger.error("compañias")
+    # _logger.error(user.company_ids)
     if user.exists():
         # copy-pasted from odoo.http.py:OpenERPSession.authenticate()
         request.session.uid = user.id
         request.session.login = user.login
+        _logger.error(f"request.session.uid: {request.session.uid}, request.session.login: {request.session.login}")
         request.session.session_token = user.id and security.compute_session_token(
             request.session, request.env
         )
-        request.update_env(user=user.id)
+        # request.update_env(user=user.id)
 
         return user
+
+        # return user
     raise werkzeug.exceptions.HTTPException(
         response=error_response(*CODE__no_user_auth)
     )
@@ -261,7 +267,8 @@ def get_namespace_by_name_from_users_namespaces(
     :raise: werkzeug.exceptions.HTTPException if the namespace is not contained
                                               in allowed user namespaces.
     """
-    namespace = request.env["openapi.namespace"].search([("name", "=", namespace_name)])
+    #user = authenticate_token_for_user(user_token)
+    namespace = request.env["openapi.namespace"].with_user(user.id).search([("name", "=", namespace_name)])
 
     if not namespace.exists() and raise_exception:
         raise werkzeug.exceptions.HTTPException(
@@ -359,10 +366,13 @@ def route(controller_method):
                 request.httprequest.headers, raise_exception=True
             )
             db_name, user_token = get_data_from_auth_header(auth_header)
+            _logger.error(f"db_name: {db_name}, user_token: {user_token}")
             authenticated_user = authenticate_token_for_user(user_token)
+            _logger.error(f"authenticated_user: {authenticated_user}")
             namespace = get_namespace_by_name_from_users_namespaces(
                 authenticated_user, ikwargs["namespace"], raise_exception=True
             )
+            _logger.error(f"namespace: {namespace}")
             data_for_log = {
                 "namespace_id": namespace.id,
                 "namespace_log_request": namespace.log_request,
@@ -371,6 +381,7 @@ def route(controller_method):
                 "user_request": None,
                 "user_response": None,
             }
+            _logger.error(f"data_for_log: {data_for_log}")
 
             try:
                 response = controller_method(*iargs, **ikwargs)
@@ -773,7 +784,7 @@ def wrap__resource__call_method(modelname, ids, method, method_params, success_c
 
     if len(ids) <= 1 and len(results):
         results = results[0]
-    model_obj.flush_model()  # to recompute fields
+    model_obj.flush()  # to recompute fields
     return successful_response(success_code, data=results)
 
 

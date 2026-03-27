@@ -10,7 +10,9 @@ import werkzeug
 from odoo import http
 from odoo.tools import date_utils
 
-from odoo.addons.web.controllers.utils import ensure_db
+# from odoo.addons.web.controllers.utils import ensure_db
+# PARA V15
+from odoo.addons.web.controllers.main import ensure_db
 
 _logger = logging.getLogger(__name__)
 

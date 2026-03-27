@@ -222,7 +222,8 @@ class ApiV1Controller(http.Controller):
         #json_data = http.request.json
         _logger.error("JSONDATA2")
         _logger.error(json_data)
-        method_params = request.get_json_data()
+        _logger.error(request)
+        method_params = json_data
         _logger.error("params")
         _logger.error(method_params)
         conf = pinguin.get_model_openapi_access(namespace, model)
