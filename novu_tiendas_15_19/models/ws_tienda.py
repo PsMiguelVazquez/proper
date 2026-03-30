@@ -58,6 +58,36 @@ class WsTienda(models.Model):
             return self.RespuestaWSTienda(False, e.pgcode if hasattr(e, "pgcode") else '-1',\
                                                                             e.name if hasattr(e, "name") else str(e), '')
 
+    def CrearOportunidad(self, *args):
+        _logger.error("ENTRE Crear")
+        for oportunidad in args:
+            try: 
+                json_oportunidad = oportunidad['infoOportunidad']
+                registro_oportunidad = {
+                    'name': json_oportunidad['name'],
+                    'email_from': json_oportunidad['email_from'],
+                    'phone': json_oportunidad['phone'],
+                    'contact_name': json_oportunidad['contact_name'],
+                    'source_id': json_oportunidad['source_id'],
+                    'captado_en': json_oportunidad['captado_en'],
+                    'mensaje': json_oportunidad['mensaje'],
+                    'type': 'opportunity'
+                    }
+    
+                oportunidad_modelo = self.env['crm.lead']
+                resultado_oportunidadCreada = oportunidad_modelo.create(registro_oportunidad)
+                jsListaOpertunidadCreada = []
+                
+                jsListaOpertunidadCreada.append(self._generarDiccionarioGenerico(resultado_oportunidadCreada))
+                
+                return self.RespuestaWSTienda(True, 0, "exitosa", jsListaOpertunidadCreada)
+    
+            except Exception as e:
+                _logger.error(e)
+                return self.RespuestaWSTienda(False, e.pgcode if hasattr(e, "pgcode") else '-1',\
+                                                                                e.name if hasattr(e, "name") else str(e), "")
+            
+
 
     def _generarDiccionarioGenerico(self, record):
         jsRespuesta = {
@@ -70,6 +100,7 @@ class WsTienda(models.Model):
     def _generarDiccionarioProducto(self, record):
         jsRespuesta = {
             'id': record.id,
+            'product_tmpl_id': record.product_tmpl_id.id,
             'name': record.name,
             'type': record.detailed_type,
             'unspsc_code_id': record.unspsc_code_id.id,

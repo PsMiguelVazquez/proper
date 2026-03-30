@@ -118,12 +118,37 @@ def successful_response(status, data=None):
     """
     try:
         _logger.error(f"data: {data}")
-        data1 = data.ids
+        data1 = data.get("catalogo")
+        if isinstance(data, dict):
+            data1 = data.get("id")
+        else:
+            data1 = None
+        _logger.error(f"data1: {data1}")
     except AttributeError:
+        _logger.error("error")
         pass
+    _logger.error("lo hare")
+    # response = request.make_response(
+    #     json.dumps(data, default=str),
+    #     headers=[('Content-Type', 'application/json')]
+    # )
 
-    return request.make_response(json.dumps(data),
-        headers=[('Content-Type', 'application/json')])
+    return {
+        "status_code": 200,
+        "data": data or {}
+    }
+    #response.status_code = 200
+    # return request.make_response(
+    #     json.dumps(data, default=str), 
+    #     headers=[('Content-Type', 'application/json')])
+    
+    # response = request.make_response(
+    #     json.dumps(data or {}),
+    #     headers=[('Content-Type', 'application/json')]
+    # )
+    # _logger.error(f"response: {response}")
+    # return response
+    # return request._json_response(data)
     # return request.make_json_response(data, status=status)
 
 
@@ -319,11 +344,12 @@ def _create_log_record(
     :returns: New 'openapi.log' record.
     :rtype: ..models.openapi_log.Log
     """
+    status = getattr(user_response, "status_code", 200)
     if True:  # just to keep original indent
         log_data = {
             "namespace_id": namespace_id,
             "request": "%s | %s | %d"
-            % (user_request.url, user_request.method, user_response.status_code),
+            % (user_request.url, user_request.method, status),
             "request_data": None,
             "response_data": None,
         }
@@ -339,7 +365,7 @@ def _create_log_record(
 
         if namespace_log_response == "debug":
             log_data["response_data"] = user_response.__dict__
-        elif namespace_log_response == "error" and user_response.status_code > 400:
+        elif namespace_log_response == "error" and status > 400:
             log_data["response_data"] = user_response.__dict__
 
         return env["openapi.log"].create(log_data)
@@ -781,10 +807,11 @@ def wrap__resource__call_method(modelname, ids, method, method_params, success_c
         result = getattr(record, method)(*args, **kwargs)
         _logger.error("Rcasi2")
         results.append(result)
-
+        _logger.error(f"results {results}")
     if len(ids) <= 1 and len(results):
         results = results[0]
     model_obj.flush()  # to recompute fields
+    # _logger.error(f"successful_response(success_code, data=results): successful_response(success_code, data=results)")
     return successful_response(success_code, data=results)
 
 

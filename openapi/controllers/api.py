@@ -178,7 +178,7 @@ class ApiV1Controller(http.Controller):
     @http.route(
         _api_endpoint_model_id_method,
         methods=["PATCH"],
-        type="http",
+        type="json",
         auth="none",
         csrf=False,
     )
@@ -187,10 +187,15 @@ class ApiV1Controller(http.Controller):
         _logger.error("patch1")
         _logger.error(method_name)
         _logger.error(id)
-        json_data = http.request.json
+        json_data = {}
+        if http.request.httprequest.data:
+            try:
+                json_data = json.loads(http.request.httprequest.data)
+            except ValueError as e:
+                _logger.error(f"Error al cargar datos JSON: {e}")
         _logger.error("JSONDATA")
         _logger.error(json_data)
-        method_params = request.get_json_data()
+        method_params = json_data
         conf = pinguin.get_model_openapi_access(namespace, model)
         pinguin.method_is_allowed(method_name, conf["method"])
         return pinguin.wrap__resource__call_method(
@@ -205,7 +210,7 @@ class ApiV1Controller(http.Controller):
     @http.route(
         [_api_endpoint_model_method, _api_endpoint_model_method_ids],
         methods=["PATCH"],
-        type="http",
+        type="json",
         auth="none",
         csrf=False,
     )
@@ -217,6 +222,7 @@ class ApiV1Controller(http.Controller):
         if http.request.httprequest.data:
             try:
                 json_data = json.loads(http.request.httprequest.data)
+                _logger.error(f"json_data: {json_data}")
             except ValueError as e:
                 _logger.error(f"Error al cargar datos JSON: {e}")
         #json_data = http.request.json

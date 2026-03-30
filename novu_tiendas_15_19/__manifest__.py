@@ -15,5 +15,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/product_template_views.xml',
+        'views/crm_lead_views.xml',
+        
     ]
 }
