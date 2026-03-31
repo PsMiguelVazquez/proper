@@ -528,12 +528,14 @@ def get_model_openapi_access(namespace, model):
     """
     # TODO: this method has code duplicates with openapi specification code (e.g. get_OAS_definitions_part)
     cr, uid = request.cr, request.session.uid
+    _logger.error(f"cr: {cr}, uid: {uid}")
     # Singleton by construction (_sql_constraints)
     openapi_access = (
         request.env(cr, uid)["openapi.access"]
         .sudo()
         .search([("model_id", "=", model), ("namespace_id.name", "=", namespace)])
     )
+    _logger.error(f"openapi_access: {openapi_access}")
     if not openapi_access.exists():
         raise werkzeug.exceptions.HTTPException(
             response=error_response(*CODE__canned_ctx_not_found)
@@ -593,6 +595,8 @@ def get_model_openapi_access(namespace, model):
     else:
         res["method"]["main"]["mode"] = "custom"
 
+    _logger.error(f"res: {res}")
+
     return res
 
 
@@ -615,6 +619,7 @@ def wrap__resource__create_one(modelname, context, data, success_code, out_field
     :rtype: werkzeug.wrappers.Response
     """
     model_obj = get_model_for_read(modelname)
+    _logger.error(f"model_obj: {model_obj}")
     try:
         created_obj = model_obj.with_context(context).create(data)
         test_mode = request.registry.test_cr
@@ -626,8 +631,9 @@ def wrap__resource__create_one(modelname, context, data, success_code, out_field
             request.env.cr.commit()
     except Exception as e:
         return error_response(400, type(e).__name__, str(e))
-
+    
     out_data = get_dict_from_record(created_obj, out_fields, (), ())
+    _logger.error(f"out_data: {out_data}")
     return successful_response(success_code, out_data)
 
 

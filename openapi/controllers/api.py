@@ -78,15 +78,24 @@ class ApiV1Controller(http.Controller):
 
     # CreateOne
     @http.route(
-        _api_endpoint_model, methods=["POST"], type="http", auth="none", csrf=False
+        _api_endpoint_model, methods=["POST"], type="json", auth="none", csrf=False
     )
     @pinguin.route
     def create_one__POST(self, namespace, model):
-        data = request.get_json_data()
+        # data = request.get_json_data()
+        json_data = {}
+        if http.request.httprequest.data:
+            try:
+                json_data = json.loads(http.request.httprequest.data)
+                _logger.error(f"json_data: {json_data}")
+            except ValueError as e:
+                _logger.error(f"Error al cargar datos JSON: {e}")
         conf = pinguin.get_model_openapi_access(namespace, model)
+        _logger.error(f"conf: {conf}")
         pinguin.method_is_allowed(
             "api_create", conf["method"], main=True, raise_exception=True
         )
+        _logger.error(f"conf: {conf}")
         # FIXME: What is contained in context and for what?
         # # If context is not a python dict
         # # TODO unwrap
@@ -97,7 +106,7 @@ class ApiV1Controller(http.Controller):
         return pinguin.wrap__resource__create_one(
             modelname=model,
             context=conf["context"],
-            data=data,
+            data=json_data,
             success_code=pinguin.CODE__created,
             out_fields=conf["out_fields_read_one"],
         )
