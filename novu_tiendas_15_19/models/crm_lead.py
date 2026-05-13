@@ -15,7 +15,7 @@ class CrmLead(models.Model):
     def create(self, vals):
         if vals.get('captado_en') == 'PROPER V19':
             vendedor = self.env['res.users'].search([
-                ('login', '=', 'soporte@a-pro.com.mx')
+                ('login', '=', 'mercadotecnia-ps@properservices.com.mx')
             ], limit=1)
 
             if vendedor:
