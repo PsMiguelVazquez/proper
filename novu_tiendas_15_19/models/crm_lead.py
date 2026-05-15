@@ -21,4 +21,8 @@ class CrmLead(models.Model):
             if vendedor:
                 vals['user_id'] = vendedor.id
 
+            if vals.get('mensaje'):
+                msj = vals.get('mensaje')
+                vals['description'] = msj
+
         return super(CrmLead, self).create(vals)
