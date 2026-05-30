@@ -10,6 +10,13 @@ class CrmLead(models.Model):
 
     captado_en = fields.Char(string="Captado en")
     mensaje = fields.Char(string="Mensaje de interes")
+    tamanio_empresa = fields.Selection(
+        string="Tamaño de la empresa",
+        selection=[('1_50', '1 - 50 Empleados'),
+                    ('51_200', '51 - 200 Empleados'),
+                    ('201_1000', '201 - 1000 Empleados'),
+                    ('1000_plus', '+ 1000 Empleados')]
+                   )
 
     @api.model
     def create(self, vals):

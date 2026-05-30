@@ -117,17 +117,17 @@ def successful_response(status, data=None):
 
     """
     try:
-        _logger.error(f"data: {data}")
+        # _logger.error(f"data: {data}")
         data1 = data.get("catalogo")
         if isinstance(data, dict):
             data1 = data.get("id")
         else:
             data1 = None
-        _logger.error(f"data1: {data1}")
+        # _logger.error(f"data1: {data1}")
     except AttributeError:
-        _logger.error("error")
+        # _logger.error("error")
         pass
-    _logger.error("lo hare")
+    # _logger.error("lo hare")
     # response = request.make_response(
     #     json.dumps(data, default=str),
     #     headers=[('Content-Type', 'application/json')]
@@ -175,7 +175,7 @@ def authenticate_token_for_user(token):
         # copy-pasted from odoo.http.py:OpenERPSession.authenticate()
         request.session.uid = user.id
         request.session.login = user.login
-        _logger.error(f"request.session.uid: {request.session.uid}, request.session.login: {request.session.login}")
+        # _logger.error(f"request.session.uid: {request.session.uid}, request.session.login: {request.session.login}")
         request.session.session_token = user.id and security.compute_session_token(
             request.session, request.env
         )
@@ -392,13 +392,13 @@ def route(controller_method):
                 request.httprequest.headers, raise_exception=True
             )
             db_name, user_token = get_data_from_auth_header(auth_header)
-            _logger.error(f"db_name: {db_name}, user_token: {user_token}")
+            # _logger.error(f"db_name: {db_name}, user_token: {user_token}")
             authenticated_user = authenticate_token_for_user(user_token)
-            _logger.error(f"authenticated_user: {authenticated_user}")
+            # _logger.error(f"authenticated_user: {authenticated_user}")
             namespace = get_namespace_by_name_from_users_namespaces(
                 authenticated_user, ikwargs["namespace"], raise_exception=True
             )
-            _logger.error(f"namespace: {namespace}")
+            # _logger.error(f"namespace: {namespace}")
             data_for_log = {
                 "namespace_id": namespace.id,
                 "namespace_log_request": namespace.log_request,
@@ -407,7 +407,7 @@ def route(controller_method):
                 "user_request": None,
                 "user_response": None,
             }
-            _logger.error(f"data_for_log: {data_for_log}")
+            # _logger.error(f"data_for_log: {data_for_log}")
 
             try:
                 response = controller_method(*iargs, **ikwargs)
@@ -528,14 +528,14 @@ def get_model_openapi_access(namespace, model):
     """
     # TODO: this method has code duplicates with openapi specification code (e.g. get_OAS_definitions_part)
     cr, uid = request.cr, request.session.uid
-    _logger.error(f"cr: {cr}, uid: {uid}")
+    # _logger.error(f"cr: {cr}, uid: {uid}")
     # Singleton by construction (_sql_constraints)
     openapi_access = (
         request.env(cr, uid)["openapi.access"]
         .sudo()
         .search([("model_id", "=", model), ("namespace_id.name", "=", namespace)])
     )
-    _logger.error(f"openapi_access: {openapi_access}")
+    # _logger.error(f"openapi_access: {openapi_access}")
     if not openapi_access.exists():
         raise werkzeug.exceptions.HTTPException(
             response=error_response(*CODE__canned_ctx_not_found)
@@ -595,7 +595,7 @@ def get_model_openapi_access(namespace, model):
     else:
         res["method"]["main"]["mode"] = "custom"
 
-    _logger.error(f"res: {res}")
+    # _logger.error(f"res: {res}")
 
     return res
 
@@ -619,7 +619,7 @@ def wrap__resource__create_one(modelname, context, data, success_code, out_field
     :rtype: werkzeug.wrappers.Response
     """
     model_obj = get_model_for_read(modelname)
-    _logger.error(f"model_obj: {model_obj}")
+    # _logger.error(f"model_obj: {model_obj}")
     try:
         created_obj = model_obj.with_context(context).create(data)
         test_mode = request.registry.test_cr
@@ -633,7 +633,7 @@ def wrap__resource__create_one(modelname, context, data, success_code, out_field
         return error_response(400, type(e).__name__, str(e))
     
     out_data = get_dict_from_record(created_obj, out_fields, (), ())
-    _logger.error(f"out_data: {out_data}")
+    # _logger.error(f"out_data: {out_data}")
     return successful_response(success_code, out_data)
 
 
@@ -648,10 +648,10 @@ def wrap__resource__read_all(modelname, success_code, out_fields,**kg):
     :rtype: werkzeug.wrappers.Response
     """
     data = get_dictlist_from_model(modelname, out_fields,**kg)
-    _logger.error("dataaaaa")
+    # _logger.error("dataaaaa")
     reorder = kg.get("reorder")
     if reorder is None:
-         _logger.error("none")
+        _logger.error("none")
     elif reorder:#Se usa para modificar la salida del json como lo solicito el cliente
         new_pre_data = []
         company_id_string = kg.get("company_id")
@@ -659,10 +659,10 @@ def wrap__resource__read_all(modelname, success_code, out_fields,**kg):
         if company_id_string:
             elementos = company_id_string.strip('[]').split(',')
             ids_companies_filter = [int(elemento) for elemento in elementos]
-            _logger.error(ids_companies_filter)
+            # _logger.error(ids_companies_filter)
          
         i = 0;
-        _logger.error("attributes")
+        # _logger.error("attributes")
         for record in data:
             flag_add = False
             if company_id_string:
@@ -751,7 +751,7 @@ def wrap__resource__unlink_one(modelname, id, success_code):
 
 
 def ejecutarcompra():
-    _logger.error("jiji")
+    # _logger.error("jiji")
     return "jeje"
 
 
@@ -770,7 +770,7 @@ def wrap__resource__call_method(modelname, ids, method, method_params, success_c
     
    
     model_obj = get_model_for_read(modelname)
-    _logger.error("casi")
+    # _logger.error("casi")
     #_logger.error(model_obj)
     #_logger.error([model_obj])
     
@@ -785,9 +785,9 @@ def wrap__resource__call_method(modelname, ids, method, method_params, success_c
         
     if not hasattr(model_obj, method):
         return error_response(*CODE__invalid_method)
-    _logger.error("1")
+    # _logger.error("1")
     records = model_obj.browse(ids).exists()
-    _logger.error("2")
+    # _logger.error("2")
     results = []
     #args = method_params.get("args", [])
 
@@ -797,23 +797,23 @@ def wrap__resource__call_method(modelname, ids, method, method_params, success_c
         args = method_params
     else:
         args = [] 
-    _logger.error("3")
+    # _logger.error("3")
     #kwargs = method_params.get("kwargs", {})
     if "kwargs" in method_params:
         args = method_params["kwargs"]
     else:
         kwargs = {}
-    _logger.error("4")
-    _logger.error(method_params)
-    _logger.error(args)
+    # _logger.error("4")
+    # _logger.error(method_params)
+    # _logger.error(args)
     
     for record in records or [model_obj]:
-        _logger.error("Rcasi")
-        _logger.error(record)
+        # _logger.error("Rcasi")
+        # _logger.error(record)
         result = getattr(record, method)(*args, **kwargs)
-        _logger.error("Rcasi2")
+        # _logger.error("Rcasi2")
         results.append(result)
-        _logger.error(f"results {results}")
+        # _logger.error(f"results {results}")
     if len(ids) <= 1 and len(results):
         results = results[0]
     model_obj.flush()  # to recompute fields

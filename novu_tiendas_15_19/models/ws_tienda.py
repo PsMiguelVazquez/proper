@@ -36,6 +36,25 @@ class WsTienda(models.Model):
             return self.RespuestaWSTienda(False, e.pgcode if hasattr(e, "pgcode") else '-1',\
                                                                             e.name if hasattr(e, "name") else str(e), '')
 
+    def ObtenerCategoriasPublicas(self, *args):
+        # _logger.error("ENTRE XD")
+        try:
+            product_public_categories = self.env['product.public.category'].search([])
+            _logger.error(f"product_public_categories: {product_public_categories} XD")
+            jsListaProductPublicCategories = []
+
+            for product_public_category in product_public_categories:
+                jsListaProductPublicCategories.append(self._generarDiccionarioGenerico(product_public_category))
+
+            jsListaProductPublicCategories = sorted(jsListaProductPublicCategories, key=lambda x: x["id"])
+            _logger.error(f"jsListaProductPublicCategories: {jsListaProductPublicCategories} XD")
+
+            return self.RespuestaWSTienda(True, 0, "exitosa", jsListaProductPublicCategories)
+
+        except Exception as e:
+            return self.RespuestaWSTienda(False, e.pgcode if hasattr(e, "pgcode") else '-1',\
+                                                                            e.name if hasattr(e, "name") else str(e), '')
+
     def ObtenerProductosTiendaProper(self, *args):
         _logger.error("ENTRE 2 XD")
         try:
@@ -107,8 +126,7 @@ class WsTienda(models.Model):
             'default_code': record.default_code,
             'categ_id': record.categ_id.id,
             'uom_id': record.uom_id.id,
-            'image_19_20': record.image_1920,
-            
+            'public_categ_ids': record.public_categ_ids.ids
         }
 
         return jsRespuesta
