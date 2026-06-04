@@ -767,57 +767,30 @@ def wrap__resource__call_method(modelname, ids, method, method_params, success_c
               otherwise error response
     :rtype: werkzeug.wrappers.Response
     """
-    
-   
     model_obj = get_model_for_read(modelname)
-    # _logger.error("casi")
-    #_logger.error(model_obj)
-    #_logger.error([model_obj])
     
-    #_logger.error(method)
-    #for record in [model_obj]:
-        #_logger.error("recordmod")
-        #metodo = getattr(record, "create_records")
-        #_logger.error("recordmod2")
-        #resultado = metodo()
-        #_logger.error("recordmod3")
-        #_logger.error(resultado)
-        
     if not hasattr(model_obj, method):
         return error_response(*CODE__invalid_method)
-    # _logger.error("1")
+    
     records = model_obj.browse(ids).exists()
-    # _logger.error("2")
     results = []
-    #args = method_params.get("args", [])
-
-    if "args" in method_params:
-        args = method_params["args"]
-    elif method_params:
-        args = method_params
-    else:
-        args = [] 
-    # _logger.error("3")
-    #kwargs = method_params.get("kwargs", {})
-    if "kwargs" in method_params:
-        args = method_params["kwargs"]
-    else:
-        kwargs = {}
-    # _logger.error("4")
-    # _logger.error(method_params)
-    # _logger.error(args)
+    
+    # CORRECCIÓN AQUÍ:
+    args = method_params.get("args", [])
+    kwargs = method_params.get("kwargs", {})
+    
+    # Si no hay args ni kwargs explícitos, asumir que method_params son los kwargs
+    if not args and not kwargs and method_params:
+        kwargs = method_params  # ← Esto es lo correcto
     
     for record in records or [model_obj]:
-        # _logger.error("Rcasi")
-        # _logger.error(record)
         result = getattr(record, method)(*args, **kwargs)
-        # _logger.error("Rcasi2")
         results.append(result)
-        # _logger.error(f"results {results}")
+    
     if len(ids) <= 1 and len(results):
         results = results[0]
-    model_obj.flush()  # to recompute fields
-    # _logger.error(f"successful_response(success_code, data=results): successful_response(success_code, data=results)")
+    
+    model_obj.flush()
     return successful_response(success_code, data=results)
 
 

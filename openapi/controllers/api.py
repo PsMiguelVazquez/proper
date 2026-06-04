@@ -243,8 +243,19 @@ class ApiV1Controller(http.Controller):
         _logger.error(method_params)
         conf = pinguin.get_model_openapi_access(namespace, model)
         pinguin.method_is_allowed(method_name, conf["method"])
-        ids = ids and ids.split(",") or []
-        ids = [int(i) for i in ids]
+        # CORRECCIÓN AQUÍ:
+        # Si el método es ObtenerImagenProducto, los IDs vienen en method_params, no en la URL
+        if method_name == "ObtenerImagenProducto" or method_name == "ObtenerImagenesProductos":
+            # Extraer product_ids del json_data y usarlos como ids
+            product_ids = json_data.get('product_ids', [])
+            if product_ids:
+                # Convertir strings a enteros si es necesario
+                ids = [int(pid) if isinstance(pid, str) else pid for pid in product_ids]
+            else:
+                ids = []
+        else:
+            ids = ids and ids.split(",") or []
+            ids = [int(i) for i in ids]
         return pinguin.wrap__resource__call_method(
             modelname=model,
             ids=ids,
