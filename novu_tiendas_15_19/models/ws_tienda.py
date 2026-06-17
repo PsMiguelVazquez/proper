@@ -21,14 +21,14 @@ class WsTienda(models.Model):
         # _logger.error("ENTRE XD")
         try:
             product_categories = self.env['product.category'].search([])
-            _logger.error(f"product_categories: {product_categories} XD")
+            #_logger.error(f"product_categories: {product_categories} XD")
             jsListaProductCategories = []
 
             for product_category in product_categories:
                 jsListaProductCategories.append(self._generarDiccionarioGenerico(product_category))
 
             jsListaProductCategories = sorted(jsListaProductCategories, key=lambda x: x["id"])
-            _logger.error(f"jsListaProductCategories: {jsListaProductCategories} XD")
+            #_logger.error(f"jsListaProductCategories: {jsListaProductCategories} XD")
 
             return self.RespuestaWSTienda(True, 0, "exitosa", jsListaProductCategories)
 
@@ -40,14 +40,14 @@ class WsTienda(models.Model):
         # _logger.error("ENTRE XD")
         try:
             product_public_categories = self.env['product.public.category'].search([])
-            _logger.error(f"product_public_categories: {product_public_categories} XD")
+            #_logger.error(f"product_public_categories: {product_public_categories} XD")
             jsListaProductPublicCategories = []
 
             for product_public_category in product_public_categories:
                 jsListaProductPublicCategories.append(self._generarDiccionarioGenerico(product_public_category))
 
             jsListaProductPublicCategories = sorted(jsListaProductPublicCategories, key=lambda x: x["id"])
-            _logger.error(f"jsListaProductPublicCategories: {jsListaProductPublicCategories} XD")
+            #_logger.error(f"jsListaProductPublicCategories: {jsListaProductPublicCategories} XD")
 
             return self.RespuestaWSTienda(True, 0, "exitosa", jsListaProductPublicCategories)
 
@@ -56,20 +56,20 @@ class WsTienda(models.Model):
                                                                             e.name if hasattr(e, "name") else str(e), '')
 
     def ObtenerProductosTiendaProper(self, *args):
-        _logger.error("ENTRE 2 XD")
+        #_logger.error("ENTRE 2 XD")
         try:
             products = self.env['product.product'].search([
                             ('product_tmpl_id.sale_ok', '=', True),
                             ('product_tmpl_id.proper', '=', True)
                         ])
-            _logger.error(f"products: {products} XD")
+            #_logger.error(f"products: {products} XD")
             jsListaProducts = []
 
             for product in products:
                 jsListaProducts.append(self._generarDiccionarioProducto(product))
 
             jsListaProducts = sorted(jsListaProducts, key=lambda x: x["id"])
-            _logger.error(f"jsListaProducts: {jsListaProducts} XD")
+            #_logger.error(f"jsListaProducts: {jsListaProducts} XD")
 
             return self.RespuestaWSTienda(True, 0, "exitosa", jsListaProducts)
 
@@ -78,9 +78,9 @@ class WsTienda(models.Model):
                                                                             e.name if hasattr(e, "name") else str(e), '')
 
     def ObtenerImagenProducto(self, *args, **kwargs):
-        _logger.error("ENTRE MBCT 2 XD")
-        _logger.error(f"args: {args}")
-        _logger.error(f"kwargs: {kwargs}")
+        #_logger.error("ENTRE MBCT 2 XD")
+        #_logger.error(f"args: {args}")
+        #_logger.error(f"kwargs: {kwargs}")
         try:
             # Los parámetros pueden venir en diferentes lugares
             product_ids = None
@@ -99,14 +99,14 @@ class WsTienda(models.Model):
                 # Esto es un hack - mejor arreglar el wrapper
                 param_name = args[0]
                 # No tenemos el valor porque el wrapper lo perdió
-                _logger.error(f"Error: El wrapper pasó solo el nombre '{param_name}' sin su valor")
+                #_logger.error(f"Error: El wrapper pasó solo el nombre '{param_name}' sin su valor")
                 return {'error': 'Parámetro mal formado'}
             if product_ids and isinstance(product_ids, list):
                 # Convierte strings a enteros, mantiene los que ya son enteros
                 product_ids = [int(pid) if isinstance(pid, str) and pid.isdigit() else pid for pid in product_ids]
                 # Filtra solo los que son enteros (por si algún string no era número)
                 product_ids = [pid for pid in product_ids if isinstance(pid, int)]
-            _logger.error(f"product_ids final: {product_ids}")
+            #_logger.error(f"product_ids final: {product_ids}")
             
             if product_ids:
                 productos = self.env['product.product'].search([('id', 'in', product_ids)])
@@ -118,7 +118,7 @@ class WsTienda(models.Model):
     
                 jsListaImageProducts = sorted(jsListaImageProducts, key=lambda x: x["id"])
                 # _logger.error(f"jsListaImageProducts: {jsListaImageProducts}")
-                _logger.error(f"Finalice sincronizacion IMGs XD")
+                #_logger.error(f"Finalice sincronizacion IMGs XD")
     
                 return self.RespuestaWSTienda(True, 0, "exitosa", jsListaImageProducts)
 
@@ -127,7 +127,7 @@ class WsTienda(models.Model):
                                                                             e.name if hasattr(e, "name") else str(e), '')
 
     def CrearOportunidad(self, *args):
-        _logger.error("ENTRE Crear")
+        #_logger.error("ENTRE Crear")
         for oportunidad in args:
             try: 
                 json_oportunidad = oportunidad['infoOportunidad']
