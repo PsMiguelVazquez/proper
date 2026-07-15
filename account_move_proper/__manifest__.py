@@ -12,21 +12,28 @@
     'author': "Jonathan Alfaro",
     'website': "",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
+    'license': 'LGPL-3',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base','account','product','l10n_mx_edi', 'stock'],
-
-    # always loaded
-    'data': [
-        #'security/ir.model.access.csv',
-        #'wizard/upload_invoice_view.xml',
-        'views/views.xml'
-        #'views/templates.xml',
+    # MIGRACIÓN V19: `l10n_mx_edi` pasó a ser un módulo Enterprise (en 15.0
+    # era Community); se sirve desde `/home/odoo19/odoo/enterprise`.
+    # `account_move_update_field_label` (campo `version_cfdi`),
+    # `costo_promedio_proper` (campo `fecha_recepcion_cliente` en
+    # `stock.picking`), `upload_invoice_wizard` (`repair_invoice()` usa el
+    # modelo/vista `upload.invoice.wizard`), `res_partner_fields` (campos
+    # `x_nom_corto_agente_venta`/`x_nombre_corto_tpago`/`x_estado_cli_actua`
+    # en `res.partner`, ahora formalizados como código real) y
+    # `sale_purchase_confirm` (campo `x_studio_n_orden_de_compra` en
+    # `sale.order`) son dependencias reales usadas en Python por este
+    # módulo, no declaradas en el manifest original de v15.
+    'depends': [
+        'base', 'account', 'product', 'l10n_mx_edi', 'stock',
+        'account_move_update_field_label', 'costo_promedio_proper',
+        'upload_invoice_wizard', 'res_partner_fields', 'sale_purchase_confirm',
     ],
 
+    'data': [
+        'views/views.xml',
+    ],
 }

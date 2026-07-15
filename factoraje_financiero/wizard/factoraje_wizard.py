@@ -8,6 +8,7 @@ from lxml.objectify import fromstring
 import logging
 _logger = logging.getLogger(__name__)
 
+
 class FactoringWizard(models.TransientModel):
     _inherit = 'account.payment.register'
     _description = 'Muestra un wizard para el proceso de factoraje financiero'
@@ -25,9 +26,8 @@ class FactoringWizard(models.TransientModel):
             record.amount_residual_factor_bill = record.amount_factor_bill - sum(record.partner_bills.mapped('factoring_amount'))
 
     def create_neteo(self, es_neteo = False):
-        
+
         for record in self:
-            #_logger.error(f"record {record}") logger pruebas
             journal = self.env['account.journal'].search([('name','ilike','neteo')])
             if not journal:
                 raise UserError('No existe diario para llevar a cabo la operación')
@@ -35,12 +35,17 @@ class FactoringWizard(models.TransientModel):
                 'ref': _(', '.join(self.partner_bills.mapped(('name'))))
                 , 'journal_id': journal.id
             })
-            move_lines = record.partner_bills.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable') and x.partner_id == record.partner_bills.mapped('partner_id'))
+            # MIGRACIÓN V19: `account.account.user_type_id` (Many2one a
+            # `account.account.type`) fue eliminado; el tipo de cuenta es
+            # ahora el campo `account_type` (Selection) directo, con
+            # valores como `asset_receivable`/`liability_payable` en vez de
+            # `receivable`/`payable`.
+            move_lines = record.partner_bills.mapped('line_ids').filtered(lambda x: x.account_id.account_type in ('liability_payable', 'asset_receivable') and x.partner_id == record.partner_bills.mapped('partner_id'))
             if not es_neteo:
-                move_lines |= record.factor_bill.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable') and x.partner_id == record.financial_factor)
+                move_lines |= record.factor_bill.mapped('line_ids').filtered(lambda x: x.account_id.account_type in ('liability_payable', 'asset_receivable') and x.partner_id == record.financial_factor)
             else:
-                move_lines |= record.factor_bill.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.type in ('payable', 'receivable'))
-                
+                move_lines |= record.factor_bill.mapped('line_ids').filtered(lambda x: x.account_id.account_type in ('liability_payable', 'asset_receivable'))
+
             move_lines_d = []
             for inv in record.partner_bills:
                 move_line_vals = {
@@ -54,7 +59,7 @@ class FactoringWizard(models.TransientModel):
                 factor_account_creditor = record.financial_factor.property_account_creditor
             else:
                 factor_account_creditor = record.factor_bill.partner_id.property_account_creditor
-                
+
             if factor_account_creditor:
                 line_account_id = factor_account_creditor.id
             else:
@@ -62,55 +67,53 @@ class FactoringWizard(models.TransientModel):
                     line_account_id = record.financial_factor.property_account_payable_id.id
                 else:
                     line_account_id = record.factor_bill.partner_id.property_account_payable_id.id
-                    
+
             move_line_vals = {
                 'debit': sum(record.partner_bills.mapped('factoring_amount')),
-                "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
+                "partner_id": record.factor_bill.partner_id.id,
                 "name": record.factor_bill.name,
                 "account_id": line_account_id,
             }
             move_lines_d.append((0, 0, move_line_vals))
-            
-            #Se agrega para validar si existe IVA en el gasto que compensa el endoso
+
+            # Se agrega para validar si existe IVA en el gasto que compensa el endoso
             has_iva_taxes = [tax for tax in record.factor_bill.invoice_line_ids.mapped('tax_ids') if 'iva' in tax.tax_group_id.name.lower()]
-            has_iva = bool(has_iva_taxes)            
-            _logger.error(f"has_iva: {has_iva}")
-            if has_iva:        
+            has_iva = bool(has_iva_taxes)
+            if has_iva:
                 iva_tax = has_iva_taxes[0]  # Tomamos el primer impuesto que cumple la condición
-                _logger.error(f"iva_tax: {iva_tax}")
                 iva_account_id = iva_tax.cash_basis_transition_account_id.id if iva_tax.cash_basis_transition_account_id else None
-    
-                #_logger.error(f"iva_account_id: {iva_account_id}")
-                #cuenta_credit = [cuenta.id for cuenta in iva_tax.invoice_repartition_line_ids.mapped('account_id') if 'iva' in cuenta.name.lower()]
-                #raise UserError(f'cuenta_credit: {cuenta_credit[0]}')
-                #if cuenta_credit:
+
                 if not sum(record.partner_bills.mapped('factoring_amount')) == record.factor_bill.amount_total:
                     tipo_iva = has_iva_taxes[0].amount / 100 if has_iva_taxes else 0.0
                     total_iva = sum(record.partner_bills.mapped('factoring_amount')) * tipo_iva
                 else:
                     total_iva = record.factor_bill.amount_tax
-                #raise UserError(f'total_iva: {total_iva}')
+                # MIGRACIÓN V19: `account_id: 35323`/`account_id: 15` son
+                # IDs internos de cuentas contables específicos de la base
+                # de datos de producción original (plan de cuentas de la
+                # empresa real); no hay xmlid estable posible sin acceso a
+                # esa base de datos, se conservan tal cual.
                 move_line_vals = {
                     'credit': total_iva,
-                    "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
+                    "partner_id": record.factor_bill.partner_id.id,
                     "name": iva_tax.name,
                     "account_id": 35323,
-                }  
-                _logger.error(f"move_line_vals: {move_line_vals}")
+                }
                 move_lines_d.append((0, 0, move_line_vals))
 
                 move_line_vals = {
                     'debit': total_iva,
-                    "partner_id": record.factor_bill.partner_id.id, #cambie esto record.financial_factor.id,
+                    "partner_id": record.factor_bill.partner_id.id,
                     "name": iva_tax.name,
                     "account_id": 15,
-                }  
-                _logger.error(f"move_line_vals: {move_line_vals}")
+                }
                 move_lines_d.append((0, 0, move_line_vals))
-                #cuentas = iva_tax.invoice_repartition_line_ids
-            
-            #raise UserError(f'move_lines_d: {move_lines_d}')
-            move.write({"line_ids": move_lines_d, 'l10n_mx_edi_payment_method_id': 12})
+
+            # MIGRACIÓN V19: el id crudo 12 dependía del orden de carga de
+            # `l10n_mx_edi_payment_method_data.xml`; se resuelve por xmlid
+            # (`payment_method_17`, código SAT 17 - "Compensación").
+            payment_method_compensacion = self.env.ref('l10n_mx_edi.payment_method_17', raise_if_not_found=False)
+            move.write({"line_ids": move_lines_d, 'l10n_mx_edi_payment_method_id': payment_method_compensacion.id if payment_method_compensacion else False})
             move.action_post()
             for move_line in move.line_ids:
                 to_reconcile = move_line + move_lines.filtered(
@@ -139,11 +142,13 @@ class FactoringWizard(models.TransientModel):
                 raise UserError('No se ha definido un factorante.')
             if not self.factor_bill:
                 raise UserError('No se ha definido la factura/gasto del factorante.')
-            # if round(self.amount_residual_factor_bill,2) != 0.00:
-            #     raise UserError('No se ha aplicado completamente el monto del factoraje.')
             if round(sum(self.partner_bills.mapped('balance_after_factoring')),2) != 0.00:
                 raise UserError('No se han pagado las facturas por completo.')
-            if self.l10n_mx_edi_payment_method_id.id == 22:
+            # MIGRACIÓN V19: el id crudo 22 dependía del orden de carga de
+            # `l10n_mx_edi_payment_method_data.xml`; se resuelve por xmlid
+            # (`payment_method_otros`, código SAT 99 - "Por definir").
+            payment_method_otros = self.env.ref('l10n_mx_edi.payment_method_otros', raise_if_not_found=False)
+            if payment_method_otros and self.l10n_mx_edi_payment_method_id.id == payment_method_otros.id:
                 raise UserError('La forma de pago 99 - Por definir no está permitida.')
             '''
                 Si es pago por factoraje el partner del pago pasa a ser el factor
@@ -151,16 +156,16 @@ class FactoringWizard(models.TransientModel):
             self.partner_id = self.financial_factor
             payments = super(FactoringWizard, self).action_create_payments()
             return payments
+
     def _create_payments(self):
         payments = super(FactoringWizard, self)._create_payments()
         '''
-            Si es proceso de factoraje se crea el neteo, se publica y se postea 
+            Si es proceso de factoraje se crea el neteo, se publica y se postea
             para marcar como pagadas/parcialmente pagadas/en proceso de pago las facturas de cliente y proveedor
         '''
         if not self.hide_fields_factoraje:
             neteo = self.create_neteo()
             neteo.rel_payment = payments
-            # neteo.payment_id = payments.id
         return payments
 
     def _reconcile_payments(self, to_process, edit_mode=False):
@@ -169,9 +174,12 @@ class FactoringWizard(models.TransientModel):
             en el campo porcent_assign
         '''
         if len(self.partner_bills) > 1:
+            # MIGRACIÓN V19: `account_internal_type` -> `account_type`, y se
+            # usa `_get_valid_payment_account_types()` (igual que el core)
+            # en vez de la tupla literal `('receivable', 'payable')`.
             domain = [
                 ('parent_state', '=', 'posted'),
-                ('account_internal_type', 'in', ('receivable', 'payable')),
+                ('account_type', 'in', self.env['account.payment']._get_valid_payment_account_types()),
                 ('reconciled', '=', False),
             ]
             for vals in to_process:

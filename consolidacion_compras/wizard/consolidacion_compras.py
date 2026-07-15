@@ -3,7 +3,8 @@ from datetime import datetime
 
 from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
-from lxml.objectify import fromstring
+
+
 class ConsolidacionWizardPurchase(models.TransientModel):
     _name = 'consolidacion.compras.wizard'
     _description = 'Muestra un wizard para el proceso consolidar compras'
@@ -13,11 +14,11 @@ class ConsolidacionWizardPurchase(models.TransientModel):
     wizard_lines = fields.Many2many('pwizard.line', string='Líneas')
     partner_ref = fields.Char(string='Referencia del proveedor')
 
+    @api.model_create_multi
     def create(self, vals_list):
-        r = super(ConsolidacionWizardPurchase, self).create(vals_list)
-        if r:
-            r._compute_lines()
-        return r
+        records = super().create(vals_list)
+        records._compute_lines()
+        return records
 
     def done_consolidar_compra(self):
         self.purchase_orders.state = 'consolidate'
@@ -46,11 +47,13 @@ class ConsolidacionWizardPurchase(models.TransientModel):
                               "Se consolidó esta orden desde: " +
                               ", ".join([("<a href=# data-oe-model=purchase.order data-oe-id=%d>%s</a>")%(x.id, x.name)
                                         for x in self.purchase_orders]))
-            purchase_order.message_post(body=msg, type="notification")
+            # MIGRACIÓN V19: `message_post(..., type=...)` -> `message_type`
+            # (además, todos los parámetros de message_post son keyword-only).
+            purchase_order.message_post(body=msg, message_type="notification")
             msg2 = ("Esta orden forma parte de la consolidación: <a href=# data-oe-model=purchase.order data-oe-id=%d>%s</a>") % (
                                 purchase_order.id, purchase_order.name)
             for order in self.purchase_orders:
-                order.message_post(body=msg2, type="notification")
+                order.message_post(body=msg2, message_type="notification")
 
 
     def _compute_lines(self):
@@ -103,4 +106,3 @@ class ConsolidarCompraLine(models.TransientModel):
         for record in self:
             record.price_subtotal = record.product_qty * record.price_unit
             record.price_total = record.price_subtotal * (1 + record.product_id.taxes_id.amount/100)
-

@@ -12,22 +12,23 @@
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
+    'license': 'LGPL-3',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base', 'account','l10n_mx_edi'],
+    # MIGRACIÓN V19: `porcent_assign` (account.move) es de `add_invoice_to_paid`
+    # (Lote 3); `endoso.move` es de `endoso_proper`; el contexto
+    # `paid_amount` en `_reconcile_payments` lo interpreta el
+    # `_prepare_reconciliation_single_partial` de `account_payment_widget_amount`
+    # (Lote 1). Instalación+pruebas quedan diferidas hasta que
+    # `add_invoice_to_paid` esté migrado.
+    'depends': ['base', 'account', 'l10n_mx_edi', 'endoso_proper', 'account_payment_widget_amount', 'add_invoice_to_paid'],
 
-    # always loaded
     'data': [
         'views/account_move.xml',
         'wizard/factoraje_wizard_view.xml',
         'wizard/compensate_wizard_view.xml',
         'security/ir.model.access.csv',
-        'data/cfdi4/pago.xml',
         'views/account_payment.xml',
     ],
 }

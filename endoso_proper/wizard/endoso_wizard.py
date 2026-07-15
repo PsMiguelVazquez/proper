@@ -4,6 +4,8 @@ from datetime import datetime
 from odoo import models, fields, _
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
+
+
 class EndosoWizard(models.TransientModel):
     _name = 'endoso.wizard'
     _description = 'Muestra un wizard para el proceso de endoso de facturas'
@@ -16,7 +18,6 @@ class EndosoWizard(models.TransientModel):
     def _compute_amount(self):
         for record in self:
             record.amount = record.factura.amount_residual
-
 
     def done_endoso(self):
         if self:
@@ -44,7 +45,6 @@ class EndosoWizard(models.TransientModel):
                 'journal_id': journal.id,
                 'partner_id': self.cliente.id,
                 'origin_partner_id': invoice.partner_id.id,
-                # 'name': self.env['ir.sequence'].next_by_code('account.move.endoso') or _('New'),
                 'origin_invoice': invoice.id,
                 'amount': invoice.amount_residual,
                 'posted_before': True,
@@ -79,8 +79,10 @@ class EndosoWizard(models.TransientModel):
                 endoso_msg = (
                                  "Este endoso fue creado desde: <a href=# data-oe-model=account.move data-oe-id=%d>%s</a>") % (
                                  invoice.id, invoice.name)
-                invoice.message_post(body=invoice_msg, type="notification")
-                endoso.message_post(body=endoso_msg, type="notification")
+                # MIGRACIÓN V19: `message_post(..., type=...)` ya no es
+                # válido; el kwarg correcto es `message_type`.
+                invoice.message_post(body=invoice_msg, message_type="notification")
+                endoso.message_post(body=endoso_msg, message_type="notification")
                 return {
                     'name': _('Endoso'),
                     'view_mode': 'form',

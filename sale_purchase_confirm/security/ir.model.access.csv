@@ -11,3 +11,9 @@ access_wizard_proposal,salewizard_proposal,model_wizard_proposal,base.group_user
 access_wizard_cancel,salewizard_cancel_proposal,model_wizard_cancel,base.group_user,1,1,1,1
 access_wizard_revali,salewizard_revalid_proposal,model_wizard_revali,base.group_user,1,1,1,1
 access_wizard_puchase_create,salewizard_pucrahse_create_proposal,model_wizard_purchase_create,base.group_user,1,1,1,1
+access_x_fabricante,sale_purchase_confirm.x_fabricante,model_x_fabricante,base.group_user,1,1,1,1
+access_x_familia,sale_purchase_confirm.x_familia,model_x_familia,base.group_user,1,1,1,1
+access_x_linea,sale_purchase_confirm.x_linea,model_x_linea,base.group_user,1,1,1,1
+access_x_grupo,sale_purchase_confirm.x_grupo,model_x_grupo,base.group_user,1,1,1,1
+access_x_client_requirement,sale_purchase_confirm.x_client_requirement,model_x_client_requirement,base.group_user,1,1,1,1
+access_x_proposal_purchase,sale_purchase_confirm.x_proposal_purchase,model_x_proposal_purchase,base.group_user,1,1,1,1

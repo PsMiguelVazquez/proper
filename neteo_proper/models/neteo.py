@@ -4,19 +4,19 @@ from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
 
+
 class Neteo(models.Model):
     _name = 'neteo.move'
     _inherits = {'account.move': 'move_id'}
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Neteos (Pago por compensación)"
+    # MIGRACIÓN V19: desde 19.0, `_inherits` exige declarar explícitamente
+    # el campo Many2one de delegación (antes se creaba implícitamente).
+    move_id = fields.Many2one('account.move', required=True, ondelete='cascade')
     factura_cliente = fields.Many2one('account.move', string='Factura de cliente')
     facturas_proveedor = fields.Many2many('account.move', string='Factura de proveedor')
     amount = fields.Float('Monto pagado')
     partner_id = fields.Many2one('res.partner')
-    # journal_id = fields.Many2one('account.journal')
-
-
-
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -50,5 +50,3 @@ class Neteo(models.Model):
 
     def button_draft(self):
         super(Neteo, self).button_draft()
-
-

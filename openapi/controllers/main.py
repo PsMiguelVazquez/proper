@@ -8,11 +8,11 @@ import logging
 import werkzeug
 
 from odoo import http
-from odoo.tools import date_utils
+from odoo.tools import json_default
 
-# from odoo.addons.web.controllers.utils import ensure_db
-# PARA V15
-from odoo.addons.web.controllers.main import ensure_db
+# MIGRACIÓN V19: `odoo.addons.web.controllers.main` ya no existe;
+# `ensure_db` vive en `odoo.addons.web.controllers.utils`.
+from odoo.addons.web.controllers.utils import ensure_db
 
 _logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class OAS(http.Controller):
             }
 
         return werkzeug.wrappers.Response(
-            json.dumps(namespace.get_OAS(), default=date_utils.json_default),
+            json.dumps(namespace.get_OAS(), default=json_default),
             status=200,
             **response_params
         )

@@ -6,7 +6,6 @@
             <field name="arch" type="xml">
                 <form string="Cambiar cliente">
                     <group class="oe_title">
-<!--                        <field name="client_id" options="{'no_create_edit': True}" domain="[('x_nivel_cliente', '!=', None)]" />-->
                         <field name="client_id" options="{'no_create_edit': True}"  />
                     </group>
                     <footer>

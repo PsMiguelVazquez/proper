@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_res_partner_fields_res_partner_fields,res_partner_fields.res_partner_fields,model_res_partner_fields_res_partner_fields,base.group_user,1,1,1,1
+access_x_categoria_compania,access_x_categoria_compania,model_x_categoria_compania,base.group_user,1,1,1,1
+access_x_niveles_de_cliente,access_x_niveles_de_cliente,model_x_niveles_de_cliente,base.group_user,1,1,1,1
+access_x_grupo_cliente,access_x_grupo_cliente,model_x_grupo_cliente,base.group_user,1,1,1,1

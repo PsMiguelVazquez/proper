@@ -12,16 +12,15 @@
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
+    'license': 'LGPL-3',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base', 'account','l10n_mx_edi'],
+    # MIGRACIÓN V19: la vista del wizard usa `account.move.porcent_assign`,
+    # campo real definido por `add_invoice_to_paid` (Lote 3). Instalación y
+    # pruebas quedan diferidas hasta que ese módulo esté migrado.
+    'depends': ['base', 'account', 'l10n_mx_edi', 'add_invoice_to_paid'],
 
-    # always loaded
     'data': [
         'views/views.xml',
         'wizard/neteo_wizard_view.xml',

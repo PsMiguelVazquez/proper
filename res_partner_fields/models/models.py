@@ -45,6 +45,69 @@ regimenes = [('601', '601- General de Ley Personas Morales')
     , ('629', '629- De los Regímenes Fiscales Preferentes y de las Empresas Multinacionales')
     , ('630', '630- Enajenación de acciones en bolsa de valores')]
 
+# MIGRACIÓN V19: `x_cat_com`, `x_studio_mtodo_de_pago`, `x_nombre_agente_venta`,
+# `x_nivel_cliente`, `x_nom_corto_agente_venta`, `x_nombre_corto_tpago`,
+# `x_es_marketplace`, `x_grupo_cliente`, `x_estado_cli_actua`,
+# `x_studio_triple_a` y `x_studio_lista_de_precios` eran personalizaciones de
+# Odoo Studio (creadas directamente en la base de datos de producción de
+# v15, sin código de módulo). A partir de esta migración se formalizan aquí
+# como campos reales -con el mismo nombre técnico exacto-, de modo que al
+# actualizar la base de datos de producción real Odoo reconozca las
+# columnas ya existentes y las tome como propias sin perder datos (el campo
+# deja de ser `state='manual'` y pasa a pertenecer a este módulo). Los
+# modelos propios `x_categoria_compania`, `x_niveles_de_cliente` y
+# `x_grupo_cliente` se formalizan igual, con los campos realmente usados por
+# el código (se omiten campos de Studio no referenciados por ninguno de los
+# 36 módulos, como `x_categoria_compania.x_sub_cat`, para no depender de
+# modelos fuera de alcance).
+
+
+class XCategoriaCompania(models.Model):
+    _name = 'x_categoria_compania'
+    _description = 'Categoría de compañía'
+
+    x_name = fields.Char(string='Nombre')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_notes = fields.Text(string='Notas')
+    x_studio_sequence = fields.Integer(string='Secuencia')
+
+
+class XNivelesDeCliente(models.Model):
+    _name = 'x_niveles_de_cliente'
+    _description = 'Niveles de cliente'
+
+    x_name = fields.Char(string='Nivel de cliente')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_res = fields.Many2one('res.partner', string='Cliente')
+    x_studio_descripcin_de_lista_de_precios = fields.Char(string='Descripción de lista de precios')
+    x_studio_lista_de_precios = fields.Selection([
+        ('COMERCIALIZADORAS', 'COMERCIALIZADORAS'),
+        ('CATÁLOGOS (ILEALTAD)', 'CATÁLOGOS (ILEALTAD)'),
+        ('CATÁLOGOS VENTA DIRECTA', 'CATÁLOGOS VENTA DIRECTA'),
+        ('CORPORATIVOS', 'CORPORATIVOS'),
+    ], string='Lista de precios')
+    x_studio_sequence = fields.Integer(string='Secuencia')
+
+
+class XGrupoCliente(models.Model):
+    _name = 'x_grupo_cliente'
+    _description = 'Grupo de cliente'
+
+    x_name = fields.Char(string='Nombre')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_responsable_grupo_cliente = fields.Many2one('res.users', string='Responsable')
+    x_studio_sequence = fields.Integer(string='Secuencia')
+
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+    x_studio_clave_del_vendedor_1 = fields.Char(string='Clave Corta')
+
+
+class AccountPaymentTerm(models.Model):
+    _inherit = 'account.payment.term'
+    x_nombre_corto = fields.Char(string='Nombre corto')
+
 
 class res_partner_fields(models.Model):
     _inherit = 'res.partner'
@@ -53,15 +116,53 @@ class res_partner_fields(models.Model):
     codigo_metodo_pago = fields.Char(string="Codigo forma de pago", compute='_compute_codigo_metodo_pago', store=False)
     x_studio_uso_de_cfdi = fields.Selection(string="Uso de CFDI", selection=usos)
     l10n_mx_edi_fiscal_regime = fields.Selection(selection=regimenes)
+
+    x_cat_com = fields.Many2one('x_categoria_compania', string='Categoría')
+    x_studio_mtodo_de_pago = fields.Many2one('l10n_mx_edi.payment.method', string='Forma de Pago')
+    x_nombre_agente_venta = fields.Char(string='nombre de agente de venta')
+    x_nivel_cliente = fields.Many2one('x_niveles_de_cliente', string='Nivel del cliente')
+    x_nombre_corto_tpago = fields.Char(
+        string='Política de pago', related='property_payment_term_id.x_nombre_corto', readonly=True)
+    x_es_marketplace = fields.Boolean(string='Marketplace')
+    x_grupo_cliente = fields.Many2one('x_grupo_cliente', string='Grupo')
+    x_estado_cli_actua = fields.Selection([('3.3', '3.3'), ('4', '4')], string='Cliente Actualizado')
+    x_studio_triple_a = fields.Boolean(string='Triple A')
+    x_studio_lista_de_precios = fields.Selection([
+        ('COMERCIALIZADORAS', 'COMERCIALIZADORAS'),
+        ('CATÁLOGOS (ILEALTAD)', 'CATÁLOGOS (ILEALTAD)'),
+        ('CATÁLOGOS VENTA DIRECTA', 'CATÁLOGOS VENTA DIRECTA'),
+        ('CORPORATIVOS', 'CORPORATIVOS'),
+    ], string='Lista de precios')
+    x_nom_corto_agente_venta = fields.Char(
+        string='Clave de agente de venta', compute='_compute_nom_corto_agente_venta', store=True, readonly=True)
+    # MIGRACIÓN V19: usado por `sale_purchase_confirm` (account.move.supervisor_credito).
+    x_nombre_supervisor_credito = fields.Many2one('res.users', string='Nombre del supervisor de crédito')
+
+    @api.depends('sales_agent', 'sales_agent.x_studio_clave_del_vendedor_1')
+    def _compute_nom_corto_agente_venta(self):
+        for record in self:
+            if record.sales_agent:
+                record.x_nom_corto_agente_venta = record.sales_agent.x_studio_clave_del_vendedor_1
+            else:
+                record.x_nom_corto_agente_venta = False
+
     @api.onchange('x_cat_com')
     def _on_change_categoria(self):
+        # MIGRACIÓN V19: `team_id` no es un campo real de `res.partner` (ni
+        # en el core ni en el export de Studio -sin prefijo `x_`, no es una
+        # personalización de Studio-); ya era una referencia muerta en
+        # 15.0. Se conserva el guard defensivo por no tener forma de
+        # resolverlo con los datos disponibles.
+        if 'team_id' not in self._fields:
+            return
         for record in self:
+            if not record.x_cat_com:
+                continue
             team_id = self.env['crm.team'].search([('name', '=', record.x_cat_com.x_name)])
             if team_id:
                 record.team_id = team_id
 
-
-
+    @api.depends('x_studio_uso_de_cfdi')
     def _compute_codigo_uso_cfdi(self):
         for record in self:
             if record.x_studio_uso_de_cfdi:
@@ -69,6 +170,7 @@ class res_partner_fields(models.Model):
             else:
                 record.codigo_uso_cfdi = ''
 
+    @api.depends('x_studio_mtodo_de_pago')
     def _compute_codigo_metodo_pago(self):
         for record in self:
             if record.x_studio_mtodo_de_pago:
@@ -79,21 +181,22 @@ class res_partner_fields(models.Model):
     @api.onchange('sales_agent')
     def _on_change_sales_agent(self):
         for record in self:
-            self.x_nombre_agente_venta = record.sales_agent.name
+            record.x_nombre_agente_venta = record.sales_agent.name
 
     @api.onchange('property_account_position_id')
     def _on_change_property_account_position_id(self):
         for record in self:
             try:
                 record.l10n_mx_edi_fiscal_regime = record.property_account_position_id.name.split('-')[0].strip()
-            except:
-                record.l10n_mx_edi_fiscal_regime =''
+            except Exception:
+                record.l10n_mx_edi_fiscal_regime = ''
 
     @api.onchange('x_nivel_cliente')
     def _on_change_level(self):
         for record in self:
-            if record.x_nivel_cliente:
-                partner = record.commercial_partner_id
-                for par in partner:
-                    message = "Se configuró el nivel de cliente " + record.x_nivel_cliente.x_name + ' para el usuario ' + record.name
-                    par.message_post(body=message, type="notification", partner_ids=[record.create_uid.partner_id.id])
+            if not record.x_nivel_cliente:
+                continue
+            partner = record.commercial_partner_id
+            for par in partner:
+                message = "Se configuró el nivel de cliente " + record.x_nivel_cliente.x_name + ' para el usuario ' + record.name
+                par.message_post(body=message, message_type="notification", partner_ids=[record.create_uid.partner_id.id])

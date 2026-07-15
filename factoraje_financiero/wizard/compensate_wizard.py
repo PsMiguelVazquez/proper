@@ -5,6 +5,8 @@ from datetime import datetime
 from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
+
+
 class CompensateWizard(models.TransientModel):
     _inherit = 'account.payment.register'
     _description = 'Muestra un wizard para el proceso de compensación.'
@@ -22,4 +24,3 @@ class CompensateWizard(models.TransientModel):
             inv.write({'factoring_amount': inv.porcent_assign})
         r = self.create_neteo(True)
         return r
-

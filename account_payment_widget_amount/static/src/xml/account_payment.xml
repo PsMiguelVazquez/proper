@@ -1,34 +1,32 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <templates xml:space="preserve">
 
-    <t t-name="PaymentAmountPopOver">
-        <div class="js_payment_amount_div">
-            <table>
-                <tr>
-                    <td style="padding-right:20px;"><strong
-                            style="white-space: nowrap;"
-                        >Paid Amount: </strong></td>
-                    <td t-if="position == 'before'"><t t-esc="currency" /></td>
-                    <td style="text-align:right;">
-                        <input
-                            type="number"
-                            name="currency-field"
-                            id="paid_amount"
-                            class="o_website_form_input"
-                            data-type="number"
-                            placeholder=""
-                            t-att-amount="amount"
-                        />
-                    </td>
-                    <td t-if="position == 'after'"><t t-esc="currency" /></td>
-                </tr>
-            </table>
+    <!-- MIGRACIÓN V19: reemplaza static/src/xml/account_payment.xml (t-name
+         "PaymentAmountPopOver", cargado vía web.assets_qweb en 15.0). El
+         popover "Add" ahora se abre desde el componente OWL
+         account.AccountPaymentField; este template extiende el suyo
+         (account.AccountPaymentField) para que el link "Add" abra primero
+         este popover de monto en vez de asignar directamente. -->
+    <t t-name="account_payment_widget_amount.AccountPaymentField"
+       t-inherit="account.AccountPaymentField" t-inherit-mode="extension">
+        <xpath expr="//a[hasclass('outstanding_credit_assign')]" position="attributes">
+            <attribute name="t-on-click.prevent">(ev) => this.onOutstandingCreditAssignClick(ev, info.moveId, line)</attribute>
+        </xpath>
+    </t>
+
+    <t t-name="account_payment_widget_amount.PaymentAmountPopOver">
+        <div class="js_payment_amount_div p-2">
+            <div class="d-flex align-items-center mb-2">
+                <strong class="me-2 text-nowrap">Paid Amount:</strong>
+                <input type="number"
+                       step="0.01"
+                       class="o_input"
+                       style="max-width: 8rem;"
+                       t-model.number="state.amount"/>
+            </div>
+            <button class="btn btn-sm btn-primary js_payment_amount w-100"
+                    t-on-click="onApplyClick">Apply</button>
         </div>
-        <button
-            class="btn btn-xs btn-primary js_payment_amount pull-right"
-            t-att-id="id"
-            style="margin-top:5px; margin-bottom:5px;"
-        >Apply</button>
     </t>
 
 </templates>

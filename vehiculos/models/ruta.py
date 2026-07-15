@@ -18,14 +18,15 @@ class CreacionRuta(Model):
     odometro=fields.Integer()
     nivel_tanque=fields.Selection([["reserva","Reserva"],[".25","1/4"],[".5","1/2"],[".75","3/4"],["1","Lleno"]])
     tipo=fields.Selection([["local","Local"],["foraneo","Foraneo"],["guadalajara","Guadalajara"],["monterrey","Monterrey"],["queretaro","Querétaro"]])
-    EstadoPais=fields.Many2one('res.country.state',string="Estado")
-    EstadoPaisName=fields.Char(related='EstadoPais.name',string="Estado")
+    EstadoPais=fields.Many2one('res.country.state',string="Estado (ubicación)")
+    EstadoPaisName=fields.Char(related='EstadoPais.name',string="Estado (ubicación, texto)")
     ticket=fields.Char()
-    #almacen=fields.Many2one('stock.warehouse')
-    #picking_type=fields.Many2many('stock.picking.type')
     usuarios = fields.Many2many('res.users')
     arreglo=fields.Char()
-    active = fields.Boolean('Active', default=True, track_visibility=True)
+    # MIGRACIÓN V19: `creacion.ruta` no hereda mail.thread, así que
+    # `tracking=True` no es un parámetro válido aquí (a diferencia de
+    # `automovil`, que sí lo hereda).
+    active = fields.Boolean('Active', default=True)
 
     def confirmar(self):
         if len(self.ordenes) > 0:
@@ -33,9 +34,6 @@ class CreacionRuta(Model):
             self.ordenes.write({'estado':'ruta'})
             self.ordenes.write({'ajusta':True})
             self.estado="valido"
-            #if(self.chofer.id):
-            #    us=self.env['res.users'].search([['id','=', 1380]])
-            #    _logger.info(us.name)
             if(self.odometro==0 and self.tipo.lower()=="local"):
                 raise UserError(_('Tiene que ingresas el Odometro'))
             for o in self.ordenes:
@@ -43,7 +41,7 @@ class CreacionRuta(Model):
             odometroAnterior = self.env['fleet.vehicle.odometer'].search([['vehicle_id','=',self.vehiculo.id]], order='id desc',limit=1)
             odometroAnt = odometroAnterior.value if(odometroAnterior.id) else 0
             if(odometroAnt>=self.odometro and self.tipo.lower()=="local"):
-                raise UserError(_('Registro de odometro invalido debe ser mayor al anterior. Favor de revisar'))    
+                raise UserError(_('Registro de odometro invalido debe ser mayor al anterior. Favor de revisar'))
             if(self.odometro>odometroAnt):
                 self.vehiculo.write({'driver_id': self.chofer.partner_id.id})
                 self.env['fleet.vehicle.assignation.log'].create({'vehicle_id': self.vehiculo.id, 'driver_id': self.chofer.partner_id.id, 'date_start': fields.Date.today(), 'date_end': fields.Date.today()})
@@ -51,12 +49,12 @@ class CreacionRuta(Model):
         else:
             raise UserError(_('No se ha selaccionado ninguna orden'))
 
-    @api.model
-    def create(self, vals):
-        vals['name'] = self.env['ir.sequence'].next_by_code('ruta') or _('New')
-        result = super(CreacionRuta, self).create(vals)
-        return result
-    
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            vals['name'] = self.env['ir.sequence'].next_by_code('ruta') or _('New')
+        return super(CreacionRuta, self).create(vals_list)
+
     @api.onchange('tipo')
     def dominio(self):
         res={}

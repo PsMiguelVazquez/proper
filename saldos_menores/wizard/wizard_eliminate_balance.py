@@ -4,9 +4,11 @@ from datetime import datetime
 
 from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
-from lxml.objectify import fromstring
+
+
 class WizardEliminateBalance(models.TransientModel):
     _name = 'wizard.eliminate.balance'
+    _description = 'Eliminación de saldos menores'
 
     move_date = fields.Date(string='Fecha del movimiento')
     from_date = fields.Date(string='Desde')
@@ -17,13 +19,20 @@ class WizardEliminateBalance(models.TransientModel):
     payments = fields.Many2many('account.payment', string='Pagos')
     lines = fields.Many2many('wizard.eliminate.line', compute='_get_wizard_lines')
     account_id = fields.Many2one('account.account')
+    # MIGRACIÓN V19: `journal_id=3` es un id interno hardcodeado de la base de
+    # producción de 15.0 (diario específico para el asiento de eliminación de
+    # saldos). No es portable entre bases de datos; debe verificarse/ajustarse
+    # contra la configuración contable real del entorno de destino.
     journal_id = fields.Many2one('account.journal')
 
-    def create(self, vals):
-        r = super(WizardEliminateBalance, self).create(vals)
-        r.account_id = self.env['account.account'].search([('name', 'ilike', 'GASTOS NO DEDUCIBLES (SIN REQUISITOS FISCALES)')])
-        r.journal_id = self.env['account.journal'].browse(3)
-        return r
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        account = self.env['account.account'].search([('name', 'ilike', 'GASTOS NO DEDUCIBLES (SIN REQUISITOS FISCALES)')], limit=1)
+        journal = self.env['account.journal'].browse(3)
+        records.account_id = account.id
+        records.journal_id = journal.id
+        return records
 
     @api.depends('moves')
     def _get_wizard_lines(self):
@@ -31,7 +40,13 @@ class WizardEliminateBalance(models.TransientModel):
             record.lines = self.env['wizard.eliminate.line']
             lines_list = []
             for move in record.moves:
-                origin_move = self.env['account.move'].browse(move.id.origin)
+                # MIGRACIÓN V19: en 15.0 este código hacía
+                # `self.env['account.move'].browse(move.id.origin)`, lo cual
+                # nunca pudo haber funcionado (`move.id` es un entero, no
+                # tiene atributo `.origin`) - código muerto desde su origen.
+                # El movimiento sobre el que se calculan estos datos es el
+                # propio `move`.
+                origin_move = move
                 lines_list.append({
                     'invoice_name':origin_move.name,
                     'invoice_id': origin_move.id,
@@ -44,7 +59,9 @@ class WizardEliminateBalance(models.TransientModel):
                     'type': 'Factura'
                 })
             for payment in record.payments:
-                origin_move = self.env['account.move'].browse(payment.move_id.id.origin)
+                # MIGRACIÓN V19: mismo caso que arriba
+                # (`payment.move_id.id.origin` nunca funcionó).
+                origin_move = payment.move_id
                 lines_list.append({
                     'invoice_name': origin_move.name,
                     'invoice_id': origin_move.id,
@@ -137,19 +154,22 @@ class WizardEliminateBalance(models.TransientModel):
                           "Se realizó el proceso de eliminación de saldos desde: <a href=# data-oe-model=account.move data-oe-id=%d>%s</a>") % (
                           move.id, move.name)
         for inv in invoices_to_reconcile:
-            inv.message_post(body=invoice_msg, type="notification")
+            # MIGRACIÓN V19: `message_post(..., type=...)` -> el parámetro se
+            # llama `message_type` (además, todos los parámetros de
+            # `message_post` son ahora solo por keyword).
+            inv.message_post(body=invoice_msg, message_type="notification")
 
         msg = (
                 "Se realizó eliminación de saldos: " +
                 ", ".join([("<a href=# data-oe-model=account.move data-oe-id=%d>%s</a>") % (x.id, x.name)
                            for x in invoices_to_reconcile]))
-        move.message_post(body=msg, type="notification")
+        move.message_post(body=msg, message_type="notification")
         result = {
             "type": "ir.actions.act_window",
             "res_model": "account.move",
             "domain": [('id', 'in', invoices_to_reconcile.ids)],
             "context": {"create": False, 'default_move_type': 'out_invoice'},
             "name": _("Customer Invoices"),
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
         }
         return result

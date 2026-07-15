@@ -77,32 +77,36 @@ class ApiV1Controller(http.Controller):
     # #################
 
     # CreateOne
+    # MIGRACIÓN V19: `type="json"` es un alias deprecado de `type="jsonrpc"`
+    # desde 19.0 (sigue funcionando, pero se usa el nombre moderno
+    # directamente para evitar el DeprecationWarning).
+    # MIGRACIÓN V19: `readonly` en `@route()` ahora por defecto es
+    # `auth == 'none'` (ver `odoo/http.py::_check_and_complete_route_definition`),
+    # y todas las rutas de este controlador usan `auth="none"` (la
+    # autenticación real es por token, manual). Sin `readonly=False`
+    # explícito, el cursor abierto es de solo lectura y cualquier
+    # create/write/unlink real falla con "cannot execute ... in a
+    # read-only transaction".
     @http.route(
-        _api_endpoint_model, methods=["POST"], type="json", auth="none", csrf=False
+        _api_endpoint_model,
+        methods=["POST"],
+        type="jsonrpc",
+        auth="none",
+        csrf=False,
+        readonly=False,
     )
     @pinguin.route
     def create_one__POST(self, namespace, model):
-        # data = request.get_json_data()
         json_data = {}
         if http.request.httprequest.data:
             try:
                 json_data = json.loads(http.request.httprequest.data)
-                _logger.error(f"json_data: {json_data}")
             except ValueError as e:
-                _logger.error(f"Error al cargar datos JSON: {e}")
+                _logger.warning("Error al cargar datos JSON: %s", e)
         conf = pinguin.get_model_openapi_access(namespace, model)
-        _logger.error(f"conf: {conf}")
         pinguin.method_is_allowed(
             "api_create", conf["method"], main=True, raise_exception=True
         )
-        _logger.error(f"conf: {conf}")
-        # FIXME: What is contained in context and for what?
-        # # If context is not a python dict
-        # # TODO unwrap
-        # if isinstance(kw.get('context'), basestring):
-        #     context = get_create_context(namespace, model, kw.get('context'))
-        # else:
-        #     context = kw.get('context') or {}
         return pinguin.wrap__resource__create_one(
             modelname=model,
             context=conf["context"],
@@ -121,11 +125,6 @@ class ApiV1Controller(http.Controller):
         pinguin.method_is_allowed(
             "api_read", conf["method"], main=True, raise_exception=True
         )
-       #ORIGINAL return pinguin.wrap__resource__read_all(
-       #     modelname=model,
-       #     success_code=pinguin.CODE__success,
-       #     out_fields=conf["out_fields_read_multi"],
-       # )
         return pinguin.wrap__resource__read_all(
             modelname=model,
             success_code=pinguin.CODE__success,
@@ -152,7 +151,12 @@ class ApiV1Controller(http.Controller):
 
     # UpdateOne
     @http.route(
-        _api_endpoint_model_id, methods=["PUT"], type="http", auth="none", csrf=False
+        _api_endpoint_model_id,
+        methods=["PUT"],
+        type="http",
+        auth="none",
+        csrf=False,
+        readonly=False,
     )
     @pinguin.route
     def update_one__PUT(self, namespace, model, id):
@@ -167,7 +171,12 @@ class ApiV1Controller(http.Controller):
 
     # UnlinkOne
     @http.route(
-        _api_endpoint_model_id, methods=["DELETE"], type="http", auth="none", csrf=False
+        _api_endpoint_model_id,
+        methods=["DELETE"],
+        type="http",
+        auth="none",
+        csrf=False,
+        readonly=False,
     )
     @pinguin.route
     def unlink_one__DELETE(self, namespace, model, id):
@@ -187,23 +196,22 @@ class ApiV1Controller(http.Controller):
     @http.route(
         _api_endpoint_model_id_method,
         methods=["PATCH"],
-        type="json",
+        type="jsonrpc",
         auth="none",
         csrf=False,
+        # No se puede saber de antemano si `method_name` es de solo lectura
+        # (search) o de escritura (write); se abre el cursor en modo
+        # lectura/escritura para no romper los métodos que sí escriben.
+        readonly=False,
     )
     @pinguin.route
-    def call_method_one__PATCH(self, namespace, model, id, method_name,**kw):
-        _logger.error("patch1")
-        _logger.error(method_name)
-        _logger.error(id)
+    def call_method_one__PATCH(self, namespace, model, id, method_name, **kw):
         json_data = {}
         if http.request.httprequest.data:
             try:
                 json_data = json.loads(http.request.httprequest.data)
             except ValueError as e:
-                _logger.error(f"Error al cargar datos JSON: {e}")
-        _logger.error("JSONDATA")
-        _logger.error(json_data)
+                _logger.warning("Error al cargar datos JSON: %s", e)
         method_params = json_data
         conf = pinguin.get_model_openapi_access(namespace, model)
         pinguin.method_is_allowed(method_name, conf["method"])
@@ -219,31 +227,22 @@ class ApiV1Controller(http.Controller):
     @http.route(
         [_api_endpoint_model_method, _api_endpoint_model_method_ids],
         methods=["PATCH"],
-        type="json",
+        type="jsonrpc",
         auth="none",
         csrf=False,
+        readonly=False,
     )
     @pinguin.route
     def call_method_multi__PATCH(self, namespace, model, method_name, ids=None):
-        _logger.error("patch2")
-        _logger.error(method_name)
         json_data = {}
         if http.request.httprequest.data:
             try:
                 json_data = json.loads(http.request.httprequest.data)
-                _logger.error(f"json_data: {json_data}")
             except ValueError as e:
-                _logger.error(f"Error al cargar datos JSON: {e}")
-        #json_data = http.request.json
-        _logger.error("JSONDATA2")
-        _logger.error(json_data)
-        _logger.error(request)
+                _logger.warning("Error al cargar datos JSON: %s", e)
         method_params = json_data
-        _logger.error("params")
-        _logger.error(method_params)
         conf = pinguin.get_model_openapi_access(namespace, model)
         pinguin.method_is_allowed(method_name, conf["method"])
-        # CORRECCIÓN AQUÍ:
         # Si el método es ObtenerImagenProducto, los IDs vienen en method_params, no en la URL
         if method_name == "ObtenerImagenProducto" or method_name == "ObtenerImagenesProductos":
             # Extraer product_ids del json_data y usarlos como ids

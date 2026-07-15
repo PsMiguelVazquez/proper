@@ -1,8 +1,9 @@
-from odoo import fields,models, api, _, modules
+from odoo import fields, models, api, _, modules
 import base64
 import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
 from odoo.exceptions import UserError
+
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
@@ -27,7 +28,7 @@ class AccountMove(models.Model):
                                         if ss.name == "Receptor":
                                             record.use_cfdi = ss.attrs.get("UsoCFDI")
                                             record.nombre_receptor = ss.attrs.get("Nombre")
-                            except:
+                            except Exception:
                                 continue
 
 
@@ -35,7 +36,6 @@ class AccountPayment(models.Model):
     _inherit = 'account.payment'
     use_cfdi = fields.Char('Uso CFDI', compute='get_cfi_use')
     nombre_receptor = fields.Char("Nombre")
-
 
     @api.depends('attachment_ids')
     def get_cfi_use(self):
@@ -55,5 +55,5 @@ class AccountPayment(models.Model):
                                         if ss.name == "Receptor":
                                             record.use_cfdi = ss.attrs.get("UsoCFDI")
                                             record.nombre_receptor = ss.attrs.get("Nombre")
-                            except:
+                            except Exception:
                                 continue

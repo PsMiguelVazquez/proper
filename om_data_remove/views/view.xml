@@ -105,7 +105,9 @@
             <field name="res_model">res.config.settings</field>
             <field name="view_mode">form</field>
             <field name="view_id" ref="view_remove_data"/>
-            <field name="target">inline</field>
+            <!-- MIGRACIÓN V19: 'inline' ya no es un valor válido para
+                 ir.actions.act_window.target (opciones: current/new/fullscreen/main) -->
+            <field name="target">current</field>
         </record>
 
         <menuitem

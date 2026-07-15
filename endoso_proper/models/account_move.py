@@ -4,6 +4,7 @@ from odoo import models, fields, _
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
 
+
 class AccountMove(models.Model):
     _inherit = 'account.move'
     ocultar_endoso = fields.Boolean(string='Ocultar endoso',
@@ -12,14 +13,26 @@ class AccountMove(models.Model):
     es_endoso = fields.Boolean(string='Es endoso')
 
     def is_inbound(self, include_receipts=True):
-        if 'END/' in self.name and self.es_endoso:
+        # MIGRACIÓN V19: `self.name` puede ser `False` (no solo `'/'`) para
+        # registros nuevos/en onchange antes de asignarse una secuencia;
+        # `'END/' in False` lanza TypeError. Se agrega el guard `self.name`.
+        if self.name and 'END/' in self.name and self.es_endoso:
             return True
         return self.move_type in self.get_inbound_types(include_receipts)
 
     def _compute_ocultar_endoso(self):
         for record in self:
-            if self.env['endoso.move'].search([('origin_invoice','=',record.id)]).filtered(lambda x: x.state != 'cancel')\
-                    or self.amount_residual == 0.0 or not self.l10n_mx_edi_cfdi_uuid:
+            # MIGRACIÓN V19: se usaba `self.amount_residual`/`self.l10n_mx_edi_cfdi_uuid`
+            # dentro del bucle (bug preexistente, solo correcto para un
+            # único registro); se corrige a `record.*`. También se evita
+            # `search()` con un `NewId` (registro virtual de un Form/onchange
+            # sin guardar aún), que Odoo 19 ya no tolera silenciosamente
+            # (warning "Domains don't support NewId").
+            has_active_endoso = (
+                isinstance(record.id, int)
+                and bool(self.env['endoso.move'].search([('origin_invoice', '=', record.id)]).filtered(lambda x: x.state != 'cancel'))
+            )
+            if has_active_endoso or record.amount_residual == 0.0 or not record.l10n_mx_edi_cfdi_uuid:
                 record['ocultar_endoso'] = True
             else:
                 record['ocultar_endoso'] = False
@@ -37,5 +50,3 @@ class AccountMove(models.Model):
             'view_id': view.id,
             'target': 'new'
         }
-
-

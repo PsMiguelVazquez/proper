@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <header>
                 <button string="Neteo" name="compensar_factura" type="object"
-                        attrs="{'invisible': ['|', ('state', '=', 'draft'), ('move_type', 'not in', ['out_invoice', 'in_invoice'])]}"/>
+                        invisible="state == 'draft' or move_type not in ('out_invoice', 'in_invoice')"/>
             </header>
         </field>
     </record>
@@ -15,9 +15,9 @@
         <field name="model">neteo.move</field>
         <field name="name">neteo.tree.view</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -28,12 +28,12 @@
             <form>
                 <header>
                         <button name="action_post" string="Confirmar" type="object" class="oe_highlight"
-                                attrs="{'invisible': [('state', '!=', 'draft')]}" data-hotkey="v"/>
+                                invisible="state != 'draft'" data-hotkey="v"/>
                         <button name="action_draft" string="Restablecer a borrador" type="object" class="btn btn-secondary"
-                                attrs="{'invisible': [('state', 'not in', ('posted', 'cancel'))]}"
+                                invisible="state not in ('posted', 'cancel')"
                                 groups="account.group_account_invoice" data-hotkey="w"/>
                         <button name="action_cancel" string="Cancelar" type="object"
-                                attrs="{'invisible': [('state', '!=', 'draft')]}" data-hotkey="z"/>
+                                invisible="state != 'draft'" data-hotkey="z"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                 <sheet>
@@ -48,8 +48,8 @@
                     <field name="move_type" invisible="1"/>
                     <field name="auto_post" invisible="1"/>
                     <div class="oe_title">
-                            <h1 attrs="{'invisible': [('state', '!=', 'draft')]}"><span>Draft</span></h1>
-                            <h1 attrs="{'invisible': [('state', '=', 'draft')]}"><field name="name" readonly="1"/></h1>
+                            <h1 invisible="state != 'draft'"><span>Draft</span></h1>
+                            <h1 invisible="state == 'draft'"><field name="name" readonly="1"/></h1>
                     </div>
                     <group>
                         <group id="left_group">
@@ -59,18 +59,18 @@
                         <group id="right_group">
                             <field name="factura_cliente" readonly="1"/>
                             <field name="facturas_proveedor" readonly="1">
-                                <tree editable="bottom" string="Journal Items">
+                                <list editable="bottom" string="Journal Items">
                                     <field name="name"/>
                                     <field name="amount_total"/>
-                                </tree>
+                                </list>
                             </field>
                             <field name="amount" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
                         <page id="invoice_tab" string="Invoice Lines">
-                            <field name="invoice_line_ids" widget="section_and_note_one2many" mode="tree">
-                                <tree editable="bottom" string="Journal Items">
+                            <field name="invoice_line_ids" widget="section_and_note_one2many" mode="list">
+                                <list editable="bottom" string="Journal Items">
                                     <control>
                                         <create name="add_line_control" string="Add a line"/>
                                         <create name="add_section_control" string="Add a section"
@@ -82,7 +82,7 @@
                                     <field name="name"/>
                                     <field name="debit"/>
                                     <field name="credit"/>
-                                </tree>
+                                </list>
 
                             </field>
 
@@ -104,9 +104,9 @@
         <field name="name">Neteos</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">neteo.move</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="view_ids" eval="[(5, 0, 0),
-                (0,0, {'view_mode': 'tree', 'view_id': ref('neteo_proper.neteo_tree_view')}),
+                (0,0, {'view_mode': 'list', 'view_id': ref('neteo_proper.neteo_tree_view')}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('neteo_proper.neteo_form_view')})]"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

@@ -25,8 +25,8 @@ class ResConfigSettings(models.TransientModel):
                 t_name = obj._table
             sql = "delete from %s" % t_name
             try:
-                self._cr.execute(sql)
-                self._cr.commit()
+                self.env.cr.execute(sql)
+                self.env.cr.commit()
             except Exception as e:
                 _logger.warning('remove data error: %s,%s', line, e)
         for line in s:
@@ -40,7 +40,7 @@ class ResConfigSettings(models.TransientModel):
             except Exception as e:
                 _logger.warning('reset sequence data error: %s,%s', line, e)
         return True
-    
+
     def remove_sales(self):
         to_removes = [
             'sale.order.line',
@@ -82,8 +82,15 @@ class ResConfigSettings(models.TransientModel):
         res = self.remove_data(to_removes, seqs)
         try:
             statement = self.env['account.bank.statement'].sudo().search([])
-            for s in statement:
-                s._end_balance()
+            # MIGRACIÓN V19: `account.bank.statement._end_balance()` ya no existe;
+            # `balance_end_real` pasó a ser un campo computado y almacenado
+            # (`_compute_balance_end_real`, depende de `balance_start`). Tras el
+            # DELETE por SQL directo de arriba, se fuerza la recomputación
+            # invalidando el valor en caché y volviendo a calcular balance_end /
+            # balance_end_real explícitamente.
+            statement.invalidate_recordset(['balance_end', 'balance_end_real'])
+            statement._compute_balance_end()
+            statement._compute_balance_end_real()
         except Exception as e:
             _logger.error('reset sequence data error: %s', e)
         return res
@@ -221,10 +228,10 @@ class ResConfigSettings(models.TransientModel):
             sql = "delete from ir_default where (field_id = %s or field_id = %s) and company_id=%d" \
                   % (field1, field2, company_id)
             sql2 = "update account_journal set bank_account_id=NULL where company_id=%d;" % company_id
-            self._cr.execute(sql)
-            self._cr.execute(sql2)
+            self.env.cr.execute(sql)
+            self.env.cr.execute(sql2)
 
-            self._cr.commit()
+            self.env.cr.commit()
         except Exception as e:
             _logger.error('remove data error: %s,%s', 'account_chart: set tax and account_journal', e)
         if self.env['ir.model']._get('pos.config'):
@@ -241,14 +248,20 @@ class ResConfigSettings(models.TransientModel):
         except Exception as e:
             _logger.error('remove data error: %s,%s', 'account_chart', e)
         try:
+            # MIGRACIÓN V19: `property_stock_account_input_categ_id`,
+            # `property_stock_account_output_categ_id` y
+            # `property_account_creditor_price_difference_categ` ya no existen
+            # como tales en `product.category` (stock_account/account en 19.0
+            # solo conservan `property_account_income_categ_id`,
+            # `property_account_expense_categ_id` y
+            # `property_stock_valuation_account_id`). Se ajusta el write para
+            # solo tocar los campos que siguen existiendo; el resto del bloque
+            # ya estaba protegido con try/except y no rompía la instalación.
             rec = self.env['product.category'].search([])
             for r in rec:
                 r.write({
                     'property_account_income_categ_id': None,
                     'property_account_expense_categ_id': None,
-                    'property_account_creditor_price_difference_categ': None,
-                    'property_stock_account_input_categ_id': None,
-                    'property_stock_account_output_categ_id': None,
                     'property_stock_valuation_account_id': None,
                 })
         except Exception as e:
@@ -263,6 +276,11 @@ class ResConfigSettings(models.TransientModel):
         except Exception as e:
             pass
         try:
+            # MIGRACIÓN V19: `stock.location.valuation_in_account_id` /
+            # `valuation_out_account_id` ya no existen en 19.0 (la valuación
+            # in/out por ubicación ya no se modela con estos campos). Se deja
+            # el bloque sin efecto (try/except ya presente en origen) para no
+            # inventar un reemplazo funcional no solicitado.
             rec = self.env['stock.location'].search([])
             for r in rec:
                 r.write({

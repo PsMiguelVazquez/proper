@@ -4,10 +4,10 @@ from odoo import models, fields, _
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
 
+
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
-    
-    
+
     def view_consolidate_lines_wizard(self):
         sale_orders = self.env['sale.order'].browse(self.env.context.get('active_ids'))
         order_lines = sale_orders.mapped('order_line')
@@ -27,7 +27,10 @@ class SaleOrder(models.Model):
                 raise UserError(_('No se puede  puede consolidar si la orden si tiene borrador de factura o remisión'))
         if self.filtered(lambda x: x.state != 'sale'):
             raise UserError(_('No se puede consolidar si el pedido no esta en el estado "Orden de venta"'))
-        w = self.env['consolidacion.wizard'].sudo().create({'sale_orders': sale_orders, 'orden_compra': sale_orders[0].x_studio_n_orden_de_compra})
+        # MIGRACIÓN V19: `x_studio_n_orden_de_compra` (sale.order) se
+        # formalizó como campo real en `sale_purchase_confirm`.
+        orden_compra = sale_orders[0].x_studio_n_orden_de_compra
+        w = self.env['consolidacion.wizard'].sudo().create({'sale_orders': sale_orders, 'orden_compra': orden_compra})
         view = self.env.ref('consolidacion_venta.view_consolidacion_wizard_form')
         context = dict(self.env.context)
         context['form_view_initial_mode'] = 'edit'
@@ -36,7 +39,7 @@ class SaleOrder(models.Model):
             'name': _('Consolidar'),
             'type': 'ir.actions.act_window',
             'res_model': 'consolidacion.wizard',
-            'view_mode': 'tree, form',
+            'view_mode': 'list,form',
             'res_id': w.id,
             'views': [(view.id, 'form')],
             'view_id': view.id,

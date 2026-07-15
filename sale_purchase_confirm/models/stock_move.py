@@ -23,24 +23,39 @@ class StockMoveLine(models.Model):
                 'date_deadline': fields.Date.today()
             }
             self.env['mail.activity'].sudo().create(data)
-            #sale.message_post(body=message, partner_ids=sale.user_id.partner_id.ids)
 
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
     sale = fields.Many2one('sale.order')
+    # MIGRACIÓN V19: `x_studio_facturas` (Studio, "Traslado") es un Many2many
+    # a account.move relacionado con `sale_id.invoice_ids`, usado por
+    # `account_move_proper`. `sale_id` era en sí otro campo de Studio
+    # (duplicado de este mismo `sale`, ver `x_studio_many2one_field_uXDXF`
+    # en el export); se enlaza directamente al `sale` ya formalizado aquí.
+    x_studio_facturas = fields.Many2many('account.move', string='Facturas', related='sale.invoice_ids')
+
 
 class StockMove(models.Model):
     _inherit = 'stock.move'
 
-    def _action_confirm(self, merge=True, merge_into=False):
-        return super(StockMove, self)._action_confirm(merge=False, merge_into=merge_into)
+    # MIGRACIÓN V19: `_action_confirm()` del core ahora acepta también
+    # `create_proc`; sin declararlo aquí, cualquier llamada interna del core
+    # que lo pase (p. ej. `_create_backorder()`) fallaba con
+    # "unexpected keyword argument 'create_proc'". Se agrega y se reenvía.
+    def _action_confirm(self, merge=True, merge_into=False, create_proc=True):
+        return super(StockMove, self)._action_confirm(merge=False, merge_into=merge_into, create_proc=create_proc)
 
 
 class productPr(models.Model):
     _inherit = 'product.product'
     move_in = fields.Float(compute='_get_in_out')
 
+    # MIGRACIÓN V19: `x_studio_ultimo_costo` ahora se calcula en
+    # `product.py` con la fórmula real de Studio (basada en
+    # `stock.valuation.layer`), así que ya no se escribe aquí como efecto
+    # secundario de este compute -ambas cosas escribiendo el mismo campo
+    # entraban en conflicto-.
     @api.depends('qty_available')
     def _get_in_out(self):
         for record in self:
@@ -50,6 +65,4 @@ class productPr(models.Model):
                 move_in = self.env['stock.move.line'].search([['product_id', '=', record.id], ['location_id', '=', location_supplier]], order='id desc', limit=1)
                 if move_in.id:
                     picking_in = move_in.move_id.mapped('purchase_line_id.price_unit')[-1]
-                    if picking_in!=0:
-                        record.update({'x_studio_ultimo_costo': picking_in})
             record.move_in = picking_in

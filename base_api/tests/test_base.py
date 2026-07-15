@@ -1,13 +1,12 @@
 # Copyright 2019,2022 Ivan Yelizariev <https://twitter.com/yelizariev>
 # Copyright 2019 Anvar Kildebekov <https://it-projects.info/team/fedoranvar>
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
-from odoo.tests import tagged
-from odoo.tests.common import TransactionCase
+from odoo.tests import TransactionCase, tagged
 
 prefix = "__base_api__."
 
 
-@tagged("post_install", "at_install")
+@tagged("post_install", "-at_install")
 class TestBase(TransactionCase):
     def test_search_or_create(self):
         # define test variables

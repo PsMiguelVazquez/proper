@@ -14,23 +14,19 @@
     'author': "My Company",
     'website': "http://www.yourcompany.com",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base', 'account', 'account_payment_widget_amount', 'l10n_mx_edi'],
+    # MIGRACIÓN V19: `endoso_proper` es dependencia real (usa el modelo
+    # `endoso.move`), no declarada en el manifest original de v15.
+    'depends': ['base', 'account', 'account_payment_widget_amount', 'l10n_mx_edi', 'endoso_proper'],
 
-    # always loaded
     'data': [
         'security/ir.model.access.csv',
         'views/views.xml',
-        'views/templates.xml',
     ],
-    # only loaded in demonstration mode
-    'demo': [
-        'demo/demo.xml',
-    ],
+    # MIGRACIÓN V19: la clave `demo` apuntaba a `demo/demo.xml`, un archivo
+    # que nunca existió en el módulo (carpeta `demo/` ausente); era una
+    # referencia rota ya en 15.0. Se quita en vez de crear datos demo
+    # inventados.
 }

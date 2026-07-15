@@ -4,6 +4,7 @@ from odoo import models, fields, _
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
 
+
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
@@ -23,4 +24,3 @@ class AccountMove(models.Model):
             'view_id': view.id,
             'target': 'new'
         }
-

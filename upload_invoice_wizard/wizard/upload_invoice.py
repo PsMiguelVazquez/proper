@@ -4,11 +4,13 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
 import base64
+
+
 class UploadInvoice(models.TransientModel):
     _name = 'upload.invoice.wizard'
     _description = 'Sube una adjuntos para asignarla a ordenes de venta'
-    client_id= fields.Many2one('res.partner', 'Cliente')
-    provider_id= fields.Many2one('res.partner', 'Proveedor')
+    client_id = fields.Many2one('res.partner', 'Cliente')
+    provider_id = fields.Many2one('res.partner', 'Proveedor')
     sale_ids = fields.Many2many('sale.order')
     purchase_ids = fields.Many2many('purchase.order')
     order_lines = fields.Many2many('sale.order.line')
@@ -26,7 +28,13 @@ class UploadInvoice(models.TransientModel):
     fecha_factura = fields.Date('Fecha de adjuntos')
     ref = fields.Char('Referencia')
     terminos_pago = fields.Char('Términos de pago')
-    terminos_pago_id = fields.Many2one('Id Términos de pago')
+    # MIGRACIÓN V19: en 15.0 este campo era `fields.Many2one('Id Términos de
+    # pago')`, con un nombre de modelo inexistente/inválido -un error de
+    # captura del desarrollador original que habría impedido instalar el
+    # módulo si Odoo hubiera validado el comodelo en ese momento-. Se corrige
+    # al modelo real que claramente se pretendía usar, a partir de cómo se
+    # asigna (`property_payment_term_id.id`) en el resto del código.
+    terminos_pago_id = fields.Many2one('account.payment.term', string='Id Términos de pago')
     tipo_movimiento = fields.Char('Tipo de movimiento')
     id_metodo_pago = fields.Integer('Id Método de pago')
     codigos_producto = fields.Char('Códigos de producto')
@@ -35,7 +43,7 @@ class UploadInvoice(models.TransientModel):
     mensaje_error = fields.Text('')
     reparar_factura = fields.Boolean('Reparar factura', default=False)
     invoice_ids = fields.Many2one('account.move')
-    tipo = fields.Selection(string='Tipo', selection=[('purchase_order','Orden de compra'),('sale_order','Orden de venta')])
+    tipo = fields.Selection(string='Tipo', selection=[('purchase_order', 'Orden de compra'), ('sale_order', 'Orden de venta')])
     margen = fields.Float('Margen de redondeo')
 
     @api.depends('order_lines', 'purchase_lines')
@@ -56,8 +64,7 @@ class UploadInvoice(models.TransientModel):
             else:
                 self.total_ordenes = sum(self.purchase_ids.mapped('amount_total'))
 
-
-    def get_node(self,cfdi_node, attribute, namespaces):
+    def get_node(self, cfdi_node, attribute, namespaces):
         if hasattr(cfdi_node, 'Complemento'):
             node = cfdi_node.Complemento.xpath(attribute, namespaces=namespaces)
             return node[0] if node else None
@@ -65,14 +72,13 @@ class UploadInvoice(models.TransientModel):
             return None
 
     @api.constrains('adjuntos')
-    def _check_adjuntos(self,):
+    def _check_adjuntos(self):
         for record in self:
             total_xmls = len(record.adjuntos.filtered(lambda x: x.mimetype == 'application/xml'))
             if total_xmls > 1:
                 raise ValidationError('Solo puede subir un archivo de tipo XML')
             if total_xmls == 0:
                 raise ValidationError('Debe subir un archivo de tipo XML')
-
 
     def validate(self):
         valid = True
@@ -81,9 +87,8 @@ class UploadInvoice(models.TransientModel):
             total_validar = sum(self.sale_ids.mapped('amount_total'))
         else:
             total_validar = sum(self.purchase_ids.mapped('amount_total'))
-        if not (round(total_validar, 2) >= self.monto- self.margen and round(total_validar, 2) <=  self.monto + self.margen):
-        # if not (round(total_validar,2) - self.monto >= -self.margen and  round(total_validar,2) - self.monto <= self.margen):
-            valid =  False
+        if not (round(total_validar, 2) >= self.monto - self.margen and round(total_validar, 2) <= self.monto + self.margen):
+            valid = False
             message += '\nNo coinciden los montos. Monto total de las facturas seleccionadas: ' + str(total_validar) + ' Monto en el archívo XML: ' + str(self.monto)
         return valid, message
 
@@ -91,17 +96,16 @@ class UploadInvoice(models.TransientModel):
         invoice_id = self.env['account.move'].search([('ref', '=', self.ref)])
         if self.reparar_factura:
             invoice_id = self.invoice_ids
+            # MIGRACIÓN V19: `edi_error_message`/`edi_blocking_level` son
+            # campos calculados de solo lectura en 19.0 (no se pueden
+            # escribir); y `account.edi.document`/`edi_format_id` ya no
+            # aplica para CFDI mexicano, que usa `l10n_mx_edi.document`
+            # (`l10n_mx_edi` dejó de depender de `account_edi` genérico).
+            # Se conserva únicamente el efecto útil real: re-adjuntar los
+            # archivos al documento.
             if invoice_id and self.client_id:
-                invoice_id.write({'edi_error_message': None,
-                                  'edi_blocking_level': None,
-                                  'edi_error_message': None,
-                                  'edi_error_message': None
-                                  })
-                invoice_id.edi_document_ids.filtered(lambda d: d.error).write({'error': None})
-                acc_edi_doc_id = self.env['account.edi.document'].search(
-                    [('move_id', '=', invoice_id.id), ('edi_format_id', '=', 2)])
                 for adjunto in self.adjuntos:
-                    attachment = self.env['ir.attachment'].create({
+                    self.env['ir.attachment'].create({
                         'name': adjunto.name,
                         'type': 'binary',
                         'datas': adjunto.datas,
@@ -109,28 +113,19 @@ class UploadInvoice(models.TransientModel):
                         'res_id': invoice_id.id,
                         'mimetype': adjunto.mimetype,
                     })
-                    if adjunto.mimetype == 'application/xml':
-                        ### Account
-                        acc_edi_doc_dict = {
-                            'state': 'sent',
-                            'attachment_id': attachment.id,
-                        }
-                        acc_edi_doc_id.write(acc_edi_doc_dict)
         else:
             valid, message = self.validate()
             if valid:
                 if self.tipo == 'purchase_order':
-                    journal_id = 2
                     tipo_movimiento = 'in_invoice'
                     self.tipo_movimiento = tipo_movimiento
-                    invoice_origin = ', '.join(self.purchase_ids.mapped('name'))
                 else:
                     partners_id = self.sale_ids.mapped('partner_id.id')
                     if len(partners_id) == 0:
                         raise UserError('No existe el cliente')
                     if len(partners_id) > 1:
                         raise UserError('No se puede subir una factura si los clientes no son los mismos')
-                    #Se obtienen los archivos xml para facturas mexicanas emitidas
+                    # Se obtienen los archivos xml para facturas mexicanas emitidas
                     attachments = self.env['ir.attachment'].search([
                         ('res_model', '=', 'account.move'),
                         ('mimetype', '=', 'application/xml'),
@@ -155,28 +150,34 @@ class UploadInvoice(models.TransientModel):
                         for attachment in attachments
                     ]
                     uuids = [uuids_fact[0] for uuids_fact in tupla_uuids_facturas]
-                    #Si ya existe el folio fiscal muestra un mensaje e indica en cuál factura
+                    # Si ya existe el folio fiscal muestra un mensaje e indica en cuál factura
                     if self.folio_fiscal in uuids:
                         index = uuids.index(self.folio_fiscal)
                         id_am = tupla_uuids_facturas[index][1]
                         am = self.env['account.move'].browse(id_am)
                         raise UserError(f'Ya existe una factura {am.name} con ese folio fiscal.')
 
-                    journal_id = 1
-                    invoice_origin = ', '.join(self.sale_ids.mapped('name'))
-                if self.client_id:                    
+                if self.client_id:
                     self.sale_ids.partner_id = self.client_id
                     self.sale_ids.partner_invoice_id = self.client_id
                     invoice_id = self.sale_ids._create_invoices()
                     invoice_id.ref = self.ref
-                    invoice_id.x_referencia = self.ref
+                    # MIGRACIÓN V19: `x_referencia` se formalizó en
+                    # `account_move_proper`, pero declarar esa dependencia
+                    # aquí crearía un ciclo (`account_move_proper` ya
+                    # depende de `upload_invoice_wizard`). Se escribe de
+                    # forma defensiva.
+                    if 'x_referencia' in invoice_id._fields:
+                        invoice_id.x_referencia = self.ref
                     invoice_id.invoice_date = self.fecha_factura
                     invoice_id.partner_id = self.client_id
                     if invoice_id:
                         invoice_id.action_post()
-                        acc_edi_doc_id = self.env['account.edi.document'].search([('move_id', '=', invoice_id.id), ('edi_format_id', '=', 2)])
+                        # MIGRACIÓN V19: ver nota arriba sobre
+                        # `account.edi.document`/`edi_format_id`; se
+                        # conserva solo el adjuntar los archivos.
                         for adjunto in self.adjuntos:
-                            attachment = self.env['ir.attachment'].create({
+                            self.env['ir.attachment'].create({
                                 'name': adjunto.name,
                                 'type': 'binary',
                                 'datas': adjunto.datas,
@@ -185,13 +186,6 @@ class UploadInvoice(models.TransientModel):
                                 'mimetype': adjunto.mimetype,
                                 'description': f'CFDI de factura mexicana generado para el documento {invoice_id.name}'
                             })
-                            if adjunto.mimetype == 'application/xml':
-                                ### Account
-                                acc_edi_doc_dict = {
-                                    'state': 'sent',
-                                    'attachment_id': attachment.id,
-                                }
-                                acc_edi_doc_id.write(acc_edi_doc_dict)
                     return {
                         'name': _('Factura'),
                         'view_mode': 'form',
@@ -208,19 +202,18 @@ class UploadInvoice(models.TransientModel):
     @api.onchange('sale_ids')
     def on_change_sale_ids(self):
         for record in self:
-            self.order_lines = self.order_lines = self.sale_ids.mapped('order_line')
+            self.order_lines = self.sale_ids.mapped('order_line')
 
     @api.onchange('adjuntos')
     def on_change_factura(self):
         for record in self:
             if record.adjuntos:
                 xmls = record.adjuntos.filtered(lambda x: x.mimetype == 'application/xml')
-                pdfs = record.adjuntos.filtered(lambda x: x.mimetype == 'application/pdf')
                 if xmls and xmls[0]:
                     try:
                         cfdi_node = fromstring(xmls[0].raw)
                         emisor_node = cfdi_node.Emisor
-                        ######### Lista de productos en el XML ########
+                        # Lista de productos en el XML
                         self.codigos_producto = cfdi_node['Conceptos']['Concepto']
 
                         receptor_node = cfdi_node.Receptor
@@ -230,23 +223,18 @@ class UploadInvoice(models.TransientModel):
                             {'tfd': 'http://www.sat.gob.mx/TimbreFiscalDigital'},
                         )
 
-                        ####  Folio y serie
+                        # Folio y serie
                         serie = cfdi_node.get('Serie')
                         folio = cfdi_node.get('Folio')
 
                         cfdi_ref = (serie if serie else '') + (folio if folio else '')
 
-                        ####  MetodoPago
                         MetodoPago = cfdi_node.get('MetodoPago')
-
-                        ####  FormaPago
                         FormaPago = cfdi_node.get('FormaPago')
-
-                        ####  Version
                         cfdi_version = 'CFDI (' + cfdi_node.get('Version') + ')'
 
-                        ##### Document type
                         cfdi_type = cfdi_node.get('TipoDeComprobante')
+                        move_type = False
                         if cfdi_type == 'I':
                             move_type = 'out_invoice'
                         if cfdi_type == 'E':
@@ -254,17 +242,9 @@ class UploadInvoice(models.TransientModel):
 
                         SubTotal = cfdi_node.get('SubTotal')
                         total = cfdi_node.get('Total')
-
                         cfdi_date = cfdi_node.get('Fecha')
 
-                        ####  Comprobante info
-
-                        # Emisor
-                        emisor_name = emisor_node.get('Nombre', emisor_node.get('Nombre'))
                         emisor_vat = emisor_node.get('Rfc', emisor_node.get('rfc'))
-
-                        # Receptor
-                        receptor_name = receptor_node.get('Nombre', receptor_node.get('Nombre'))
                         receptor_vat = receptor_node.get('Rfc', emisor_node.get('rfc'))
                         receptor_usocfdi = receptor_node.get('UsoCFDI', emisor_node.get('UsoCFDI'))
 
@@ -291,10 +271,6 @@ class UploadInvoice(models.TransientModel):
                         l10n_mx_edi_payment_method_id = self.env['l10n_mx_edi.payment.method'].search([('code', '=', FormaPago)])
                         partner_data = self.env['res.partner'].search([('id', '=', self.client_id.id)])
                         property_payment_term_id = partner_data['property_payment_term_id']
-                        # if property_payment_term_id:
-                        #     property_payment_term_id = property_payment_term_id[0]
-                        # else:
-                        #     property_payment_term_id = 1
 
                         self.folio_fiscal = cfdi_uuid
                         self.monto = total
@@ -335,8 +311,8 @@ class UploadInvoice(models.TransientModel):
                         w.sale_ids = self.sale_ids
                         w.order_lines = self.order_lines
                         w.purchase_ids = self.purchase_ids
-                    except:
-                        self.mensaje_error ='Error al obtener los datos del documento XML. Compruebe la estructura del archivo'
+                    except Exception:
+                        self.mensaje_error = 'Error al obtener los datos del documento XML. Compruebe la estructura del archivo'
             else:
                 self.folio_fiscal = ''
                 self.monto = 0.0
@@ -351,9 +327,8 @@ class UploadInvoice(models.TransientModel):
                 self.ref = ''
                 self.tipo_movimiento = ''
                 self.subtotal = 0.0
-                self.client_id = None
                 self.id_metodo_pago = None
                 self.terminos_pago = ''
                 self.order_lines = None
                 self.sale_ids = None
-                self.mensaje_error= None
+                self.mensaje_error = None

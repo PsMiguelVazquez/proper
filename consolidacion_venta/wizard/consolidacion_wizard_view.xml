@@ -6,21 +6,16 @@
         <field name="arch" type="xml">
             <form string="Consolidar Pedidos">
                 <label for="sale_orders" invisible="1"/>
-                <field name="sale_orders" widget="many2many" mode="tree" invisible="1">
-                    <tree>
+                <field name="sale_orders" widget="many2many" mode="list" invisible="1">
+                    <list>
                         <field name="display_name" readonly="1"/>
                         <field name="amount_untaxed" readonly="1"/>
                         <field name="amount_tax" readonly="1"/>
                         <field name="amount_total" readonly="1"/>
-                    </tree>
+                    </list>
 
                 </field>
                 <group>
-<!--                    <group>-->
-<!--                        <field name="subtotal" widget="monetary"/>-->
-<!--                        <field name="total" widget="monetary"/>-->
-<!--                    </group>-->
-
                     <group>
                         <field name="referencia"/>
                         <field name="orden_compra"/>
@@ -31,7 +26,7 @@
                     </group>
                 </group>
                 <label for="lines"/>
-                <field name="lines"  widget="many2many" mode="form,tree">
+                <field name="lines"  widget="many2many" mode="form,list">
                         <form>
                             <group>
                                 <group>
@@ -48,7 +43,7 @@
                                 </group>
                             </group>
                         </form>
-                        <tree string="Sales Order Lines">
+                        <list string="Sales Order Lines">
                             <field name="sequence" widget="handle"/>
                             <field name="sale_order_char"/>
                             <field name="orden_compra"/>
@@ -58,7 +53,7 @@
                             <field name="subtotal" sum="Subtotal"/>
                             <field name="taxes" sum="Impuestos"/>
                             <field name="total" sum="Total"/>
-                        </tree>
+                        </list>
                 </field>
                 <footer>
                     <button name="done_consolidar" type="object" string="Confirmar"/>

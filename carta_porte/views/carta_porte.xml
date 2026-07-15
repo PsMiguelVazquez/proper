@@ -5,18 +5,22 @@
         <field name="name">stock.picking.carta_porte</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//header//button[@name='l10n_mx_edi_action_send_delivery_guide']" position="replace">
-                <button name="l10n_mx_edi_action_send_delivery_guide"
+            <!-- MIGRACIÓN V19: `l10n_mx_edi_action_send_delivery_guide` ->
+                 `l10n_mx_edi_cfdi_try_send`; `l10n_mx_edi_status` ->
+                 `l10n_mx_edi_cfdi_state` (valores 'sent'/'cancel', ya no
+                 True/False/'cancelled'); `attrs` -> expresiones inline. -->
+            <xpath expr="//header//button[@name='l10n_mx_edi_cfdi_try_send']" position="replace">
+                <button name="l10n_mx_edi_cfdi_try_send"
                         type="object"
                         string="Generar Carta Porte"
-                        attrs="{'invisible':['|', '|', '|',('state', 'not in', ['done','assigned']),('country_code', '!=', 'MX'),('picking_type_code', '!=', 'outgoing'),('l10n_mx_edi_status', 'not in', [False, 'cancelled'])]}"/>
+                        invisible="state not in ('done', 'assigned') or country_code != 'MX' or picking_type_code != 'outgoing' or l10n_mx_edi_cfdi_state not in (False, 'cancel')"/>
             </xpath>
             <xpath expr="//field[@name='date_done']" position="after">
                 <field name="fecha_timbrado_carta" invisible="1"/>
             </xpath>
             <xpath expr="//field[@name='location_dest_id']" position="after">
-                <field name="fecha_recepcion_cliente" attrs="{'invisible':['|',('state', 'not in', ['done']),('picking_type_code', '!=', 'outgoing')]}"/>
-                <field name="nombre_receptor" attrs="{'invisible':['|',('state', 'not in', ['done']),('picking_type_code', '!=', 'outgoing')]}"/>
+                <field name="fecha_recepcion_cliente" invisible="state != 'done' or picking_type_code != 'outgoing'"/>
+                <field name="nombre_receptor" invisible="state != 'done' or picking_type_code != 'outgoing'"/>
             </xpath>
         </field>
     </record>

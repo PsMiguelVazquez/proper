@@ -4,9 +4,11 @@ from datetime import datetime
 
 from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
-from lxml.objectify import fromstring
+
+
 class WizardEliminateLine(models.TransientModel):
     _name = 'wizard.eliminate.line'
+    _description = 'Línea de eliminación de saldos menores'
 
     invoice_name = fields.Char('Número')
     invoice_id = fields.Many2one('account.move', 'Movimiento')

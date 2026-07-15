@@ -16,80 +16,80 @@ class AccountMove(models.Model):
                 self.with_context(
                     move_id=self.id,
                     line_id=line_id,
+                    # MIGRACIÓN V19: diccionario mutable para rastrear cuánto
+                    # de `paid_amount` sigue disponible a través de las
+                    # llamadas recursivas dentro de un mismo reconcile() (ver
+                    # AccountMoveLine._prepare_reconciliation_single_partial).
+                    # No se puede usar un atributo de instancia en el
+                    # recordset (account.move.line no lo permite), pero un
+                    # objeto mutable guardado en el contexto sí sobrevive a
+                    # los `with_context()` intermedios, porque estos solo
+                    # copian el dict de contexto de forma superficial.
+                    _paid_amount_state={"remaining": self.env.context["paid_amount"]},
                 ),
             ).js_assign_outstanding_line(line_id)
         return super(AccountMove, self).js_assign_outstanding_line(line_id)
 
-class SendForm(models.TransientModel):
-    _inherit = 'account.invoice.send'
-
-    def _send_email(self):
-        r = super(SendForm, self)._send_email()
-        return r
-        # for record in self:
-        #     arr = []
-        #     for att in record.attachment_ids:
-        #         if 'ubl' not in att.name:
-        #             arr.append(att)
-        #     record.attachment_ids = arr
 
 class AccountMoveLine(models.Model):
 
     _inherit = "account.move.line"
 
-    def _prepare_reconciliation_partials(self):
-        am_model = self.env["account.move"]
-        aml_model = self.env["account.move.line"]
-        partials = super(AccountMoveLine, self)._prepare_reconciliation_partials()
-        if self.env.context.get("paid_amount", 0.0):
-            total_paid = self.env.context.get("paid_amount", 0.0)
-            current_am = am_model.browse(self.env.context.get("move_id"))
-            current_aml = aml_model.browse(self.env.context.get("line_id"))
-            decimal_places = current_am.company_id.currency_id.decimal_places
-            if current_am.currency_id.id != current_am.company_currency_id.id:
-                total_paid = current_am.currency_id._convert(
-                    total_paid,
-                    current_aml.currency_id,
-                    current_am.company_id,
-                    current_aml.date,
-                )
-            for partial in partials:
-                debit_line = self.browse(partial.get("debit_move_id"))
-                credit_line = self.browse(partial.get("credit_move_id"))
-                different_currency = (
-                    debit_line.currency_id.id != credit_line.currency_id.id
-                )
-                to_apply = min(total_paid, partial.get("amount", 0.0))
-                partial.update(
-                    {
-                        "amount": to_apply,
-                    }
-                )
-                if different_currency:
-                    partial.update(
-                        {
-                            "debit_amount_currency": credit_line.company_currency_id._convert(
-                                to_apply,
-                                debit_line.currency_id,
-                                credit_line.company_id,
-                                credit_line.date,
-                            ),
-                            "credit_amount_currency": debit_line.company_currency_id._convert(
-                                to_apply,
-                                credit_line.currency_id,
-                                debit_line.company_id,
-                                debit_line.date,
-                            ),
-                        }
-                    )
-                else:
-                    partial.update(
-                        {
-                            "debit_amount_currency": to_apply,
-                            "credit_amount_currency": to_apply,
-                        }
-                    )
-                total_paid -= to_apply
-                if float_compare(total_paid, 0.0, precision_digits=decimal_places) <= 0:
-                    break
-        return partials
+    # MIGRACIÓN V19: el motor de conciliación fue reescrito por completo.
+    # `_prepare_reconciliation_partials` (que en 15.0 recibía la lista plana
+    # de partials ya calculados y simplemente recortaba `amount` de cada uno
+    # hasta agotar `paid_amount`) ya no existe. La construcción de cada
+    # partial ahora ocurre línea por línea en `_prepare_reconciliation_single_partial`,
+    # llamada repetidamente por `_prepare_reconciliation_amls` mientras el par
+    # débito/crédito siga teniendo residual (lo que incluye el residual que
+    # nosotros mismos dejamos al recortar el monto). Por eso, en cuanto se
+    # recorta un partial, hay que señalar explícitamente que no se debe volver
+    # a intentar conciliar ese mismo par en esta llamada (si no, el bucle
+    # seguiría creando partials cada vez más chicos hasta agotar el monto
+    # original completo, anulando el recorte).
+    #
+    # Se deja que el core calcule el partial normalmente (con toda su lógica
+    # de tipos de cambio/monedas intacta) y solo se recorta proporcionalmente
+    # el resultado, devolviendo el remanente al residual de ambas líneas para
+    # que la contabilidad cuadre.
+    def _prepare_reconciliation_single_partial(self, debit_values, credit_values, shadowed_aml_values=None):
+        res = super()._prepare_reconciliation_single_partial(
+            debit_values, credit_values, shadowed_aml_values=shadowed_aml_values
+        )
+        state = self.env.context.get("_paid_amount_state")
+        partial_values = res.get("partial_values")
+        if not state or not partial_values:
+            return res
+
+        remaining = state["remaining"]
+        company = self[:1].company_id or self.env.company
+        precision = company.currency_id.decimal_places
+        original_amount = partial_values["amount"]
+        to_apply = min(remaining, original_amount)
+
+        if float_compare(to_apply, original_amount, precision_digits=precision) >= 0:
+            # Alcanza para aplicar todo el partial calculado por el core.
+            state["remaining"] = remaining - original_amount
+            return res
+
+        ratio = (to_apply / original_amount) if original_amount else 0.0
+        unapplied_amount = original_amount - to_apply
+        unapplied_debit_currency = partial_values["debit_amount_currency"] * (1 - ratio)
+        unapplied_credit_currency = partial_values["credit_amount_currency"] * (1 - ratio)
+
+        partial_values["amount"] = to_apply
+        partial_values["debit_amount_currency"] *= ratio
+        partial_values["credit_amount_currency"] *= ratio
+        state["remaining"] = remaining - to_apply
+
+        debit_values["amount_residual"] += unapplied_amount
+        credit_values["amount_residual"] -= unapplied_amount
+        debit_values["amount_residual_currency"] += unapplied_debit_currency
+        credit_values["amount_residual_currency"] -= unapplied_credit_currency
+
+        # No reintentar este mismo par en esta llamada a reconcile(): ya se
+        # aplicó el recorte deseado, el resto del residual debe quedar
+        # disponible para usarse en otra conciliación posterior.
+        res["debit_values"] = None
+        res["credit_values"] = None
+        return res

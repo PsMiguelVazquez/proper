@@ -13,16 +13,17 @@
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
+    'license': 'LGPL-3',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base'],
+    # MIGRACIÓN V19: el campo `property_account_creditor` usa el modelo
+    # 'account.account', que solo existe si el módulo 'account' está
+    # instalado. El manifest original solo declaraba 'base' como dependencia;
+    # se corrige para reflejar la dependencia real (factoraje_financiero,
+    # que consume este campo, ya depende de 'account').
+    'depends': ['base', 'account'],
 
-    # always loaded
     'data': [
         # 'views/res_partner.xml',
     ],

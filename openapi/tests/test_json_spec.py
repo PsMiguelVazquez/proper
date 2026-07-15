@@ -14,6 +14,21 @@ from odoo.tools import config
 
 @tagged("post_install", "-at_install")
 class TestJsonSpec(HttpCase):
+    def setUp(self):
+        super().setUp()
+        # MIGRACIÓN V19: la namespace 'demo' de `demo/openapi_demo.xml` solo
+        # existe con `--with-demo` (ya no es el valor por defecto desde
+        # 19.0). Se crea aquí una namespace equivalente con el mismo token.
+        self.env["openapi.namespace"].create({
+            "name": "demo",
+            "token": "demo_token",
+        })
+        self.env["openapi.access"].create({
+            "namespace_id": self.env["openapi.namespace"].search([("name", "=", "demo")], limit=1).id,
+            "model_id": self.env.ref("base.model_res_partner").id,
+            "api_read": True,
+        })
+
     def test_json_base(self):
 
         resp = self.url_open(

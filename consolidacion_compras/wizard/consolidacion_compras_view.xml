@@ -12,7 +12,7 @@
                     </group>
                 </group>
                 <label for="purchase_order_lines"/>
-                <field name="purchase_order_lines"  widget="many2many" readonly="1" invisible="1" mode="form,tree">
+                <field name="purchase_order_lines"  widget="many2many" readonly="1" invisible="1" mode="form,list">
                         <form>
                             <group>
                                 <group>
@@ -24,15 +24,15 @@
                                 </group>
                             </group>
                         </form>
-                        <tree string="Sales Order Lines">
+                        <list string="Sales Order Lines">
                             <field name="product_id"/>
                             <field name="product_qty"/>
                             <field name="price_unit"/>
                             <field name="price_subtotal" sum="Subtotal"/>
                             <field name="price_total" sum="Total"/>
-                        </tree>
+                        </list>
                 </field>
-                <field name="wizard_lines"  widget="many2many" readonly="1" mode="form,tree">
+                <field name="wizard_lines"  widget="many2many" readonly="1" mode="form,list">
                         <form>
                             <group>
                                 <group>
@@ -44,13 +44,13 @@
                                 </group>
                             </group>
                         </form>
-                        <tree string="Sales Order Lines">
+                        <list string="Sales Order Lines">
                             <field name="product_id"/>
                             <field name="product_qty"/>
                             <field name="price_unit"/>
                             <field name="price_subtotal" sum="Subtotal"/>
                             <field name="price_total" sum="Total"/>
-                        </tree>
+                        </list>
                 </field>
                 <footer>
                     <button name="done_consolidar_compra" type="object" string="Confirmar"/>

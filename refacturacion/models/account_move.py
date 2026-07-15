@@ -1,6 +1,18 @@
 from odoo import models,api, fields, _
 from odoo.exceptions import UserError
 
+# MIGRACIÓN V19: los ids de almacén/ubicación/diario/tipo de operación
+# hardcodeados en este módulo (location_id=4, location_dest_id=69,
+# picking_type_id=11/12, journal_id=1) corresponden a registros específicos
+# de la base de datos de PRODUCCIÓN de 15.0 (el almacén "ALM-9" de
+# refacturación). No son portables entre bases de datos -en una instalación
+# nueva de 19.0 esos ids numéricos casi seguro apuntan a otros registros o no
+# existen-. No se pueden reemplazar por una referencia estable sin conocer la
+# configuración real del almacén de refacturación en el entorno de destino;
+# deben verificarse/ajustarse contra la configuración real de la base de
+# datos de producción migrada antes de usar este módulo en 19.0.
+
+
 class AccountMove(models.Model):
     _inherit = 'account.move'
     es_refacturacion = fields.Boolean(default=False, string="¿Es refacturación?")
@@ -21,7 +33,7 @@ class AccountMove(models.Model):
         return r
 
     def refactura_credito(self):
-        moves = self.env['account.move'].browse(self._context.get('active_ids'))
+        moves = self.env['account.move'].browse(self.env.context.get('active_ids'))
         if moves.filtered(lambda x : not x.es_refacturacion):
             raise UserError('No se puede refacturar si no hay entrada al almacén 9.')
         if len(moves.mapped('partner_id')) > 1:
@@ -47,21 +59,36 @@ class AccountMove(models.Model):
         partner = moves[0].partner_id
         invoice_dict = {
             'ref': ', '.join(moves.mapped('ref')),
-            'x_referencia': ', '.join(moves.mapped('ref')),
             'journal_id': 1,
             'move_type': 'out_invoice',
             'posted_before': False,
             'invoice_payment_term_id': partner.property_payment_term_id.id,
             'partner_id': partner.id,
-            'l10n_mx_edi_payment_method_id': partner.x_studio_mtodo_de_pago,
-            'l10n_mx_edi_payment_policy': partner.x_nombre_corto_tpago,
-            'l10n_mx_edi_usage': partner.x_studio_uso_de_cfdi,
             'invoice_line_ids': product_list,
-            'x_studio_almacn': 'ALM-9',
             'es_refacturacion': True,
             'almacen_refacturacion': 'ALM-9',
-            'sale_id': moves[0].sale_id
+            'sale_id': moves[0].sale_id,
         }
+        # MIGRACIÓN V19: `x_referencia`, `x_studio_almacn` en account.move y
+        # `x_studio_mtodo_de_pago`/`x_nombre_corto_tpago`/`x_studio_uso_de_cfdi`
+        # en res.partner son campos creados con Odoo Studio en la base de
+        # producción de 15.0; no existen como código de módulo. Se agregan al
+        # dict de creación solo si existen en el modelo/registro de destino,
+        # para no romper la creación de la factura en una base de datos
+        # donde todavía no se hayan recreado esos campos de Studio.
+        move_fields = self.env['account.move']._fields
+        partner_fields = partner._fields
+        if 'x_referencia' in move_fields:
+            invoice_dict['x_referencia'] = ', '.join(moves.mapped('ref'))
+        if 'x_studio_almacn' in move_fields:
+            invoice_dict['x_studio_almacn'] = 'ALM-9'
+        if 'l10n_mx_edi_payment_method_id' in move_fields and 'x_studio_mtodo_de_pago' in partner_fields:
+            invoice_dict['l10n_mx_edi_payment_method_id'] = partner.x_studio_mtodo_de_pago
+        if 'l10n_mx_edi_payment_policy' in move_fields and 'x_nombre_corto_tpago' in partner_fields:
+            invoice_dict['l10n_mx_edi_payment_policy'] = partner.x_nombre_corto_tpago
+        if 'l10n_mx_edi_usage' in move_fields and 'x_studio_uso_de_cfdi' in partner_fields:
+            invoice_dict['l10n_mx_edi_usage'] = partner.x_studio_uso_de_cfdi
+
         invoice_id = self.env['account.move'].create(invoice_dict)
         if not moves.movimientos_almacen.filtered(
             lambda x: x.picking_type_code == 'outgoing' and x.location_id.id == 69 and x.state == 'assigned'):
@@ -79,10 +106,6 @@ class AccountMove(models.Model):
             'target': 'current'
         }
 
-
-
-
-
     def create_in(self):
         for record in self:
             move_lines_d = []
@@ -91,7 +114,12 @@ class AccountMove(models.Model):
                     'name': line.product_id.name,
                     "product_id": line.product_id.id,
                     "product_uom_qty": line.quantity,
-                    "quantity_done": line.quantity,
+                    # MIGRACIÓN V19: `quantity_done` ya no existe en
+                    # stock.move; el equivalente moderno es `quantity` +
+                    # `picked=True` (stock.move sigue exponiendo estos dos
+                    # como atajo de conveniencia hacia su(s) move line(s)).
+                    "quantity": line.quantity,
+                    "picked": True,
                     "product_uom": line.product_id.uom_id.id,
                     'location_id': 4,
                     'location_dest_id': 69
@@ -105,9 +133,12 @@ class AccountMove(models.Model):
                 'location_dest_id': 69,
                 'partner_id': record.partner_id.id,
                 'picking_type_id': 11,
-                'immediate_transfer': True,
+                # MIGRACIÓN V19: `immediate_transfer` ya no existe en
+                # stock.picking; se quita (el código nunca llamaba a
+                # button_validate() en este método de todas formas).
                 'move_type': 'direct',
-                'move_lines': move_lines_d,
+                # MIGRACIÓN V19: `move_lines` -> `move_ids`.
+                'move_ids': move_lines_d,
                 'sale_id': sale.id if sale else None,
             })
             # picking.button_validate()
@@ -116,14 +147,15 @@ class AccountMove(models.Model):
 
     def create_out(self):
         for record in self:
-            sale = self._context.get('sale_id')
+            sale = self.env.context.get('sale_id')
             move_lines_d = []
             for line in record.invoice_line_ids:
                 move_line_vals = {
                     'name': line.product_id.name,
                     "product_id": line.product_id.id,
                     "product_uom_qty": line.quantity,
-                    "quantity_done": line.quantity,
+                    "quantity": line.quantity,
+                    "picked": True,
                     "product_uom": line.product_id.uom_id.id,
                     'location_id': 69,
                     'location_dest_id': 4,
@@ -135,11 +167,9 @@ class AccountMove(models.Model):
                 'location_dest_id': 4,
                 'partner_id': record.partner_id.id,
                 'picking_type_id': 12,
-                'immediate_transfer': True,
                 'move_type': 'direct',
-                'move_lines': move_lines_d,
+                'move_ids': move_lines_d,
                 'sale_id': sale.id if sale else 0,
             })
             # picking.button_validate()
             return picking
-

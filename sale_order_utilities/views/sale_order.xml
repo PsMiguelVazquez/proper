@@ -6,33 +6,36 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//form/header/field[@name='authorized_transaction_ids']" position="before">
+            <!-- MIGRACIÓN V19: `//form/header/field[@name='authorized_transaction_ids']`
+                 ya no existe como elemento propio en el header (solo se usa
+                 `has_authorized_transaction_ids` dentro de expresiones
+                 `invisible=`); se insertan estos campos ocultos al inicio
+                 del header en su lugar. -->
+            <xpath expr="//header" position="inside">
                 <field name="edit_blocked" invisible="1"/>
                 <field name="block_invoicing" invisible="1"/>
                 <field name="invoice_approved" invisible="1"/>
                 <field name="approve_invoicing_requested" invisible="1"/>
             </xpath>
-            <xpath expr="//form/header/button[@name='328']" position="attributes">
-                <attribute name="attrs">{'invisible': [
-                    '|',
-                    ('invoice_status', '!=', 'to invoice'),
-                    ('block_invoicing', '=', True)
-                    ]}</attribute>
-<!--                <attribute name="invisible">0</attribute>-->
+            <!-- MIGRACIÓN V19: el botón con id numérico `328` (autonumérico,
+                 dependiente de la base de producción de 15.0) se reemplaza
+                 por el botón real "Create Invoice" (`id="create_invoice"`). -->
+            <xpath expr="//button[@id='create_invoice']" position="attributes">
+                <attribute name="invisible">invoice_status != 'to invoice' or block_invoicing</attribute>
             </xpath>
             <header>
                 <button name="approve_invoicing" string="Aprobar facturación" type="object"
-                        attrs="{'invisible': [('approve_invoicing_requested','!=',True)]}" groups="purchase.group_purchase_manager"/>
-<!--                        attrs="{'invisible': 1}"/>-->
+                        invisible="not approve_invoicing_requested" groups="purchase.group_purchase_manager"/>
                 <button name="reject_invoicing" string="Rechazar facturación" type="object"
-                        attrs="{'invisible': [('approve_invoicing_requested','!=',True)]}" groups="purchase.group_purchase_manager"/>
+                        invisible="not approve_invoicing_requested" groups="purchase.group_purchase_manager"/>
                 <button name="request_approve_invoicing" string="Solicitar Aprobación de facturación" type="object"
-                        attrs="{'invisible': ['|','|',('state','!=','sale'), ('block_invoicing','!=',True), ('approve_invoicing_requested','=',True)]}"/>
-<!--                        attrs="{'invisible': 1}"/>-->
-
+                        invisible="state != 'sale' or not block_invoicing or approve_invoicing_requested"/>
             </header>
-            <xpath expr="//form/sheet/notebook/page/field[@name='order_line']" position="attributes">
-                <attribute name="attrs">{'readonly':[('edit_blocked','=',True)]}</attribute>
+            <!-- MIGRACIÓN V19: se combina con la condición `readonly` que ya
+                 trae el campo `order_line` en el core (`state == 'cancel' or
+                 locked`) en vez de reemplazarla. -->
+            <xpath expr="//field[@name='order_line']" position="attributes">
+                <attribute name="readonly">state == 'cancel' or locked or edit_blocked</attribute>
             </xpath>
         </field>
     </record>

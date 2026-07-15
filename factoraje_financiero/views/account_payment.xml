@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
     <data>
-        
+
     <record id="custom_account_payment_view_form" model="ir.ui.view">
         <field name="name">	account.payment.form</field>
         <field name="model">account.payment</field>
@@ -13,12 +13,12 @@
                     type="object"
                     class="oe_stat_button"
                     icon="fa-file-text-o"
-                    attrs="{'invisible': [('endosos_count', '=', 0)]}">
+                    invisible="endosos_count == 0">
                     <field name="endosos_count" widget="statinfo" string="Endosos"/>
                 </button>
             </xpath>
         </field>
     </record>
     </data>
-    
+
 </odoo>
