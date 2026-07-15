@@ -4,14 +4,26 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
+            <!-- MIGRACIÓN V19: el dominio original `[('sale_team_id','=',team_id)]`
+                 referenciaba `team_id`, que no es un campo de `res.partner`
+                 en el core (ni en `sale`/`crm`); ya en 15.0 dependía de una
+                 personalización de Odoo Studio ajena a los 36 módulos
+                 migrados (ver nota en models/models.py). El validador de
+                 vistas de 19.0 es más estricto que el de 15.0 y ahora
+                 rechaza -en la carga del módulo, no solo en tiempo de
+                 ejecución- cualquier dominio que referencie un campo
+                 inexistente ("Access Rights Inconsistency" / "field ...
+                 does not exist"), así que el módulo ya no instala si se
+                 conserva ese dominio. Se quita el filtro; el campo queda
+                 sin acotar por equipo de venta. -->
             <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='sales_purchases']/group[@name='container_row_2']/group[@name='sale']//field[@name='user_id']" position="before">
-                <field name="sales_agent" domain="[('sale_team_id','=',team_id)]"/>
+                <field name="sales_agent"/>
             </xpath>
-            <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='contact_addresses']/field[@name='child_ids']/kanban/templates//field[@name='name']" position="before">
-                <div>
-                 <field name="title"/>
-                </div>
-            </xpath>
+            <!-- MIGRACIÓN V19: `res.partner.title` (y el modelo
+                 `res.partner.title`, el honorífico "Sr./Sra./Dr.") fue
+                 eliminado por completo del core en 19.0 (sin reemplazo);
+                 ya no hay campo que mostrar aquí. -->
+
         </field>
     </record>
 </odoo>

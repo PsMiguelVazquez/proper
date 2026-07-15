@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <odoo>
+    <!-- MIGRACIÓN V19: `consolidacion_venta.model_sale_order` nunca existió
+         (el xmlid del modelo `sale.order` es `sale.model_sale_order`). -->
     <record id="action_consolidate_sale_order" model="ir.actions.server">
         <field name="name">Consolidar líneas y crear factura</field>
         <field name="type">ir.actions.server</field>
-        <field name="model_id" ref="consolidacion_venta.model_sale_order"/>
+        <field name="model_id" ref="sale.model_sale_order"/>
         <field name="binding_model_id" ref="sale.model_sale_order" />
         <field name="code">action=model.view_consolidate_lines_wizard()</field>
         <field name="state">code</field>

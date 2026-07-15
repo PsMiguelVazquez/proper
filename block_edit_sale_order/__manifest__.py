@@ -9,22 +9,20 @@
     'description': """
         Bloquea las órdenes de venta cuando ya le ha llegado la solicitud de compra de productos a Compras.
     """,
+    'license': 'LGPL-3',
 
     'author': "My Company",
     'website': "http://www.yourcompany.com",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base', 'account', 'account_payment_widget_amount', 'l10n_mx_edi'],
+    # MIGRACIÓN V19: `es_orden_parcial` es un campo real definido por
+    # `sale_purchase_confirm` (Lote 3), no declarado en el manifest
+    # original de v15.
+    'depends': ['base', 'account', 'account_payment_widget_amount', 'l10n_mx_edi', 'sale_purchase_confirm'],
 
-    # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
         'views/sale_order.xml',
     ],
 }

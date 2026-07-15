@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-import base64
-
 from odoo import models, fields, api
 from odoo.exceptions import UserError, ValidationError
 
 
-class account_bank_statement(models.Model):
+class AccountBankStatement(models.Model):
     _inherit = 'account.bank.statement'
 
     def validate_account_bank_statement(self, bank_statement, payments):
@@ -29,7 +27,7 @@ class account_bank_statement(models.Model):
 
     @api.model
     def create(self, values):
-        res = super(account_bank_statement, self).create(values)
+        res = super(AccountBankStatement, self).create(values)
         line_payment_ids = res.line_ids.rel_payment.mapped('move_id')
         valid, message = self.validate_account_bank_statement(res, line_payment_ids)
         if not valid:
@@ -37,7 +35,7 @@ class account_bank_statement(models.Model):
         return res
 
     def write(self, values):
-        res = super(account_bank_statement, self).write(values)
+        res = super(AccountBankStatement, self).write(values)
         valid = True
         message = ''
         for bank_statement in self:
@@ -59,7 +57,7 @@ class account_bank_statement(models.Model):
                 self.name = ''
 
 
-class account_bank_statement_line(models.Model):
+class AccountBankStatementLine(models.Model):
     _inherit = 'account.bank.statement.line'
     rel_payment = fields.Many2one('account.payment', string='Pago')
     rel_invoices_names = fields.Char('Facturas relacionadas')
@@ -74,7 +72,9 @@ class account_bank_statement_line(models.Model):
                 record.partner_id = record.rel_payment.partner_id
                 record.date = record.rel_payment.date
                 record.statement_id.date = record.rel_payment.date
-                inv_lines = record.rel_payment.invoice_line_ids
+                # MIGRACIÓN V19: `account.payment.invoice_line_ids` ya no existe
+                # (y la variable `inv_lines` que leía este campo en 15.0 nunca se
+                # usaba realmente, era código muerto).
                 for invoice in record.rel_payment.reconciled_invoice_ids:
                     referencia += invoice.name + ' '
                 record.rel_invoices_names = referencia

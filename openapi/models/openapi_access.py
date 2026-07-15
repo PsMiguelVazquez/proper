@@ -81,13 +81,12 @@ class Access(models.Model):
         domain="[('model_id', '=', model_id)]",
     )
 
-    _sql_constraints = [
-        (
-            "namespace_model_uniq",
-            "unique (namespace_id, model_id)",
-            "There is already a record for this Model",
-        )
-    ]
+    # MIGRACIÓN V19: `_sql_constraints` ya no está soportado; el equivalente
+    # moderno es un atributo de clase `models.Constraint`.
+    _namespace_model_uniq = models.Constraint(
+        "unique (namespace_id, model_id)",
+        "There is already a record for this Model",
+    )
 
     @api.model
     def _get_method_list(self):
@@ -153,11 +152,12 @@ class Access(models.Model):
                     % record.model
                 )
 
-    def name_get(self):
-        return [
-            (record.id, "{}/{}".format(record.namespace_id.name, record.model))
-            for record in self
-        ]
+    # MIGRACIÓN V19: `name_get()` ya no existe (removido del core); el
+    # equivalente moderno es sobreescribir `_compute_display_name`.
+    @api.depends("namespace_id.name", "model")
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = "{}/{}".format(record.namespace_id.name, record.model)
 
     def get_OAS_paths_part(self):
         model_name = self.model
@@ -445,13 +445,12 @@ class AccessCreateContext(models.Model):
     model_id = fields.Many2one("ir.model", "Model", required=True, ondelete="cascade")
     context = fields.Text("Context", required=True)
 
-    _sql_constraints = [
-        (
-            "context_model_name_uniq",
-            "unique (name, model_id)",
-            "There is already a context with the same name for this Model",
-        )
-    ]
+    # MIGRACIÓN V19: `_sql_constraints` ya no está soportado; el equivalente
+    # moderno es un atributo de clase `models.Constraint`.
+    _context_model_name_uniq = models.Constraint(
+        "unique (name, model_id)",
+        "There is already a context with the same name for this Model",
+    )
 
     @api.model
     def _fix_name(self, vals):
@@ -459,10 +458,11 @@ class AccessCreateContext(models.Model):
             vals["name"] = urlparse.quote_plus(vals["name"].lower())
         return vals
 
-    @api.model
-    def create(self, vals):
-        vals = self._fix_name(vals)
-        return super(AccessCreateContext, self).create(vals)
+    # MIGRACIÓN V19: idem Namespace.create -> @api.model_create_multi.
+    @api.model_create_multi
+    def create(self, vals_list):
+        vals_list = [self._fix_name(vals) for vals in vals_list]
+        return super(AccessCreateContext, self).create(vals_list)
 
     def write(self, vals):
         vals = self._fix_name(vals)

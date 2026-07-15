@@ -1,4 +1,4 @@
-from odoo import fields,models, api, _, modules
+from odoo import fields, models, api, _, modules
 import base64
 import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup

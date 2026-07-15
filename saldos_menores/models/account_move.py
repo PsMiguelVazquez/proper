@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from lxml import etree
-
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime

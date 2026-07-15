@@ -7,7 +7,6 @@ import logging
 
 import requests
 
-from odoo import api
 from odoo.tests import tagged
 from odoo.tests.common import HttpCase, get_db_name
 from odoo.tools import config
@@ -31,10 +30,54 @@ class TestAPI(HttpCase):
     def setUp(self):
         super(TestAPI, self).setUp()
         self.db_name = get_db_name()
-        self.phantom_env = api.Environment(self.registry.test_cr, self.uid, {})
-        self.demo_user = self.phantom_env.ref(USER_DEMO)
+        # MIGRACIÓN V19: `self.registry.test_cr` ya no existe; `HttpCase`
+        # (que ahora hereda directamente de `TransactionCase`) ya comparte
+        # `self.env` correctamente con el hilo HTTP real gracias a
+        # `registry_test_mode`, así que no hace falta construir un
+        # `api.Environment` aparte.
+        self.phantom_env = self.env
+        # MIGRACIÓN V19: `base.user_demo` y la 'demo' namespace de
+        # `demo/openapi_demo.xml` solo existen si el módulo se instaló con
+        # `--with-demo` (en 15.0 los datos demo se cargaban por defecto; en
+        # 19.0 `--with-demo` pasó a ser opt-in, `my_default=False`). En vez
+        # de depender de datos demo -que pueden no estar presentes en
+        # cualquier entorno-, el test crea su propio usuario y namespace
+        # equivalentes.
+        self.demo_user = self.phantom_env["res.users"].create({
+            "name": "Test Demo User",
+            "login": "openapi_test_demo",
+            # MIGRACIÓN V19: se replican los grupos reales de `base.user_demo`
+            # (ver `base/data/res_users_demo.xml`: group_user +
+            # group_partner_manager + group_allow_export), ya que el test
+            # original dependía de ese usuario demo para poder crear/escribir
+            # res.partner directamente (solo `group_user` da acceso de solo
+            # lectura sobre res.partner, ver `ir.model.access.csv`).
+            # `openapi.group_user` se agrega además porque las reglas de
+            # acceso de `openapi.namespace`/`openapi.access` lo exigen.
+            "group_ids": [(6, 0, [
+                self.phantom_env.ref("base.group_user").id,
+                self.phantom_env.ref("base.group_partner_manager").id,
+                self.phantom_env.ref("base.group_allow_export").id,
+                self.phantom_env.ref("openapi.group_user").id,
+            ])],
+        })
         self.admin_user = self.phantom_env.ref(USER_ADMIN)
         self.model_name = "res.partner"
+
+        self.demo_namespace = self.phantom_env["openapi.namespace"].create({
+            "name": "demo",
+            "token": "demo_token",
+            "user_ids": [(4, self.demo_user.id)],
+        })
+        self.phantom_env["openapi.access"].create({
+            "namespace_id": self.demo_namespace.id,
+            "model_id": self.phantom_env.ref("base.model_res_partner").id,
+            "api_create": True,
+            "api_read": True,
+            "api_update": True,
+            "api_delete": True,
+            "api_public_methods": True,
+        })
 
     def request(self, method, url, auth=None, **kwargs):
         kwargs.setdefault("model", self.model_name)
@@ -42,7 +85,13 @@ class TestAPI(HttpCase):
         url = (
             "http://localhost:%d/api/v1/{namespace}" % config["http_port"] + url
         ).format(**kwargs)
-        self.opener = requests.Session()
+        # MIGRACIÓN V19: no crear un `requests.Session()` nuevo aquí. El
+        # `self.opener` que ya provee `HttpCase.setUp()` es el único cliente
+        # capaz de completar la petición: su `request()` envuelve cada
+        # llamada en `self.allow_requests()`, que adjunta la cookie
+        # `test_request_key` exigida por `assertCanOpenTestCursor()`. Sin
+        # esa cookie el request se descarta con 400 ("it does not contain
+        # the test_cursor cookie or it is expired").
         return self.opener.request(
             method, url, timeout=30, auth=auth, json=kwargs.get("data_json")
         )
@@ -69,14 +118,21 @@ class TestAPI(HttpCase):
         resp = self.request_from_user(
             self.demo_user, "POST", "/{model}", data_json=data_for_create
         )
-        self.assertEqual(resp.status_code, pinguin.CODE__created)
-        created_user = self.phantom_env[self.model_name].browse(resp.json()["id"])
+        # MIGRACIÓN V19: `create_one__POST` es `type="jsonrpc"`; ese
+        # dispatcher siempre responde con HTTP 200 real y envuelve el valor
+        # de retorno del endpoint en el sobre `{"jsonrpc", "id", "result"}`
+        # (ver `odoo.http.JsonRPCDispatcher`/`_json_response`). El código de
+        # éxito propio de la API (`pinguin.CODE__created`) y el registro
+        # creado viajan dentro de `result`, no como el HTTP status real ni
+        # como una clave de nivel superior.
+        result = resp.json()["result"]
+        self.assertEqual(result["status_code"], pinguin.CODE__created)
+        created_user = self.phantom_env[self.model_name].browse(result["data"]["id"])
         self.assertEqual(created_user.name, data_for_create["name"])
 
     # TODO: doesn't work in test environment
     def _test_create_one_with_invalid_data(self):
         """create partner without name"""
-        self.phantom_env = api.Environment(self.registry.test_cr, self.uid, {})
         data_for_create = {"email": "string"}
         resp = self.request_from_user(
             self.demo_user, "POST", "/{model}", data_json=data_for_create
@@ -87,7 +143,15 @@ class TestAPI(HttpCase):
         data_for_update = {
             "name": "for update in test",
         }
-        partner = self.phantom_env[self.model_name].search([], limit=1)
+        # MIGRACIÓN V19: no usar `search([], limit=1)` aquí: sin datos demo
+        # el primer partner por orden por defecto es "Administrator" (id 3),
+        # cuyo `name` es un related field hacia `res.users.name`; escribirlo
+        # exige además permiso de escritura sobre `res.users`, que
+        # `demo_user` no tiene (ni debería necesitar para este test). Se usa
+        # un partner dedicado, sin usuario asociado.
+        partner = self.phantom_env[self.model_name].create(
+            {"name": "Partner for update test"}
+        )
         resp = self.request_from_user(
             self.demo_user,
             "PUT",
@@ -144,7 +208,8 @@ class TestAPI(HttpCase):
             {"name": "new user", "login": "new_user"}
         )
         new_user.write(
-            {"groups_id": [(4, self.phantom_env.ref("openapi.group_user").id)]}
+            # MIGRACIÓN V19: `res.users.groups_id` -> `group_ids`.
+            {"group_ids": [(4, self.phantom_env.ref("openapi.group_user").id)]}
         )
         new_user.reset_openapi_token()
         new_user.flush_recordset()
@@ -178,7 +243,13 @@ class TestAPI(HttpCase):
         # TODO check that message is created
 
     def test_call_allowed_method_on_recordset(self):
-        partners = self.phantom_env[self.model_name].search([], limit=5)
+        # MIGRACIÓN V19: no usar `search([], limit=5)` -sin datos demo puede
+        # incluir "Administrator" (id 3), cuyo `name` es un related field
+        # hacia `res.users`, para el que `demo_user` no tiene permiso de
+        # escritura-. Se crean partners dedicados para el test.
+        partners = self.phantom_env[self.model_name].create(
+            [{"name": "recordset partner %d" % i} for i in range(3)]
+        )
         method_name = "write"
         method_params = {
             "args": [{"name": "changed from write method called from api"}],
@@ -196,8 +267,12 @@ class TestAPI(HttpCase):
         )
 
         self.assertEqual(resp.status_code, pinguin.CODE__success)
+        # MIGRACIÓN V19: `call_method_multi__PATCH` es `type="jsonrpc"`; el
+        # valor de retorno real viaja en `resp.json()["result"]["data"]`,
+        # no en la raíz del body (ver nota en `test_create_one`).
+        result_data = resp.json()["result"]["data"]
         for i in range(len(partners)):
-            self.assertTrue(resp.json()[i])
+            self.assertTrue(result_data[i])
         # reread records
         partners = self.phantom_env[self.model_name].browse(ids)
         for partner in partners:
@@ -221,7 +296,9 @@ class TestAPI(HttpCase):
         )
 
         self.assertEqual(resp.status_code, pinguin.CODE__success)
-        self.assertEqual(resp.json(), [1])
+        # MIGRACIÓN V19: ver nota en `test_create_one` sobre el sobre
+        # jsonrpc envolviendo el valor de retorno real en "result"/"data".
+        self.assertEqual(resp.json()["result"]["data"], [1])
 
     # TODO: doesn't work in test environment
     def _test_log_creating(self):

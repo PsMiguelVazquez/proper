@@ -1,9 +1,12 @@
 <?xml version="1.0"?>
 <odoo>
+    <!-- MIGRACIÓN V19: el xmlid del modelo `account.move` es siempre
+         `account.model_account_move`, nunca `<módulo>.model_account_move`
+         para módulos que solo hacen `_inherit`. -->
     <record id="action_factoring" model="ir.actions.server">
         <field name="name">Factoraje</field>
         <field name="type">ir.actions.server</field>
-        <field name="model_id" ref="factoraje_financiero.model_account_move"/>
+        <field name="model_id" ref="account.model_account_move"/>
         <field name="binding_model_id" ref="account.model_account_move" />
         <field name="code">action=model.view_financial_factoring_wizard()</field>
         <field name="state">code</field>
@@ -12,7 +15,7 @@
     <record id="action_compensate" model="ir.actions.server">
         <field name="name">Compensación</field>
         <field name="type">ir.actions.server</field>
-        <field name="model_id" ref="factoraje_financiero.model_account_move"/>
+        <field name="model_id" ref="account.model_account_move"/>
         <field name="binding_model_id" ref="account.model_account_move" />
         <field name="code">action=model.view_compensate_wizard()</field>
         <field name="state">code</field>
@@ -22,7 +25,7 @@
         <field name="name">Gastos</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">account.move</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
 <!--        hardcoded journal id Cambiar de acuerdo al diario-->
         <field name="domain">[('move_type', '=', 'in_invoice'),('journal_id', '=', 21)]</field>
         <field name="context">{'default_move_type': 'in_invoice', 'default_journal_id': 21}</field>

@@ -1,0 +1,9 @@
+<odoo>
+    <!-- MIGRACIÓN V19: se quita `category_id` (apuntaba al id numérico
+         interno 51, que no es portable entre bases de datos: el orden de
+         inserción de ir.module.category difiere en 19.0). El core tampoco
+         asigna categoría a sus grupos técnicos internos equivalentes. -->
+    <record id="gerente_mostrar_documentos_equipo" model="res.groups">
+        <field name="name">Usuario: Gerente Mostrar documentos del equipo</field>
+    </record>
+</odoo>

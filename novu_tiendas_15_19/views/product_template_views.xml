@@ -7,7 +7,10 @@
         <field name="inherit_id" ref="product.product_template_only_form_view" />
         <field name="mode">extension</field>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='uom_po_id']" position="after">
+            <!-- MIGRACIÓN V19: `uom_po_id` fue eliminado (ya no hay UoM de
+                 compra separada); se usa `barcode` como referencia
+                 estable, presente en esta misma vista. -->
+            <xpath expr="//field[@name='barcode']" position="after">
                 <field name="de_hogar"/>
                 <field name="proper"/>
                 <field name="tienda_linea"/>
@@ -15,5 +18,5 @@
         </field>
     </record>
     </data>
-    
+
 </odoo>

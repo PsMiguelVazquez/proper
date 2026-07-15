@@ -1,29 +1,25 @@
 # -*- coding: utf-8 -*-
-from collections import defaultdict
-from datetime import datetime
 
 from odoo import models, fields, _, api
-from odoo.exceptions import UserError, ValidationError
-from lxml.objectify import fromstring
+
+
 class SalePurchaseOrderAlerta(models.TransientModel):
     _name = 'sale.purchase.order.alerta'
+    _description = 'Alerta de reducción de precio / orden parcial'
     message_top = fields.Html()
     message_bottom = fields.Html()
     lines = fields.Many2many('sale.order.line')
     res_order_id = fields.Many2one('sale.order')
-
 
     def confirm(self):
         sale_id = self.res_order_id
         sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})
         sale_id.write({'solicito_validacion': True})
         lines_no_stock = sale_id.order_line.filtered(
-            lambda x: (
-                                  x.product_id.stock_quant_warehouse_zero - x.product_uom_qty) < 0)
+            lambda x: (x.product_id.stock_quant_warehouse_zero - x.product_uom_qty) < 0)
         if lines_no_stock:
             sale_id.write({'state': 'sale_conf', 'solicitud_parcial': True})
             lines_no_stock.write({'x_validacion_precio': True})
-        # self.env['sale.order'].browse(self.env.context.get('active_ids')).write({'state': 'sale_conf'})
         sale_id.order_line.order_id.update({'state': 'sale_conf'})
         mensaje = ''
         if self.res_order_id.order_line.filtered(lambda y: y.price_reduce_v > 0.0):
@@ -76,4 +72,5 @@ class SalePurchaseOrderAlerta(models.TransientModel):
                     order_line.product_uom_qty + order_line.x_cantidad_disponible_compra - order_line.product_id.stock_quant_warehouse_zero) + '</td></tr>'
             mensaje += '</tbody></table>'
 
-        sale_id.message_post(body=mensaje, type="notification")
+        # MIGRACIÓN V19: `type` -> `message_type` en `message_post`.
+        sale_id.message_post(body=mensaje, message_type="notification")

@@ -13,16 +13,22 @@
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
+    'license': 'LGPL-3',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base', 'sale', 'account', 'l10n_mx_edi'],
+    # MIGRACIÓN V19: `res_partner_fields` (x_studio_uso_de_cfdi,
+    # x_studio_mtodo_de_pago, x_nombre_corto_tpago), `account_move_proper`
+    # (x_referencia, x_studio_orden_de_compra, x_studio_almacn en
+    # account.move) y `sale_purchase_confirm` (x_studio_n_orden_de_compra en
+    # sale.order) son dependencias reales, ahora que esos campos de Studio
+    # se formalizaron como código. Instalación+pruebas quedan diferidas
+    # hasta que esos módulos (Lote 3) estén migrados.
+    'depends': [
+        'base', 'sale', 'account', 'l10n_mx_edi', 'res_partner_fields',
+        'account_move_proper', 'sale_purchase_confirm',
+    ],
 
-    # always loaded
     'data': [
         'views/views.xml',
         'wizard/consolidacion_wizard_view.xml',

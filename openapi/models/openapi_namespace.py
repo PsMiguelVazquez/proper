@@ -62,26 +62,22 @@ class Namespace(models.Model):
     )
     spec_url = fields.Char("Specification Link", compute="_compute_spec_url")
 
-    _sql_constraints = [
-        (
-            "name_uniq",
-            "unique (name)",
-            "A namespace already exists with this name. Namespace's name must be unique!",
-        )
-    ]
+    # MIGRACIÓN V19: `_sql_constraints` ya no está soportado; el equivalente
+    # moderno es un atributo de clase `models.Constraint`.
+    _name_uniq = models.Constraint(
+        "unique (name)",
+        "A namespace already exists with this name. Namespace's name must be unique!",
+    )
 
-    def name_get(self):
-        return [
-            (
-                record.id,
-                "/api/v1/%s%s"
-                % (
-                    record.name,
-                    " (%s)" % record.description if record.description else "",
-                ),
+    # MIGRACIÓN V19: `name_get()` ya no existe (removido del core); el
+    # equivalente moderno es sobreescribir `_compute_display_name`.
+    @api.depends("name", "description")
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = "/api/v1/%s%s" % (
+                record.name,
+                " (%s)" % record.description if record.description else "",
             )
-            for record in self
-        ]
 
     @api.model
     def _fix_name(self, vals):
@@ -89,10 +85,13 @@ class Namespace(models.Model):
             vals["name"] = urlparse.quote_plus(vals["name"].lower())
         return vals
 
-    @api.model
-    def create(self, vals):
-        vals = self._fix_name(vals)
-        return super(Namespace, self).create(vals)
+    # MIGRACIÓN V19: `@api.model` + `create(self, vals)` (estilo singular) ya
+    # no auto-envuelve/desenvuelve la lista de valores como en 15.0; ahora
+    # hace falta `@api.model_create_multi` con `vals_list` explícito.
+    @api.model_create_multi
+    def create(self, vals_list):
+        vals_list = [self._fix_name(vals) for vals in vals_list]
+        return super(Namespace, self).create(vals_list)
 
     def write(self, vals):
         vals = self._fix_name(vals)
@@ -227,7 +226,8 @@ class Namespace(models.Model):
                 base_url,
                 record.name,
                 record.token,
-                self._cr.dbname,
+                # MIGRACIÓN V19: `self._cr` deprecado, usar `self.env.cr`.
+                self.env.cr.dbname,
             )
 
     def reset_token(self):
@@ -240,7 +240,7 @@ class Namespace(models.Model):
     def action_show_logs(self):
         return {
             "name": "Logs",
-            "view_mode": "tree,form",
+            "view_mode": "list,form",
             "res_model": "openapi.log",
             "type": "ir.actions.act_window",
             "domain": [["namespace_id", "=", self.id]],
@@ -259,7 +259,8 @@ class Namespace(models.Model):
             )
 
     def _compute_log_count(self):
-        self._cr.execute(
+        # MIGRACIÓN V19: `self._cr` deprecado, usar `self.env.cr`.
+        self.env.cr.execute(
             "SELECT COUNT(*) FROM openapi_log WHERE namespace_id=(%s);", [str(self.id)]
         )
-        self.log_count = self._cr.dictfetchone()["count"]
+        self.log_count = self.env.cr.dictfetchone()["count"]

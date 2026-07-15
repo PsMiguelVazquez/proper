@@ -8,13 +8,13 @@
         <field name="mode">extension</field>
         <field name="arch" type="xml">
             <xpath expr="//page[@name='lead']/group[1]/group[1]" position="inside">
-                
+
                 <field name="rfc_empresa"/>
                 <field name="industria"/>
                 <field name="tamanio_empresa" readonly="1"/>
             </xpath>
             <xpath expr="//page[@name='lead']/group[1]/group[3]" position="before">
-            
+
                 <group string="Información del proyecto">
                     <field name="tipo_proyecto"/>
                     <field name="volumen_compra_estimado"/>
@@ -31,5 +31,5 @@
         </field>
     </record>
     </data>
-    
+
 </odoo>

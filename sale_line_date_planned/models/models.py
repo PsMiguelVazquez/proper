@@ -5,13 +5,6 @@ from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT, float_compare, float_is_z
 from datetime import datetime, timedelta
 
 
-class SaleOrder(models.Model):
-    _inherit = 'sale.order'
-    
-    def action_confirm(self):
-        super(SaleOrder, self).action_confirm()
-
-
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
     date_planned_l = fields.Date('Fecha Entrega')
@@ -26,51 +19,6 @@ class SaleOrderLine(models.Model):
                 record.partner_ids = [(6, 0, childs.ids+record.order_partner_id.ids)]
             else:
                 record.partner_ids = [(6, 0, [])]
-
-class ProcurementRule(models.Model):
-    _inherit = 'procurement.group'
-
-    # @api.model
-    # def run(self, procurements):
-    #     """ Method used in a procurement case. The purpose is to supply the
-    #     product passed as argument in the location also given as an argument.
-    #     In order to be able to find a suitable location that provide the product
-    #     it will search among stock.rule.
-    #     """
-    #     actions_to_run = defaultdict(list)
-    #     errors = []
-    #     for procurement in procurements:
-    #         procurement.values.setdefault('company_id', procurement.location_id.company_id)
-    #         procurement.values.setdefault('priority', '1')
-    #         #procurement.values.setdefault('date_planned', fields.Datetime.now())
-    #         if (
-    #             procurement.product_id.type not in ('consu', 'product') or
-    #             float_is_zero(procurement.product_qty, precision_rounding=procurement.product_uom.rounding)
-    #         ):
-    #             continue
-    #         rule = self._get_rule(procurement.product_id, procurement.location_id, procurement.values)
-    #         if not rule:
-    #             errors.append(_('No rule has been found to replenish "%s" in "%s".\nVerify the routes configuration on the product.') %
-    #                 (procurement.product_id.display_name, procurement.location_id.display_name))
-    #         else:
-    #             action = 'pull' if rule.action == 'pull_push' else rule.action
-    #             actions_to_run[action].append((procurement, rule))
-    #
-    #     if errors:
-    #         raise UserError('\n'.join(errors))
-    #
-    #     for action, procurements in actions_to_run.items():
-    #         if hasattr(self.env['stock.rule'], '_run_%s' % action):
-    #             try:
-    #                 getattr(self.env['stock.rule'], '_run_%s' % action)(procurements)
-    #             except UserError as e:
-    #                 errors.append(e.name)
-    #         else:
-    #             _logger.error("The method _run_%s doesn't exist on the procurement rules" % action)
-    #
-    #     if errors:
-    #         raise UserError('\n'.join(errors))
-    #     return True
 
 
 class StockMove(models.Model):
@@ -94,7 +42,12 @@ class StockMove(models.Model):
                         fecha = moves.picking_id.partner_id
                         fecha2 = moves.picking_id.scheduled_date
                         if fecha != moves.sale_line_id.date_planned_line or fecha2 != moves.sale_line_id.date_planned_l:
-                            fecha_new = fields.datetime(moves.sale_line_id.date_planned_l.year, moves.sale_line_id.date_planned_l.month, moves.sale_line_id.date_planned_l.day) + timedelta(hours=18) if moves.sale_line_id.date_planned_l else order_id.date_order
+                            # MIGRACIÓN V19: `fields.datetime` nunca existió
+                            # como constructor en `odoo.fields` (ni en
+                            # 15.0); se usa la clase `datetime` ya importada
+                            # de la librería estándar, que es lo que la
+                            # lógica claramente pretendía construir.
+                            fecha_new = datetime(moves.sale_line_id.date_planned_l.year, moves.sale_line_id.date_planned_l.month, moves.sale_line_id.date_planned_l.day) + timedelta(hours=18) if moves.sale_line_id.date_planned_l else order_id.date_order
                             picking = self.env['stock.picking'].search([['location_id', '=', moves.location_id.id], ['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')],['scheduled_date', '=', fecha_new ], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]]) if moves.sale_line_id.date_planned_l else self.env['stock.picking'].search([['location_id', '=', moves.location_id.id],['sale_id', '=', order_id.id], ['state', 'not in', ('done', 'cancel')], ['partner_id', '=', moves.sale_line_id.date_planned_line.id]])
                             if picking:
                                 moves.write({'date': fecha_new, 'date_deadline': fecha_new})

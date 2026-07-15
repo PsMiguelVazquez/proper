@@ -20,9 +20,9 @@ class CrmLead(models.Model):
                    )
 
     rfc_empresa = fields.Char(
-        string='RFC', 
+        string='RFC',
         help="RFC")
-    
+
     industria = fields.Char(
         string="Industria",
         readonly=True
@@ -37,24 +37,29 @@ class CrmLead(models.Model):
         string="Volumen de compra estimado",
         readonly=True,
             )
-    
+
     fecuencia_compra_estimado = fields.Char(
         string="Frecuencia de compra estimada",
         readonly=True,
         )
-    
-    @api.model
-    def create(self, vals):
-        if vals.get('captado_en') == 'PROPER V19':
-            vendedor = self.env['res.users'].search([
-                ('login', '=', 'mercadotecnia-ps@properservices.com.mx')
-            ], limit=1)
 
-            if vendedor:
-                vals['user_id'] = vendedor.id
+    # MIGRACIÓN V19: `@api.model` + `create(self, vals)` (singular) ya no
+    # es válido -desde 19.0 un `create()` sobreescrito debe declarar
+    # `@api.model_create_multi` y operar sobre `vals_list` (lista de
+    # dicts)-.
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('captado_en') == 'PROPER V19':
+                vendedor = self.env['res.users'].search([
+                    ('login', '=', 'mercadotecnia-ps@properservices.com.mx')
+                ], limit=1)
 
-            if vals.get('mensaje'):
-                msj = vals.get('mensaje')
-                vals['description'] = msj
+                if vendedor:
+                    vals['user_id'] = vendedor.id
 
-        return super(CrmLead, self).create(vals)
+                if vals.get('mensaje'):
+                    msj = vals.get('mensaje')
+                    vals['description'] = msj
+
+        return super(CrmLead, self).create(vals_list)

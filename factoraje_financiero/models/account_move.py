@@ -3,6 +3,7 @@ from odoo import fields,models, _, api
 from datetime import datetime
 from odoo.exceptions import UserError
 
+
 class AccountMove(models.Model):
     _inherit = 'account.move'
     factoring_amount = fields.Float('Monto por factoraje')
@@ -17,7 +18,12 @@ class AccountMove(models.Model):
             SI LA TIENE CONFIGURADA. SI NO NO HACE NINGÚN CAMBIO. (EL JOURNAL_ID ESTÁ HARDCODEADO.
             INTENTAR HACERLO GENÉRICO)
         '''
-        def_journal = self._context.get('default_journal_id')
+        # MIGRACIÓN V19: `journal_id == 21` es un ID interno específico de la
+        # base de datos de producción original (el mismo hardcodeo ya
+        # existía y estaba señalado como pendiente en el propio comentario
+        # de 15.0); no hay forma de resolverlo a un xmlid estable sin
+        # acceso a esa base de datos real, así que se conserva tal cual.
+        def_journal = self.env.context.get('default_journal_id')
         if def_journal == 21 and self.state == 'draft':
             account_creditor = self.partner_id.property_account_creditor
             account_payable = self.partner_id.property_account_payable_id
@@ -31,6 +37,7 @@ class AccountMove(models.Model):
     def _compute_balance_after_factoring(self):
         for record in self:
             record.balance_after_factoring = record.amount_residual - record.factoring_amount - record.porcent_assign
+
     @api.depends('porcent_assign')
     def _compute_balance_after_compensate(self):
         for record in self:
@@ -44,7 +51,6 @@ class AccountMove(models.Model):
 
     def action_register_payment(self):
         view = self.env.ref('account.view_account_payment_register_form')
-        # return super(AccountMove, self).action_register_payment()
         return {
             'name': _('Register Payment'),
             'res_model': 'account.payment.register',
@@ -60,7 +66,7 @@ class AccountMove(models.Model):
         }
 
     def view_compensate_wizard(self):
-        active_ids = self._context.get('active_ids')
+        active_ids = self.env.context.get('active_ids')
         facturas = self.env['account.move'].browse(active_ids)
         facturas.write({'porcent_assign': 0.0})
         if len(facturas.mapped('partner_id')) != 1:
@@ -85,17 +91,13 @@ class AccountMove(models.Model):
             'target': 'new'
         }
 
-
-
     def view_financial_factoring_wizard(self):
-        active_ids = self._context.get('active_ids')
+        active_ids = self.env.context.get('active_ids')
         facturas = self.env['account.move'].browse(active_ids)
         if len(facturas.filtered(lambda x: x.payment_state == 'not_paid')) != len(facturas):
             raise UserError('No se puede aplicar factoraje a facturas pagadas o pagadas parcialmente.')
         if len(facturas.mapped('partner_id')) != 1:
             raise UserError('No se puede aplicar factoraje a facturas de diferentes clientes.')
-        # if len(facturas.mapped('partner_bank_id')) > 1:
-        #     raise UserError('No se puede aplicar factoraje a facturas con diferentes bancos asociados.')
         for factura in facturas:
             if not factura.partner_bank_id:
                 if len(self.env.company.bank_ids) < 1:

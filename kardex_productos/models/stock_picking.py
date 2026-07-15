@@ -55,57 +55,66 @@ class StockMoveLine(models.Model):
             record.salidas_destino = 0.0
             record.saldo_destino = 0.0
             # Si es un ajuste de inventario el saldo es la cantidad hecha en ese movimiento
-            if record.location_id.id == 14:
-                record.entradas_destino = record.qty_done
+            # MIGRACIÓN V19: se reemplaza el id interno hardcodeado (14) por
+            # `usage == 'inventory'`, la forma portable de identificar la
+            # ubicación virtual de ajustes de inventario (el id numérico no
+            # es estable entre bases de datos).
+            if record.location_id.usage == 'inventory':
+                # MIGRACIÓN V19: `qty_done` ya no existe en stock.move.line;
+                # fue reemplazado por `quantity` (con el booleano `picked`
+                # aparte). Como la búsqueda ya filtra state == 'done', el
+                # valor de `quantity` en esos registros equivale al antiguo
+                # `qty_done`.
+                record.entradas_destino = record.quantity
                 record.saldo_destino = record.entradas_destino
                 movs_ant|=record
             elif '/IN/' in record.tipo_mov or '/INT/' in record.tipo_mov or '/OUT/' in record.tipo_mov or 'INT' in record.tipo_mov:
                 if '/IN/' in record.tipo_mov:
-                    record.entradas_destino = record.qty_done
+                    record.entradas_destino = record.quantity
                     movs_origen = movs_ant.filtered \
                         (lambda y: (y.localidad_origen == record.localidad_destino and '/OUT/' in y.tipo_mov)  # Salidas
                                    or (y.localidad_destino == record.localidad_destino and '/IN/' in y.tipo_mov)  # entradas
                                    or ((y.localidad_origen == record.localidad_destino or y.localidad_destino == record.localidad_destino) and ('/INT/' in y.tipo_mov or 'INT' in y.tipo_mov))  # Internas
-                                   or (y.localidad_destino == record.localidad_destino and y.location_id.id == 14)  # Ajustes
+                                   or (y.localidad_destino == record.localidad_destino and y.location_id.usage == 'inventory')  # Ajustes
                                    and '/PACK/' not in y.tipo_mov and '/PICK/' not in y.tipo_mov)
                     if movs_origen:
                         ultimo_mov_origen = movs_origen[-1]
                         if record.localidad_destino == ultimo_mov_origen.localidad_origen:
                             saldo_destino = ultimo_mov_origen.saldo_origen
-                            record.saldo_destino = saldo_destino + record.qty_done
+                            record.saldo_destino = saldo_destino + record.quantity
                         else:
                             saldo_destino = ultimo_mov_origen.saldo_destino
-                            record.saldo_destino = saldo_destino + record.qty_done
+                            record.saldo_destino = saldo_destino + record.quantity
                     else:
-                        record.saldo_destino = record.qty_done
+                        record.saldo_destino = record.quantity
                 elif '/OUT/' in record.tipo_mov:
-                    record.salidas_origen = record.qty_done
+                    record.salidas_origen = record.quantity
                     movs_origen = movs_ant.filtered\
                                     (lambda y: (y.localidad_origen == record.localidad_origen and '/OUT/' in y.tipo_mov) #Salidas
                                     or (y.localidad_destino == record.localidad_origen and '/IN/' in y.tipo_mov) # entradas
                                     or ((y.localidad_origen == record.localidad_origen or y.localidad_destino == record.localidad_origen) and ('/INT/' in y.tipo_mov or 'INT' in y.tipo_mov)) # Internas
-                                    or (y.localidad_destino == record.localidad_origen and y.location_id.id == 14) # Ajustes
+                                    or (y.localidad_destino == record.localidad_origen and y.location_id.usage == 'inventory') # Ajustes
                                     and '/PACK/' not in y.tipo_mov and '/PICK/' not in y.tipo_mov)
                     if movs_origen:
                         ultimo_mov_origen = movs_origen[-1]
                         if record.localidad_origen == ultimo_mov_origen.localidad_origen:
                             saldo_origen = ultimo_mov_origen.saldo_origen
-                            record.saldo_origen = saldo_origen - record.qty_done
+                            record.saldo_origen = saldo_origen - record.quantity
                         else:
                             saldo_destino = ultimo_mov_origen.saldo_destino
-                            record.saldo_origen = saldo_destino - record.qty_done
+                            record.saldo_origen = saldo_destino - record.quantity
                     else:
                         record.saldo_origen
                 elif 'INT' in record.tipo_mov:
                     movs_origen = movs_ant.filtered(lambda y: (y.localidad_origen == record.localidad_origen and '/OUT/' in y.tipo_mov) #Salidas
                                     or (y.localidad_destino == record.localidad_origen and '/IN/' in y.tipo_mov) # entradas
                                     or ((y.localidad_origen == record.localidad_origen or y.localidad_destino == record.localidad_origen) and ('/INT/' in y.tipo_mov or 'INT' in y.tipo_mov)) # Internas
-                                    or (y.localidad_destino == record.localidad_origen and y.location_id.id == 14) # Ajustes
+                                    or (y.localidad_destino == record.localidad_origen and y.location_id.usage == 'inventory') # Ajustes
                                     and '/PACK/' not in y.tipo_mov and '/PICK/' not in y.tipo_mov)
                     movs_destino = movs_ant.filtered(lambda y: (y.localidad_origen == record.localidad_destino and '/OUT/' in y.tipo_mov)  # Salidas
                                    or (y.localidad_destino == record.localidad_destino and '/IN/' in y.tipo_mov)  # entradas
                                    or ((y.localidad_origen == record.localidad_destino or y.localidad_destino == record.localidad_destino) and ('/INT/' in y.tipo_mov or 'INT' in y.tipo_mov))  # Internas
-                                   or (y.localidad_destino == record.localidad_destino and y.location_id.id == 14)  # Ajustes
+                                   or (y.localidad_destino == record.localidad_destino and y.location_id.usage == 'inventory')  # Ajustes
                                    and '/PACK/' not in y.tipo_mov and '/PICK/' not in y.tipo_mov)
                     if movs_origen:
                         if movs_origen[-1].localidad_origen == record.localidad_origen:
@@ -121,11 +130,8 @@ class StockMoveLine(models.Model):
                             saldo_movs_destino = movs_destino[-1].saldo_destino
                     else:
                         saldo_movs_destino = 0.0
-                    record.salidas_origen = record.qty_done
-                    record.entradas_destino = record.qty_done
+                    record.salidas_origen = record.quantity
+                    record.entradas_destino = record.quantity
                     record.saldo_origen = saldo_movs_origen - record.salidas_origen
                     record.saldo_destino = saldo_movs_destino + record.entradas_destino
                 movs_ant|=record
-
-
-

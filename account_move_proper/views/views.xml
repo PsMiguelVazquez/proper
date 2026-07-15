@@ -5,9 +5,16 @@
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='payment_reference']" position="before">
-                <field name="motivo_cancelacion" attrs="{'invisible':[('state', '!=', 'cancel'),('edi_show_abandon_cancel_button','=',False)]
-                , 'required': [('edi_state','=','to_cancel')]}"/>
-                <field name="fecha_confirmacion_cancelacion" attrs="{'invisible':[('state', '!=', 'cancel'),('edi_show_abandon_cancel_button','=',False)]}"/>
+                <!-- MIGRACIÓN V19: `attrs`/`states` reemplazados por
+                     expresiones lógicas inline. `edi_state` y
+                     `edi_show_abandon_cancel_button` viven en `account_edi`,
+                     módulo del que este módulo no depende (`l10n_mx_edi` ya
+                     no depende de `account_edi` en 19.0); se simplifica la
+                     condición a solo el estado de la factura. -->
+                <field name="motivo_cancelacion"
+                       invisible="state != 'cancel'"/>
+                <field name="fecha_confirmacion_cancelacion"
+                       invisible="state != 'cancel'"/>
             </xpath>
         </field>
     </record>
@@ -16,23 +23,28 @@
     <record id="view_account_move_form_inherited_dates" model="ir.ui.view">
         <field name="name">account.move.form.inherited.dates</field>
         <field name="model">account.move</field>
-        <field name="inherit_id" ref="l10n_mx_edi.view_l10n_mx_edi_invoice_form_inherit"/>
+        <!-- MIGRACIÓN V19: `l10n_mx_edi.view_l10n_mx_edi_invoice_form_inherit`
+             ya no existe; la vista de l10n_mx_edi que hereda directamente de
+             `account.view_move_form` ahora es
+             `l10n_mx_edi.account_move_form_inherit_l10n_mx_edi`. -->
+        <field name="inherit_id" ref="l10n_mx_edi.account_move_form_inherit_l10n_mx_edi"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='l10n_mx_edi_origin']" position="after">
-                <field name="fecha_entrega_mercancia_html" attrs="{'invisible':[('move_type', '!=', 'out_invoice')], 'readonly': True}"/>
+            <!-- MIGRACIÓN V19: `l10n_mx_edi_origin` -> `l10n_mx_edi_cfdi_origin`. -->
+            <xpath expr="//field[@name='l10n_mx_edi_cfdi_origin']" position="after">
+                <field name="fecha_entrega_mercancia_html" invisible="move_type != 'out_invoice'" readonly="1"/>
                 <field name="fecha_recepcion_credito"/>
             </xpath>
             <xpath expr="//notebook/page[@name='other_info']" position="after">
                 <page string="Movimientos de almacén" name="movimientos_almacen">
                     <field name="movimientos_almacen">
-                        <tree>
+                        <list>
                             <field name="name" string="Movimiento" readonly="1"/>
                             <field name="origin" string="Origen" readonly="1"/>
                             <field name="location_id" string="Almacén" readonly="1"/>
                             <field name="date_done" readonly="1"/>
                             <field name="state" readonly="1" widget="badge" decoration-info="state in ('waiting','confirmed','assigned')" decoration-success="state == 'done'" decoration-danger="state == 'cancel'"/>
                             <field name="productos_entregados"/>
-                        </tree>
+                        </list>
                     </field>
                     <label for="cantidad_facturada_total" string="Cantidad total facturada"/>
                     <field name="cantidad_facturada_total"/>
@@ -41,10 +53,14 @@
         </field>
     </record>
 
+    <!-- MIGRACIÓN V19: el xmlid del modelo `account.move` es siempre
+         `account.model_account_move` (el módulo que declara `_name`), nunca
+         `<módulo>.model_account_move` para módulos que solo hacen
+         `_inherit` -ese xmlid nunca existió-. -->
     <record id="action_cancel_invoices_03_04" model="ir.actions.server">
         <field name="name">Marcar como cancelada</field>
         <field name="type">ir.actions.server</field>
-        <field name="model_id" ref="account_move_proper.model_account_move"/>
+        <field name="model_id" ref="account.model_account_move"/>
         <field name="binding_model_id" ref="account.model_account_move" />
         <field name="code">action=model.mark_as_cancelled()</field>
         <field name="state">code</field>
@@ -52,7 +68,7 @@
     <record id="action_duplicate_invoice" model="ir.actions.server">
         <field name="name">Duplicar (motivo 1)</field>
         <field name="type">ir.actions.server</field>
-        <field name="model_id" ref="account_move_proper.model_account_move"/>
+        <field name="model_id" ref="account.model_account_move"/>
         <field name="binding_model_id" ref="account.model_account_move" />
         <field name="code">action=model.duplicate_invoice()</field>
         <field name="state">code</field>
@@ -61,7 +77,7 @@
     <record id="action_repair_invoice" model="ir.actions.server">
         <field name="name">Reparar esta factura</field>
         <field name="type">ir.actions.server</field>
-        <field name="model_id" ref="account_move_proper.model_account_move"/>
+        <field name="model_id" ref="account.model_account_move"/>
         <field name="binding_model_id" ref="account.model_account_move" />
         <field name="code">action=model.repair_invoice()</field>
         <field name="state">code</field>

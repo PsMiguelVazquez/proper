@@ -45,7 +45,9 @@ from odoo.addons.base_api.lib.pinguin import (
     get_dictlist_from_model,
     get_model_for_read,
 )
-from odoo.addons.web.controllers.main import ReportController
+# MIGRACIÓN V19: `odoo.addons.web.controllers.main` ya no existe;
+# `ReportController` vive en `odoo.addons.web.controllers.report`.
+from odoo.addons.web.controllers.report import ReportController
 
 try:
     import simplejson as json
@@ -109,47 +111,17 @@ def successful_response(status, data=None):
     :param int status: The success code.
     :param data: (optional). The data that can be converted to a JSON.
 
-    :returns: The werkzeug `response object`_.
-    :rtype: werkzeug.wrappers.Response
-
-    .. _response object:
-        http://werkzeug.pocoo.org/docs/0.14/wrappers/#module-werkzeug.wrappers
-
+    :returns: a plain dict for `type="jsonrpc"` routes (the dispatcher itself
+        serializes it into the JSON-RPC envelope), converted into a real
+        `werkzeug.wrappers.Response` for `type="http"` routes by the
+        `route()` wrapper below (a `type="http"` endpoint cannot return a
+        bare dict, see `odoo.http.Response.load`).
+    :rtype: dict
     """
-    try:
-        # _logger.error(f"data: {data}")
-        data1 = data.get("catalogo")
-        if isinstance(data, dict):
-            data1 = data.get("id")
-        else:
-            data1 = None
-        # _logger.error(f"data1: {data1}")
-    except AttributeError:
-        # _logger.error("error")
-        pass
-    # _logger.error("lo hare")
-    # response = request.make_response(
-    #     json.dumps(data, default=str),
-    #     headers=[('Content-Type', 'application/json')]
-    # )
-
     return {
-        "status_code": 200,
-        "data": data or {}
+        "status_code": status,
+        "data": data or {},
     }
-    #response.status_code = 200
-    # return request.make_response(
-    #     json.dumps(data, default=str), 
-    #     headers=[('Content-Type', 'application/json')])
-    
-    # response = request.make_response(
-    #     json.dumps(data or {}),
-    #     headers=[('Content-Type', 'application/json')]
-    # )
-    # _logger.error(f"response: {response}")
-    # return response
-    # return request._json_response(data)
-    # return request.make_json_response(data, status=status)
 
 
 ##########################
@@ -169,21 +141,16 @@ def authenticate_token_for_user(token):
     :raise: werkzeug.exceptions.HTTPException if user not found.
     """
     user = request.env["res.users"].sudo().search([("openapi_token", "=", token)])
-    # _logger.error("compañias")
-    # _logger.error(user.company_ids)
     if user.exists():
         # copy-pasted from odoo.http.py:OpenERPSession.authenticate()
         request.session.uid = user.id
         request.session.login = user.login
-        # _logger.error(f"request.session.uid: {request.session.uid}, request.session.login: {request.session.login}")
         request.session.session_token = user.id and security.compute_session_token(
             request.session, request.env
         )
-        # request.update_env(user=user.id)
 
         return user
 
-        # return user
     raise werkzeug.exceptions.HTTPException(
         response=error_response(*CODE__no_user_auth)
     )
@@ -292,7 +259,6 @@ def get_namespace_by_name_from_users_namespaces(
     :raise: werkzeug.exceptions.HTTPException if the namespace is not contained
                                               in allowed user namespaces.
     """
-    #user = authenticate_token_for_user(user_token)
     namespace = request.env["openapi.namespace"].with_user(user.id).search([("name", "=", namespace_name)])
 
     if not namespace.exists() and raise_exception:
@@ -310,7 +276,10 @@ def get_namespace_by_name_from_users_namespaces(
 
 # Create openapi.log record
 def create_log_record(**kwargs):
-    test_mode = request.registry.test_cr
+    # MIGRACIÓN V19: `request.registry.test_cr` ya no existe; se detecta el
+    # modo test comprobando el tipo del cursor en curso (ver también
+    # base_api/lib/pinguin.py, mismo patrón).
+    test_mode = type(request.env.cr).__name__ == "TestCursor"
     # don't create log in test mode as it's impossible in case of error in sql
     # request (we cannot use second cursor and we cannot use aborted
     # transaction)
@@ -371,6 +340,27 @@ def _create_log_record(
         return env["openapi.log"].create(log_data)
 
 
+def _dict_to_http_response(result):
+    """Convert the plain dict produced by `successful_response`/`error_response`
+    into a real `werkzeug.wrappers.Response` with a JSON body.
+
+    MIGRACIÓN V19: `odoo.http.Response.load` (usado por las rutas
+    `type="http"`) solo acepta `Response`, `werkzeug.wrappers.Response`,
+    `HTTPException`, `bytes`, `str` o `None` -ya no un dict crudo-, así que
+    hace falta esta conversión explícita para las rutas GET/PUT/DELETE
+    (declaradas `type="http"`, no `type="jsonrpc"`).
+    """
+    status = result.get("status_code", 200)
+    data = result.get("data")
+    if data in (None, {}) and status == CODE__ok_no_content:
+        return werkzeug.wrappers.Response(status=status)
+    return werkzeug.wrappers.Response(
+        json.dumps(data, default=str),
+        status=status,
+        headers=[("Content-Type", "application/json")],
+    )
+
+
 # Patched http route
 def route(controller_method):
     """Set up the environment for route handlers.
@@ -392,13 +382,10 @@ def route(controller_method):
                 request.httprequest.headers, raise_exception=True
             )
             db_name, user_token = get_data_from_auth_header(auth_header)
-            # _logger.error(f"db_name: {db_name}, user_token: {user_token}")
             authenticated_user = authenticate_token_for_user(user_token)
-            # _logger.error(f"authenticated_user: {authenticated_user}")
             namespace = get_namespace_by_name_from_users_namespaces(
                 authenticated_user, ikwargs["namespace"], raise_exception=True
             )
-            # _logger.error(f"namespace: {namespace}")
             data_for_log = {
                 "namespace_id": namespace.id,
                 "namespace_log_request": namespace.log_request,
@@ -407,7 +394,6 @@ def route(controller_method):
                 "user_request": None,
                 "user_response": None,
             }
-            # _logger.error(f"data_for_log: {data_for_log}")
 
             try:
                 response = controller_method(*iargs, **ikwargs)
@@ -422,6 +408,14 @@ def route(controller_method):
                     error=type(e).__name__,
                     error_descrip=e.name if hasattr(e, "name") else str(e),
                 )
+
+            # MIGRACIÓN V19: para rutas `type="http"` (GET/PUT/DELETE), un
+            # dict crudo (el que produce `successful_response`, pensado para
+            # las rutas `type="jsonrpc"`, cuyo dispatcher sí serializa un
+            # dict directamente) ya no es un valor de retorno válido: hay
+            # que convertirlo a un Response real antes de devolverlo.
+            if isinstance(response, dict) and request.dispatcher.routing_type == "http":
+                response = _dict_to_http_response(response)
 
             data_for_log.update(
                 {"user_request": request.httprequest, "user_response": response}
@@ -457,7 +451,7 @@ def get_create_context(namespace, model, canned_context):
     :rtype: dict
     :raise: werkzeug.exceptions.HTTPException TODO: add description in which case
     """
-    cr, uid = request.cr, request.session.uid
+    cr, uid = request.env.cr, request.session.uid
 
     # Singleton by construction (_sql_constraints)
     openapi_access = request.env(cr, uid)["openapi.access"].search(
@@ -527,15 +521,13 @@ def get_model_openapi_access(namespace, model):
     :raise: werkzeug.exceptions.HTTPException if the namespace has no accesses.
     """
     # TODO: this method has code duplicates with openapi specification code (e.g. get_OAS_definitions_part)
-    cr, uid = request.cr, request.session.uid
-    # _logger.error(f"cr: {cr}, uid: {uid}")
+    cr, uid = request.env.cr, request.session.uid
     # Singleton by construction (_sql_constraints)
     openapi_access = (
         request.env(cr, uid)["openapi.access"]
         .sudo()
         .search([("model_id", "=", model), ("namespace_id.name", "=", namespace)])
     )
-    # _logger.error(f"openapi_access: {openapi_access}")
     if not openapi_access.exists():
         raise werkzeug.exceptions.HTTPException(
             response=error_response(*CODE__canned_ctx_not_found)
@@ -595,8 +587,6 @@ def get_model_openapi_access(namespace, model):
     else:
         res["method"]["main"]["mode"] = "custom"
 
-    # _logger.error(f"res: {res}")
-
     return res
 
 
@@ -619,10 +609,11 @@ def wrap__resource__create_one(modelname, context, data, success_code, out_field
     :rtype: werkzeug.wrappers.Response
     """
     model_obj = get_model_for_read(modelname)
-    # _logger.error(f"model_obj: {model_obj}")
     try:
         created_obj = model_obj.with_context(context).create(data)
-        test_mode = request.registry.test_cr
+        # MIGRACIÓN V19: `request.registry.test_cr` -> comprobar el tipo del
+        # cursor en curso (ver create_log_record más arriba).
+        test_mode = type(request.env.cr).__name__ == "TestCursor"
         if not test_mode:
             # Somehow don't making a commit here may lead to error
             # "Record does not exist or has been deleted"
@@ -631,13 +622,12 @@ def wrap__resource__create_one(modelname, context, data, success_code, out_field
             request.env.cr.commit()
     except Exception as e:
         return error_response(400, type(e).__name__, str(e))
-    
+
     out_data = get_dict_from_record(created_obj, out_fields, (), ())
-    # _logger.error(f"out_data: {out_data}")
     return successful_response(success_code, out_data)
 
 
-def wrap__resource__read_all(modelname, success_code, out_fields,**kg):
+def wrap__resource__read_all(modelname, success_code, out_fields, **kg):
     """function to read all records.
 
     :param str modelname: The name of the model.
@@ -647,39 +637,33 @@ def wrap__resource__read_all(modelname, success_code, out_fields,**kg):
     :returns: successful response with records data
     :rtype: werkzeug.wrappers.Response
     """
-    data = get_dictlist_from_model(modelname, out_fields,**kg)
-    # _logger.error("dataaaaa")
+    data = get_dictlist_from_model(modelname, out_fields, **kg)
     reorder = kg.get("reorder")
-    if reorder is None:
-        _logger.error("none")
-    elif reorder:#Se usa para modificar la salida del json como lo solicito el cliente
+    if reorder:  # Se usa para modificar la salida del json como lo solicito el cliente
         new_pre_data = []
         company_id_string = kg.get("company_id")
-        
+
+        ids_companies_filter = []
         if company_id_string:
             elementos = company_id_string.strip('[]').split(',')
             ids_companies_filter = [int(elemento) for elemento in elementos]
-            # _logger.error(ids_companies_filter)
-         
-        i = 0;
-        # _logger.error("attributes")
+
         for record in data:
             flag_add = False
             if company_id_string:
                 for product in record['product_tmpl_ids']:
-                    #producto_actual = env['product.template'].browse(product)[0]
                     producto_actual = request.env['product.template'].sudo().browse(product)[0]
                     producto_company = producto_actual.company_id.id
                     if producto_company in ids_companies_filter:
                         flag_add = True
             else:
                 flag_add = True
-                    
+
             if flag_add:
                 value_ids = record['value_ids']
                 value_names = record['value_names']
                 att_category = record['name']
-                    
+
                 for i, value_id in enumerate(value_ids):
                     attribute_name = value_names[i]
                     new_record = OrderedDict([
@@ -688,7 +672,7 @@ def wrap__resource__read_all(modelname, success_code, out_fields,**kg):
                             ('att_category', att_category)
                         ])
                     new_pre_data.append(new_record)
-        
+
         data = new_pre_data
     return successful_response(success_code, data)
 
@@ -720,7 +704,7 @@ def wrap__resource__update_one(modelname, id, success_code, data):
               otherwise error response
     :rtype: werkzeug.wrappers.Response
     """
-    cr, uid = request.cr, request.session.uid
+    cr, uid = request.env.cr, request.session.uid
     record = request.env(cr, uid)[modelname].browse(id)
     if not record.exists():
         return error_response(*CODE__obj_not_found)
@@ -742,17 +726,12 @@ def wrap__resource__unlink_one(modelname, id, success_code):
               otherwise error response
     :rtype: werkzeug.wrappers.Response
     """
-    cr, uid = request.cr, request.session.uid
+    cr, uid = request.env.cr, request.session.uid
     record = request.env(cr, uid)[modelname].browse([id])
     if not record.exists():
         return error_response(*CODE__obj_not_found)
     record.unlink()
     return successful_response(success_code)
-
-
-def ejecutarcompra():
-    # _logger.error("jiji")
-    return "jeje"
 
 
 def wrap__resource__call_method(modelname, ids, method, method_params, success_code):
@@ -768,29 +747,35 @@ def wrap__resource__call_method(modelname, ids, method, method_params, success_c
     :rtype: werkzeug.wrappers.Response
     """
     model_obj = get_model_for_read(modelname)
-    
+
     if not hasattr(model_obj, method):
         return error_response(*CODE__invalid_method)
-    
+
     records = model_obj.browse(ids).exists()
     results = []
-    
-    # CORRECCIÓN AQUÍ:
+
     args = method_params.get("args", [])
     kwargs = method_params.get("kwargs", {})
-    
+
     # Si no hay args ni kwargs explícitos, asumir que method_params son los kwargs
     if not args and not kwargs and method_params:
-        kwargs = method_params  # ← Esto es lo correcto
-    
+        kwargs = method_params
+
     for record in records or [model_obj]:
         result = getattr(record, method)(*args, **kwargs)
+        # MIGRACIÓN V19: métodos como `search` devuelven un recordset, que
+        # `json.dumps(..., default=str)` (usado al serializar la respuesta)
+        # convertía silenciosamente en su `repr` (p.ej. "res.partner(1,)")
+        # en vez de una lista de ids serializable. Esto ya era un bug
+        # latente en el framework, no algo introducido por la migración.
+        if isinstance(result, models.BaseModel):
+            result = result.ids
         results.append(result)
-    
+
     if len(ids) <= 1 and len(results):
         results = results[0]
-    
-    model_obj.flush()
+
+    model_obj.flush_model()
     return successful_response(success_code, data=results)
 
 

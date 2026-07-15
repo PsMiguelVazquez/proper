@@ -6,12 +6,15 @@ from datetime import datetime
 
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
+    # MIGRACIÓN V19: el core quitó el estado 'done' (Locked) de
+    # purchase.order.state -ahora "Locked" es el booleano `locked`-, por lo
+    # que se elimina de esta lista para que coincida con el set real de
+    # 19.0; se conserva el estado propio 'consolidate'.
     state = fields.Selection([
         ('draft', 'RFQ'),
         ('sent', 'RFQ Sent'),
         ('to approve', 'To Approve'),
         ('purchase', 'Purchase Order'),
-        ('done', 'Locked'),
         ('cancel', 'Cancelled'),
         ('consolidate', 'Consolidada'),
     ], string='Status', readonly=True, index=True, copy=False, default='draft', tracking=True)
@@ -41,7 +44,7 @@ class PurchaseOrder(models.Model):
             'name': _('Consolidar'),
             'type': 'ir.actions.act_window',
             'res_model': 'consolidacion.compras.wizard',
-            'view_mode': 'tree, form',
+            'view_mode': 'list,form',
             'res_id': w.id,
             'views': [(view.id, 'form')],
             'view_id': view.id,

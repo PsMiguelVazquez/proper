@@ -225,18 +225,13 @@ def get_dictlist_from_model(model, spec, **kwargs):
     :returns: The list of python dictionaries of the requested values.
     :rtype: list
     """
- 
-    _logger.error("get_dictlist_from_model")
-    #domain = kwargs.get("domain", [])
-    _logger.error(kwargs.get("domain"))
     _domain = kwargs.get("domain", [])
     if _domain is None:
         domain = []
     elif _domain:
-        domain = ast.literal_eval(_domain)
+        domain = ast.literal_eval(_domain) if isinstance(_domain, str) else _domain
     else:
         domain = []
-    _logger.error(domain)
     offset = kwargs.get("offset", 0)
     limit = kwargs.get("limit")
     order = kwargs.get("order")
@@ -246,24 +241,19 @@ def get_dictlist_from_model(model, spec, **kwargs):
     exclude_fields = kwargs.get("exclude_fields", ())
     delim = kwargs.get("delimeter", "/")
     ENV = kwargs.get("env", False)
-    _logger.error(model)
     model_obj = get_model_for_read(model, ENV)
 
     records = model_obj.sudo().search(domain, offset=offset, limit=limit, order=order)
-    _logger.error(records)
-    
+
     # Do some optimization for subfields
     _prefetch = {}
     for field in spec:
         if isinstance(field, str):
             continue
         _fld = records._fields[field[0]]
-        _logger.error(_fld.name)
         if _fld.relational:
-            _logger.error("prefetc")
             _prefetch[_fld.comodel] = records.mapped(field[0]).ids
-            _logger.error(records.mapped(field[0]).ids)
-            
+
     for mod, ids in _prefetch.items():
         get_model_for_read(mod, ENV).browse(ids).read()
 
@@ -292,8 +282,14 @@ def get_model_for_read(model, ENV=False):
     """
     if ENV:
         return ENV[model]
-    cr, uid = request.cr, request.session.uid
-    test_mode = request.registry.test_cr
+    cr, uid = request.env.cr, request.session.uid
+    # MIGRACIÓN V19: `request.registry.test_cr` ya no existe (Registry dejó
+    # de exponer ese atributo). El cursor de test ahora es la clase
+    # `odoo.tests.test_cursor.TestCursor`, pero ese módulo no debe importarse
+    # desde código de negocio (odoo.tests.common lanza un log de ERROR si se
+    # importa fuera de un test run). Se detecta el modo test comparando el
+    # nombre de la clase del cursor en curso, sin importar el framework.
+    test_mode = type(cr).__name__ == 'TestCursor'
     if not test_mode:
         # Permit parallel query execution on read
         # Contrary to ISOLATION_LEVEL_SERIALIZABLE as per Odoo Standard
@@ -305,9 +301,6 @@ def get_model_for_read(model, ENV=False):
         err[2] = 'The "%s" model is not available on this instance.' % model
         raise werkzeug.exceptions.HTTPException(response=error_response(*err)) from e
 
-
-# Python > 3.5
-# def get_dict_from_record(record, spec: tuple, include_fields: tuple, exclude_fields: tuple):
 
 # Extract nested values from a record
 def get_dict_from_record(
@@ -325,25 +318,15 @@ def get_dict_from_record(
     """
     map(validate_extra_field, include_fields + exclude_fields)
     result = collections.OrderedDict([])
-    _logger.error(dir(record))
-    _logger.error("recordPARAMS")
-    _logger.error(record)
-    _logger.error("record")
-    _logger.error(spec)
-    _logger.error("spec")
     _spec = [fld for fld in spec if fld not in exclude_fields] + list(include_fields)
-    _logger.error(_spec)
     if list(filter(lambda x: isinstance(x, six.string_types) and delim in x, _spec)):
         _spec = transform_dictfields_to_list_of_tuples(
             record, transform_strfields_to_dict(_spec, delim), ENV
         )
     validate_spec(record, _spec)
-    _logger.error("_spec")
     for field in _spec:
-        _logger.error(field)
         if isinstance(field, tuple):
             # It's a 2many (or a 2one specified as a list)
-            _logger.error("2many")
             if isinstance(field[1], list):
                 result[field[0]] = []
                 for rec in record[field[0]]:
@@ -352,45 +335,31 @@ def get_dict_from_record(
                     ]
             # It's a 2one
             if isinstance(field[1], tuple):
-                _logger.error("2one")
                 result[field[0]] = get_dict_from_record(
                     record[field[0]], field[1], (), (), ENV, delim
                 )
         # Normal field, or unspecified relational
         elif isinstance(field, six.string_types):
-            _logger.error("normal")
             if not hasattr(record, field):
                 raise odoo.exceptions.ValidationError(
                     odoo._('The model "%s" has no such field: "%s".')
                     % (record._name, field)
                 )
 
-            # result[field] = getattr(record, field)
             if isinstance(record[field], datetime.date):
                 value = record[field].strftime("%Y-%m-%d %H:%M:%S")
             else:
                 value = record[field]
 
             result[field] = value
-            _logger.error("result[field] = value")
-            _logger.error(result[field])
             fld = record._fields[field]
             if fld.relational:
                 if fld.type.endswith("2one"):
-                    _logger.error("2one")
                     result[field] = value.id
                 elif fld.type.endswith("2many"):
-                    _logger.error("2many")
-                    _logger.error(value.ids)
-
                     _val = value.browse(value.ids)  # Obtiene todos los registros
                     names = [value1.name for value1 in _val]
-                    _logger.error(names)
-                    
-                    _logger.error("2manyAtt")
-                    _logger.error(field)
                     result[field] = value.ids
-                    #result[fieldvalues] = names
                     if field == "value_ids":
                         result["value_names"] = names
             elif (value is False or value is None) and fld.type != "boolean":

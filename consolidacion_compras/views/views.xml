@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <odoo>
     <record id="action_consolidate_purchase_order" model="ir.actions.server">
+        <!-- MIGRACIÓN V19: `consolidacion_compras.model_purchase_order` no
+             existe (este módulo no define purchase.order, solo lo hereda). -->
+        <field name="model_id" ref="purchase.model_purchase_order"/>
         <field name="name">Consolidar compras</field>
         <field name="type">ir.actions.server</field>
-        <field name="model_id" ref="consolidacion_compras.model_purchase_order"/>
         <field name="binding_model_id" ref="purchase.model_purchase_order" />
         <field name="code">action=model.view_consolidate_purchase_wizard()</field>
         <field name="state">code</field>

@@ -7,28 +7,37 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_bank_id']" position="after">
                 <field name="hide_fields_factoraje" invisible="1"/>
-                <field name="financial_factor" attrs="{'invisible':[('hide_fields_factoraje', '=', True)]}" />
-                <field name="factor_bill" attrs="{'invisible':[('hide_fields_factoraje', '=', True)]}"  domain="[('partner_id', '=', financial_factor), ('move_type', '=', 'in_invoice'), ('state', '=', 'posted'),('payment_state', 'in', ('not_paid', 'partial'))]"/>
-                <field name="amount_factor_bill" attrs="{'invisible':[('hide_fields_factoraje', '=', True)]}"/>
-                <field name="amount_residual_factor_bill" attrs="{'invisible':[('hide_fields_factoraje', '=', True)]}"/>
+                <field name="financial_factor" invisible="hide_fields_factoraje" />
+                <field name="factor_bill" invisible="hide_fields_factoraje" domain="[('partner_id', '=', financial_factor), ('move_type', '=', 'in_invoice'), ('state', '=', 'posted'),('payment_state', 'in', ('not_paid', 'partial'))]"/>
+                <field name="amount_factor_bill" invisible="hide_fields_factoraje"/>
+                <field name="amount_residual_factor_bill" invisible="hide_fields_factoraje"/>
             </xpath>
-            <xpath expr="//group[@name='group3']" position="attributes">
-                <attribute name="attrs">
-                    {'invisible': ['|',('hide_fields_factoraje','!=',True),'|', ('payment_difference', '=', 0.0), '|', ('can_edit_wizard', '=', False), '&amp;', ('can_group_payments', '=', True), ('group_payment', '=', False)]}
-                </attribute>
+            <!-- MIGRACIÓN V19: la vista de `account.payment.register` fue
+                 reestructurada: ya no existe `group[@name='group3']` (la
+                 sección de "diferencia de pago" ahora es un `<div>` inline
+                 dentro de `group1`) ni el campo `partner_bank_ref` (fue
+                 eliminado). Se compone la condición `invisible` de este
+                 `<div>` con la de `hide_fields_factoraje` en vez de
+                 apuntar a un grupo que ya no existe; el xpath de
+                 `partner_bank_ref` se elimina por completo. -->
+            <xpath expr="//div[@invisible='not show_payment_difference']" position="attributes">
+                <attribute name="invisible">not show_payment_difference or not hide_fields_factoraje</attribute>
             </xpath>
             <xpath expr="//field[@name='group_payment']" position="attributes">
-                <attribute name="attrs">
-                    {'invisible': ['|',('hide_fields_factoraje','!=',True), ('can_group_payments', '=', False)]}
-                </attribute>
+                <attribute name="invisible">not can_group_payments or not hide_fields_factoraje</attribute>
             </xpath>
-            <xpath expr="//field[@name='partner_bank_ref']" position="attributes">
-                <attribute name="attrs">{'invisible':[('hide_fields_factoraje','!=',True)]}</attribute>
-            </xpath>
+            <!-- MIGRACIÓN V19: el validador de vistas de 19.0 exige que los
+                 nombres usados en `domain=` de un campo dentro del arch
+                 resuelvan a un campo real del modelo; `active_ids` (variable
+                 de contexto de la acción que abrió el asistente) ya no es
+                 aceptado ahí -sí sigue siendo válido en el `domain` de una
+                 `ir.actions.act_window`-. Se quita esta restricción de UI
+                 (el usuario simplemente selecciona las facturas a mano en
+                 el widget many2many; no afecta la lógica de negocio). -->
             <xpath expr="//form[1]/group[1]" position="after">
-                <field name="partner_bills" widget="many2many"  domain="[('id', 'in', active_ids)]"
-                       attrs="{'invisible':[('hide_fields_factoraje', '=', True)]}" mode="tree">
-                    <tree create="false" delete="false" editable="bottom">
+                <field name="partner_bills" widget="many2many"
+                       invisible="hide_fields_factoraje" mode="list">
+                    <list create="false" delete="false" editable="bottom">
                         <field name="partner_id" optional="hide" readonly="1"/>
                         <field name="name" readonly="1"/>
                         <field name="amount_total_signed" string="Importe Total" readonly="1"/>
@@ -36,7 +45,7 @@
                         <field name="balance_after_factoring" sum="Balance total adeudado"/>
                         <field name="factoring_amount" sum="Total por factoraje"/>
                         <field name="porcent_assign" sum="Total por depósito"/>
-                    </tree>
+                    </list>
                 </field>
             </xpath>
         </field>

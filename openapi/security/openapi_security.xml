@@ -6,18 +6,22 @@
         <field name="description">User access level for OpenAPI</field>
         <field name="sequence">4</field>
     </record>
+    <!-- MIGRACIÓN V19: `res.groups.category_id` ya no existe (el
+         agrupamiento de grupos de acceso ahora usa `privilege_id` ->
+         `res.groups.privilege`, un modelo nuevo). Se quita la referencia a
+         `category_id`; el registro `ir.module.category` de arriba se
+         conserva solo como metadato histórico, sin vincularse a los grupos. -->
     <record model="res.groups" id="group_user">
         <field name="name">User</field>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]" />
-        <field name="category_id" ref="openapi.module_management" />
     </record>
     <record model="res.groups" id="group_manager">
         <field name="name">Manager</field>
         <field name="implied_ids" eval="[(4, ref('openapi.group_user'))]" />
+        <!-- MIGRACIÓN V19: `res.groups.users` -> `res.groups.user_ids`. -->
         <field
-            name="users"
+            name="user_ids"
             eval="[(4, ref('base.partner_root')), (4, ref('base.user_root'))]"
         />
-        <field name="category_id" ref="openapi.module_management" />
     </record>
 </odoo>

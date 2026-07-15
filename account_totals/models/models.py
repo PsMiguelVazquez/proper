@@ -36,4 +36,3 @@ class FloatInherit(Float):
 #                                     monto = round(float(amount[1].replace(',', '')), 2)
 #                                     li[taxlis] = str(symbol) + "\xa0" + f"{monto:,.2f}"
 #         return r
-

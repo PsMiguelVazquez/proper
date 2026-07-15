@@ -12,19 +12,14 @@
     'author': "Jonathan Alfaro",
     'website': "",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Accounting',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
+    'license': 'LGPL-3',
 
-    'depends': ['base','account','l10n_mx_edi', 'sale'],
+    'depends': ['base', 'account', 'l10n_mx_edi', 'sale'],
 
-    # always loaded
     'data': [
         'security/ir.model.access.csv',
         'views/views.xml',
-        #'views/templates.xml',
     ],
-
 }

@@ -13,16 +13,15 @@
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
+    'license': 'LGPL-3',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base', 'account'],
+    # MIGRACIÓN V19: el manifest original solo declaraba 'base'/'account',
+    # pero `payment.amount_rest` lo define el módulo `add_invoice_to_paid`
+    # (dependencia real no declarada).
+    'depends': ['base', 'account', 'add_invoice_to_paid'],
 
-    # always loaded
     'data': [
         'views/account_move.xml',
         'wizard/wizard_eliminate_balance_view.xml',

@@ -13,21 +13,16 @@
     'author': "Jonathan Alfaro",
     'website': "",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base','stock','sale','account','purchase'],
+    # MIGRACIÓN V19: se agrega `sale_purchase_confirm` porque la vista del
+    # asistente usa `x_descripcion_corta` (sale.order.line, formalizado ahí).
+    'depends': ['base', 'stock', 'sale', 'account', 'purchase', 'l10n_mx_edi', 'sale_purchase_confirm'],
 
-    # always loaded
     'data': [
         'security/ir.model.access.csv',
         'wizard/upload_invoice_view.xml',
-        'views/views.xml'
-        #'views/templates.xml',
+        'views/views.xml',
     ],
-
 }

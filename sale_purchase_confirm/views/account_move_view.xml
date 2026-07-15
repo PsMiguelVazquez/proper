@@ -8,10 +8,15 @@
                 <xpath expr="//field[@name='payment_reference']" position="before">
                     <field name="x_estado_actuali_cli" invisible="1"/>
                 </xpath>
-                <xpath expr="//button[2]" position="replace">
+                <!-- MIGRACIÓN V19: `string` no puede usarse como selector en
+                     herencia de vistas; se usa el índice posicional entre
+                     los botones `action_post` -el segundo es "Confirm",
+                     visible cuando `move_type != 'entry'`, ver vista base
+                     `account.view_move_form`-. -->
+                <xpath expr="//button[@name='action_post'][2]" position="replace">
                     <button name="action_post" string="Confirm" class="oe_highlight"
                                 type="object" groups="account.group_account_invoice" data-hotkey="v"
-                                attrs="{'invisible': ['|', '|', '|', '|', ('x_estado_actuali_cli', '==', '3.3'),  ('state', '!=', 'draft'), ('auto_post', '=', True), ('move_type', '=', 'entry'), ('display_inactive_currency_warning','=',True)]}"></button>
+                                invisible="x_estado_actuali_cli == '3.3' or state != 'draft' or auto_post or move_type == 'entry' or display_inactive_currency_warning"></button>
                 </xpath>
                 <header>
                 </header>

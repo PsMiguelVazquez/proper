@@ -12,20 +12,14 @@
     'author': "Jonathan Alfaro",
     'website': "http://www.yourcompany.com",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
+    'license': 'LGPL-3',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base','l10n_mx_edi'],
+    'depends': ['base', 'l10n_mx_edi'],
 
-    # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
         'views/res_partner.xml',
-        # 'views/templates.xml',
     ],
-
 }

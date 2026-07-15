@@ -17,15 +17,15 @@
       <field name="name">automovil.list</field>
       <field name="model">automovil</field>
       <field name="arch" type="xml">
-        <tree string="Automovil">
-            <field name="name" modifiers="{}"/>
-            <field name="modelo" modifiers="{}"/>
-            <field name="ano_modelo" modifiers="{}"/>
-            <field name="fecha_adquisicion" modifiers="{}"/>
-        </tree>
+        <list string="Automovil">
+            <field name="name"/>
+            <field name="modelo"/>
+            <field name="ano_modelo"/>
+            <field name="fecha_adquisicion"/>
+        </list>
       </field>
     </record>
-  
+
     <record model="ir.ui.view" id="automovil_form">
       <field name="name">automovil.form</field>
       <field name="model">automovil</field>
@@ -37,9 +37,6 @@
             <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
                 <field name="active" widget="boolean_button" options="{&quot;terminology&quot;: &quot;archive&quot;}"/>
             </button>
-            <!--<button class="oe_stat_button" icon="fa-file-o" type="action" name="1534">
-                <field name="x_rel_vehiculo__registro_odometro_count" string="Odometros" widget="statinfo"/>
-            </button>-->
         </div>
         <field name="imagen" widget="image" class="oe_avatar"/>
         <div class="oe_title">
@@ -83,10 +80,10 @@
             </group>
         </group>
     </sheet>
-    <div class="oe_chatter">
-        <field name="message_follower_ids" widget="mail_followers"/>
-        <field name="message_ids" widget="mail_thread"/>
-    </div>
+    <!-- MIGRACIÓN V19: los <div class="oe_chatter"> con widgets
+         mail_followers/mail_thread se reemplazan por el elemento moderno
+         <chatter/> (ver p.ej. addons/sale/views/sale_order_views.xml). -->
+    <chatter/>
         </form>
       </field>
     </record>
@@ -95,7 +92,7 @@
     <record model="ir.actions.act_window" id="automovil_action_window">
       <field name="name">automovil</field>
       <field name="res_model">automovil</field>
-      <field name="view_mode">tree,form</field>
+      <field name="view_mode">list,form</field>
     </record>
 
     <!-- explicit list view definition -->
@@ -103,17 +100,17 @@
       <field name="name">creacion.ruta.list</field>
       <field name="model">creacion.ruta</field>
       <field name="arch" type="xml">
-          <tree string="creacion.ruta" delete="false">
+          <list string="creacion.ruta" delete="false">
               <field name="id" />
               <field name="create_date" />
-              <field name="name" modifiers="{}"/>
+              <field name="name"/>
               <field name="tipo"/>
               <field name="chofer"/>
               <field name="vehiculo"/>
               <field name="zona"/>
               <field name="create_uid"/>
               <field name="EstadoPais"/>
-          </tree>
+          </list>
       </field>
     </record>
 
@@ -123,12 +120,12 @@
       <field name="arch" type="xml">
       <form>
           <header>
-              <button name="confirmar" type="object" string="Confirmar"  attrs="{'invisible': [['estado','=','valido']]}"></button>
+              <button name="confirmar" type="object" string="Confirmar" invisible="estado == 'valido'"></button>
               <field name="estado" widget="statusbar"></field>
           </header>
           <sheet string="creacion.ruta">
               <h2>
-                  <field name="name" attrs="{'invisible': [['id','=',False]]}"/>
+                  <field name="name" invisible="not id"/>
               </h2>
               <group>
                   <group>
@@ -143,21 +140,22 @@
                   </group>
               </group>
               <field name="ordenes" domain="['&amp;', ['picking_type_id.code','=','outgoing'], ['state','=','assigned']]">
-                  <tree string="Picking list" editable="bottom">
-                      <field name="id" invisible="1"/>
-                      <field name="ruta_id"  invisible="1"/>
-                      <field name="name" invisible="1"/>
+                  <list string="Picking list" editable="bottom">
+                      <field name="id" column_invisible="1"/>
+                      <field name="ruta_id" column_invisible="1"/>
+                      <field name="name" column_invisible="1"/>
                       <field name="origin" readonly="1" string="Orden"/>
                       <field name="carrier_tracking_ref" />
                       <field name="guia" string="Guia de ventas" readonly="1"/>
                       <field name="evidencia" force_save="1" />
-                      <!--<button name="comentario" type="object" string="Comentario y/o evidencia" attrs="{'invisible': ['|',['state','=','done'],['ruta_id','=',False]]}" ></button>-->
-                      <!--<button name="guia" type="object" string="Guia" attrs="{'invisible': ['|','|',['state','=','done'],['carrier_tracking_ref','!=',False],['ruta_id','=',False]]}"/>
-                      --><button name="button_validate" attrs="{'invisible': ['|', ('state', 'in', ('waiting','confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" class="oe_highlight" groups="stock.group_stock_user"/>
-                      <button name="button_validate" attrs="{'invisible': ['|', ('state', 'not in', ('waiting', 'confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" groups="stock.group_stock_user" class="o_btn_validate"/>
-                      <field name="state" invisible="1"/>
-                      <field name="show_validate" invisible="1"/>
-                  </tree>
+                      <!-- MIGRACIÓN V19: `show_validate` ya no existe en
+                           stock.picking; la visibilidad moderna del botón
+                           Validate se basa solo en `state` (ver
+                           addons/stock/views/stock_picking_views.xml). -->
+                      <button name="button_validate" invisible="state in ('draft', 'confirmed', 'done', 'cancel')" string="Validate" type="object" class="oe_highlight" groups="stock.group_stock_user"/>
+                      <button name="button_validate" invisible="state in ('waiting', 'assigned', 'done', 'cancel')" string="Validate" type="object" groups="stock.group_stock_user" class="o_btn_validate"/>
+                      <field name="state" column_invisible="1"/>
+                  </list>
               </field>
           </sheet>
       </form>
@@ -166,294 +164,51 @@
     <record model="ir.actions.act_window" id="creacion_ruta_action_window">
       <field name="name">ruta</field>
       <field name="res_model">creacion.ruta</field>
-      <field name="view_mode">tree,form</field>
+      <field name="view_mode">list,form</field>
     </record>
     <menuitem name="Distribucion" id="distribucion_menu" parent="stock.menu_stock_root" sequence="5"/>
     <menuitem name="Vehiculos" id="vehiculos_menu" parent="distribucion_menu" action="fleet.fleet_vehicle_action" />
     <menuitem name="Ruta" id="ruta_menu" parent="vehiculos.distribucion_menu" action="creacion_ruta_action_window" />
 
-      <record model="ir.ui.view" id="view_account_payment_form_update">
-        <field name="name">stock.immediate.transfer.update</field>
-        <field name="model">stock.immediate.transfer</field>
-        <field name="inherit_id" ref="stock.view_immediate_transfer"/>
-        <field name="arch" type="xml">
-            <xpath expr="//footer" position="before">
-                <field name="code" invisible="1"/>
-                <field name="evidencia" attrs="{'invisible': [['code', '=', False]], 'required': [['code', '=', True]]}"/>
-            </xpath>
-        </field>
-      </record>
+    <!-- MIGRACIÓN V19: se elimina `view_account_payment_form_update` -el
+         modelo `stock.immediate.transfer` que heredaba (y su vista
+         `stock.view_immediate_transfer`) ya no existen: Odoo simplificó el
+         flujo, ya no hay un wizard aparte de "transferencia inmediata"
+         (ver models/models.py, clase StockPickingLL eliminada por el mismo
+         motivo). Los campos `evidencia`/`code` de ese wizard nunca se
+         sincronizaban con `stock.picking.evidencia` (definido en
+         models/ruta.py) de todas formas: ya era funcionalidad muerta en
+         15.0. -->
+
         <record id="sale_orde_proposal_requirement" model="ir.ui.view">
+        <field name="name">sale.order.form.vehiculos</field>
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
         <xpath expr="//field[@name='payment_term_id']" position="after">
             <field name="guia" string="Guia de ventas"/>
-            <field name="carrier_tracking_ref" attrs="{'invisible': [('carrier_tracking_ref', '=', False)]}" readonly="1"/>
+            <field name="carrier_tracking_ref" invisible="not carrier_tracking_ref" readonly="1"/>
         </xpath>
         </field>
         </record>
-      <record model="ir.ui.view" id="stock_alm_0_14_form">
-          <field name="name">Form inherit alm0</field>
-          <field name="model">stock.picking</field>
-          <field eval="99" name="priority"/>
-          <field name="arch" type="xml">
-              <form string="Transfer">
 
-                <field name="is_locked" invisible="1"/>
-                <field name="show_mark_as_todo" invisible="1"/>
-                <field name="show_check_availability" invisible="1"/>
-                <field name="show_validate" invisible="1"/>
-                <field name="show_lots_text" invisible="1"/>
-                <field name="immediate_transfer" invisible="1"/>
-                <field name="picking_type_code" invisible="1"/>
-                <field name="hide_picking_type" invisible="1"/>
-                <field name="show_operations" invisible="1" readonly="1"/>
-                <field name="show_allocation" invisible="1"/>
-                <field name="show_reserved" invisible="1" readonly="1"/>
-                <field name="move_line_exist" invisible="1"/>
-                <field name="has_packages" invisible="1"/>
-                <field name="picking_type_entire_packs" invisible="1"/>
-                <field name="use_create_lots" invisible="1"/>
-                  <field name="has_kits" invisible="1"/>
-
-                <header>
-                    <button name="action_confirm" attrs="{'invisible': [('show_mark_as_todo', '=', False)]}" string="Mark as Todo" type="object" class="oe_highlight" groups="base.group_user" data-hotkey="x"/>
-                    <button name="action_assign" attrs="{'invisible': [('show_check_availability', '=', False)]}" string="Check Availability" type="object" class="oe_highlight" groups="base.group_user"/>
-                    <button name="button_validate" attrs="{'invisible': ['|', ('state', 'in', ('waiting','confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" class="oe_highlight" groups="stock.group_stock_user" data-hotkey="v"/>
-                    <button name="button_validate" attrs="{'invisible': ['|', ('state', 'not in', ('waiting', 'confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" groups="stock.group_stock_user" class="o_btn_validate" data-hotkey="v"/>
-                    <button name="action_set_quantities_to_reservation" attrs="{'invisible': ['|', ('show_validate', '=', False), ('immediate_transfer', '=', True)]}" string="Set quantities" type="object" groups="stock.group_stock_user" class="o_btn_validate" data-hotkey="g"/>
-                    <widget name="signature" string="Sign" highlight="1"
-                            attrs="{'invisible': ['|', '|', ('id', '=', False), ('picking_type_code', '!=', 'outgoing'), ('state', '!=', 'done')]}"
-                            full_name="partner_id" groups="stock.group_stock_sign_delivery"/>
-                    <widget name="signature" string="Sign"
-                            attrs="{'invisible': ['|', '|', ('id', '=', False), ('picking_type_code', '!=', 'outgoing'), ('state', '=', 'done')]}"
-                            full_name="partner_id" groups="stock.group_stock_sign_delivery"/>
-                    <button name="do_print_picking" string="Print" groups="stock.group_stock_user" type="object" attrs="{'invisible': [('state', '!=', 'assigned')]}" data-hotkey="o"/>
-                    <button string="Print Labels" type="object" name="action_open_label_layout"/>
-                    <button name="%(stock.action_report_delivery)d" string="Print" attrs="{'invisible': [('state', '!=', 'done')]}" type="action" groups="base.group_user" data-hotkey="o"/>
-                    <button name="%(stock.act_stock_return_picking)d" string="Return" attrs="{'invisible': [('state', '!=', 'done')]}" type="action" groups="base.group_user" data-hotkey="k"/>
-                    <button name="do_unreserve" string="Unreserve" groups="base.group_user" type="object" attrs="{'invisible': ['|', '|', '|', ('picking_type_code', '=', 'incoming'), ('immediate_transfer', '=', True), '&amp;', ('state', '!=', 'assigned'), ('move_type', '!=', 'one'), '&amp;', ('state', 'not in', ('assigned', 'confirmed')), ('move_type', '=', 'one')]}" data-hotkey="w"/>
-                    <button name="button_scrap" type="object" string="Scrap" attrs="{'invisible': ['|', '&amp;', ('picking_type_code', '=', 'incoming'), ('state', '!=', 'done'), '&amp;', ('picking_type_code', '=', 'outgoing'), ('state', '=', 'done')]}" data-hotkey="y"/>
-                    <button name="action_toggle_is_locked" attrs="{'invisible': ['|', ('state', 'in', ('draft','cancel')), ('is_locked', '=', False)]}" string="Unlock" groups="stock.group_stock_manager" type="object" help="If the picking is unlocked you can edit initial demand (for a draft picking) or done quantities (for a done picking)." data-hotkey="l"/>
-                    <button name="action_toggle_is_locked" attrs="{'invisible': [('is_locked', '=', True)]}" string="Lock" groups="stock.group_stock_manager" type="object" data-hotkey="l"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,assigned,done" />
-                    <button name="action_cancel" attrs="{'invisible': [('state', 'not in', ('assigned', 'confirmed', 'draft', 'waiting'))]}" string="Cancel" groups="base.group_user" type="object" data-hotkey="z"/>
-                </header>
-                <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <field name="has_scrap_move" invisible="True"/>
-                        <field name="has_tracking" invisible="True"/>
-                        <button name="action_see_move_scrap" string="Scraps" type="object"
-                            class="oe_stat_button" icon="fa-arrows-v"
-                            attrs="{'invisible': [('has_scrap_move', '=', False)]}"/>
-                        <button name="action_see_packages" string="Packages" type="object"
-                            class="oe_stat_button" icon="fa-cubes"
-                            attrs="{'invisible': [('has_packages', '=', False)]}"/>
-                        <button name="%(stock.action_stock_report)d" icon="fa-arrow-up" class="oe_stat_button" string="Traceability" type="action" attrs="{'invisible': ['|', ('state', '!=', 'done'), ('has_tracking', '=', False)]}" groups="stock.group_production_lot"/>
-                        <button name="action_view_reception_report" string="Allocation" type="object"
-                            context="{'default_picking_ids': [id]}"
-                            class="oe_stat_button" icon="fa-list"
-                            attrs="{'invisible': [('show_allocation', '=', False)]}"
-                            groups="stock.group_reception_report"/>
-                        <!-- Use the following button to avoid onchange on one2many -->
-                        <button name="action_picking_move_tree"
-                            class="oe_stat_button"
-                            icon="fa-arrows-v"
-                            type="object"
-                            help="List view of operations"
-                            groups="base.group_no_one"
-                            attrs="{'invisible': ['|', '&amp;', ('show_operations', '=', True), '|', ('is_locked', '=', True), ('state', '=', 'done'), '&amp;', ('state', '=', 'done'), ('is_locked', '=', True)]}"
-                            context="{'picking_type_code': picking_type_code, 'default_picking_id': id, 'form_view_ref':'stock.view_move_form', 'address_in_id': partner_id, 'default_picking_type_id': picking_type_id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id}">
-                            <div class="o_form_field o_stat_info">
-                                <span class="o_stat_text">Operations</span>
-                            </div>
-                        </button>
-                    </div>
-                    <div class="oe_title">
-                        <h1>
-                            <field name="priority" widget="priority" class="mr-3" attrs="{'invisible': [('name','=','/')]}"/>
-                            <field name="name" attrs="{'invisible': [('name','=','/')]}"/>
-                        </h1>
-                    </div>
-                    <group>
-                        <group>
-                            <div class="o_td_label">
-                                <label for="partner_id" string="Delivery Address" style="font-weight:bold;"
-                                       attrs="{'invisible': [('picking_type_code', '!=', 'outgoing')]}"/>
-                                <label for="partner_id" string="Receive From" style="font-weight:bold;"
-                                       attrs="{'invisible': [('picking_type_code', '!=', 'incoming')]}"/>
-                                <label for="partner_id" string="Contact" style="font-weight:bold;"
-                                       attrs="{'invisible': [('picking_type_code', 'in', ['incoming', 'outgoing'])]}"/>
-                            </div>
-                            <field name="partner_id" nolabel="1"/>
-                            <field name="picking_type_id" attrs="{'invisible': [('hide_picking_type', '=', True)], 'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="location_id" options="{'no_create': True}" groups="stock.group_stock_multi_locations" attrs="{'invisible': [('picking_type_code', '=', 'incoming')]}"/>
-                            <field name="location_dest_id" options="{'no_create': True}" groups="stock.group_stock_multi_locations" attrs="{'invisible': [('picking_type_code', '=', 'outgoing')]}"/>
-                            <field name="backorder_id" attrs="{'invisible': [('backorder_id','=',False)]}"/>
-                        </group>
-                        <group>
-                            <label for="scheduled_date"/>
-                            <div class="o_row">
-                                <field name="scheduled_date" attrs="{'required': [('id', '!=', False)]}"
-                                    decoration-warning="state not in ('done', 'cancel') and scheduled_date &lt; now"
-                                    decoration-danger="state not in ('done', 'cancel') and scheduled_date &lt; current_date"
-                                    decoration-bf="state not in ('done', 'cancel') and (scheduled_date &lt; current_date or scheduled_date &lt; now)"/>
-                                <field name="json_popover" nolabel="1" widget="stock_rescheduling_popover" attrs="{'invisible': [('json_popover', '=', False)]}"/>
-                            </div>
-                            <field name="date_deadline"
-                                attrs="{'invisible': ['|', ('state', 'in', ('done', 'cancel')), ('date_deadline', '=', False)]}"
-                                decoration-danger="date_deadline and date_deadline &lt; current_date"
-                                decoration-bf="date_deadline and date_deadline &lt; current_date"/>
-                            <field name="products_availability_state" invisible="1"/>
-                            <field name="products_availability"
-                                attrs="{'invisible': ['|', ('picking_type_code', '!=', 'outgoing'), ('state', 'not in', ['confirmed', 'waiting', 'assigned'])]}"
-                                decoration-success="state == 'assigned' or products_availability_state == 'available'"
-                                decoration-warning="state != 'assigned' and products_availability_state in ('expected', 'available')"
-                                decoration-danger="state != 'assigned' and products_availability_state == 'late'"/>
-                            <field name="date_done" string="Effective Date" attrs="{'invisible': [('state', '!=', 'done')]}"/>
-                            <field name="origin" placeholder="e.g. PO0032"/>
-                            <field name="owner_id" groups="stock.group_tracking_owner"
-                                   attrs="{'invisible': [('picking_type_code', '!=', 'incoming')]}"/>
-                        </group>
-                    </group>
-                    <notebook>
-                        <page string="Detailed Operations"
-                            name="detailed_operations"
-                            attrs="{'invisible': [('show_operations', '=', False)]}">
-                            <field name="move_line_nosuggest_ids"
-                                   attrs="{'readonly': ['|', '|', ('show_operations', '=', False), ('state', '=', 'cancel'), '&amp;', ('state', '=', 'done'), ('is_locked', '=', True)], 'invisible': [('show_reserved', '=', True)]}"
-                                   context="{'tree_view_ref': 'stock.view_stock_move_line_detailed_operation_tree', 'default_picking_id': id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}"/>
-                            <field name="move_line_ids_without_package"
-                                   attrs="{'readonly': ['|', '|', ('show_operations', '=', False), ('state', '=', 'cancel'), '&amp;', ('state', '=', 'done'), ('is_locked', '=', True)], 'invisible': [('show_reserved', '=', False)]}"
-                                   context="{'tree_view_ref': 'stock.view_stock_move_line_detailed_operation_tree', 'default_picking_id': id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}"/>
-                            <field name="package_level_ids_details"
-                                   context="{'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}"
-                                   attrs="{'readonly': [('state', '=', 'done')], 'invisible': ['|', ('picking_type_entire_packs', '=', False), ('show_operations', '=', False)]}" />
-                            <button class="oe_highlight" name="action_put_in_pack" type="object" string="Put in Pack" attrs="{'invisible': [('state', 'in', ('draft', 'done', 'cancel'))]}" groups="stock.group_tracking_lot" data-hotkey="shift+g"/>
-                        </page>
-
-                        <page string="Operations" name="operations">
-                            <field name="move_ids_without_package" mode="tree,kanban"
-                                attrs="{'readonly': ['&amp;', ('state', '=', 'done'), ('is_locked', '=', True)]}"
-                                context="{'default_company_id': company_id, 'default_date': scheduled_date, 'default_date_deadline': date_deadline, 'picking_type_code': picking_type_code, 'default_picking_id': id, 'form_view_ref':'stock.view_move_form', 'address_in_id': partner_id, 'default_picking_type_id': picking_type_id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_partner_id': partner_id}"
-                                add-label="Add a Product">
-                                <tree decoration-danger="not parent.immediate_transfer and state != 'done' and quantity_done > reserved_availability and show_reserved_availability" decoration-muted="scrapped == True or state == 'cancel' or (state == 'done' and is_locked == True)" string="Stock Moves" editable="bottom">
-                                    <field name="company_id" invisible="1"/>
-                                    <field name="name" invisible="1"/>
-                                    <field name="state" invisible="1" readonly="0"/>
-                                    <field name="picking_type_id" invisible="1"/>
-                                    <field name="location_id" invisible="1"/>
-                                    <field name="location_dest_id" invisible="1"/>
-                                    <field name="partner_id" invisible="1"/>
-                                    <field name="scrapped" invisible="1"/>
-                                    <field name="picking_code" invisible="1"/>
-                                    <field name="product_type" invisible="1"/>
-                                    <field name="show_details_visible" invisible="1"/>
-                                    <field name="show_reserved_availability" invisible="1"/>
-                                    <field name="show_operations" invisible="1" readonly="1"/>
-                                    <field name="additional" invisible="1"/>
-                                    <field name="move_lines_count" invisible="1"/>
-                                    <field name="is_locked" invisible="1"/>
-                                    <field name="product_uom_category_id" invisible="1"/>
-                                    <field name="has_tracking" invisible="1"/>
-                                    <field name="display_assign_serial" invisible="1"/>
-                                    <field name="product_id" required="1" context="{'default_detailed_type': 'product'}" attrs="{'readonly': ['|', '&amp;', ('state', '!=', 'draft'), ('additional', '=', False), ('move_lines_count', '&gt;', 0)]}"/>
-                                    <field name="description_picking" string="Description" optional="hide"/>
-                                    <field name="date" optional="hide"/>
-                                    <field name="date_deadline" optional="hide"/>
-                                    <field name="is_initial_demand_editable" invisible="1"/>
-                                    <field name="is_quantity_done_editable" invisible="1"/>
-                                    <field name="product_packaging_id" groups="product.group_stock_packaging"/>
-                                    <field name="product_uom_qty" string="Demand" attrs="{'column_invisible': [('parent.immediate_transfer', '=', True)], 'readonly': ['|', ('is_initial_demand_editable', '=', False), '&amp;', '&amp;', ('show_operations', '=', True), ('is_locked', '=', True), ('is_initial_demand_editable', '=', False)]}"/>
-                                    <button type="object" name="action_product_forecast_report" icon="fa-area-chart"
-                                        attrs="{'invisible': ['|', ('forecast_availability', '&lt;', 0), '|', ('parent.immediate_transfer', '=', True), '&amp;', ('parent.picking_type_code', '=', 'outgoing'), ('state', '!=', 'draft')]}"/>
-                                    <button type="object" name="action_product_forecast_report" icon="fa-area-chart text-danger"
-                                        attrs="{'invisible': ['|', ('forecast_availability', '&gt;=', 0), '|', ('parent.immediate_transfer', '=', True), '&amp;', ('parent.picking_type_code', '=', 'outgoing'), ('state', '!=', 'draft')]}"/>
-                                    <field name="forecast_expected_date" invisible="1"/>
-                                    <field name="forecast_availability" string="Reserved"
-                                        attrs="{'column_invisible': ['|', '|', ('parent.state', 'in', ['draft', 'done']), ('parent.picking_type_code', '!=', 'outgoing'), ('parent.immediate_transfer', '=', True)]}" widget="forecast_widget"/>
-                                    <field name="reserved_availability" string="Reserved"
-                                        attrs="{'column_invisible': ['|', '|', ('parent.state', 'in', ['draft', 'done']), ('parent.picking_type_code', 'in', ['incoming', 'outgoing']), ('parent.immediate_transfer', '=', True)]}"/>
-                                    <field name="product_qty" invisible="1" readonly="1"/>
-                                    <field name="quantity_done" string="Done" attrs="{'readonly': [('is_quantity_done_editable', '=', False)], 'column_invisible':[('parent.state', '=', 'draft'), ('parent.immediate_transfer', '=', False)]}"/>
-                                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft'), ('additional', '=', False)]}" options="{'no_open': True, 'no_create': True}" string="Unit of Measure" groups="uom.group_uom"/>
-                                    <field name="lot_ids" widget="many2many_tags"
-                                        groups="stock.group_production_lot"
-                                        attrs="{'invisible': ['|', ('show_details_visible', '=', False), ('has_tracking', '!=', 'serial')]}"
-                                        optional="hide"
-                                        options="{'create': [('parent.use_create_lots', '=', True)]}"
-                                        context="{'default_company_id': company_id, 'default_product_id': product_id, 'active_picking_id': parent.id}"
-                                        domain="[('product_id','=',product_id)]"
-                                    />
-                                    <button name="action_show_details" type="object" icon="fa-list" width="0.1"
-                                            attrs="{'invisible': [('show_details_visible', '=', False)]}" options='{"warn": true}'/>
-                                    <button name="action_assign_serial" type="object"
-                                            icon="fa-plus-square"
-                                            width="0.1"
-                                            role="img" title="Assign Serial Numbers"
-                                            attrs="{'invisible': ['|', ('display_assign_serial', '=', False), ('show_operations', '=', False)]}"/>
-                                </tree>
-                                <form string="Stock Moves">
-                                    <header>
-                                        <field name="state" widget="statusbar"/>
-                                    </header>
-                                    <group>
-                                        <field name="product_uom_category_id" invisible="1"/>
-                                        <field name="additional" invisible="1"/>
-                                        <field name="move_lines_count" invisible="1"/>
-                                        <field name="company_id" invisible="1"/>
-                                        <field name="product_id" required="1" attrs="{'readonly': ['|', '&amp;', ('state', '!=', 'draft'), ('additional', '=', False), ('move_lines_count', '&gt;', 0)]}"/>
-                                        <field name="is_initial_demand_editable" invisible="1"/>
-                                        <field name="is_quantity_done_editable" invisible="1"/>
-                                        <field name="product_uom_qty" attrs="{'invisible': [('parent.immediate_transfer', '=', True)], 'readonly': [('is_initial_demand_editable', '=', False)]}"/>
-                                        <field name="reserved_availability" string="Reserved" attrs="{'invisible': (['|','|', ('parent.state','=', 'done'), ('parent.picking_type_code', 'in', ['outgoing', 'incoming']), ('parent.immediate_transfer', '=', True)])}"/>
-                                        <field name="product_qty" invisible="1" readonly="1"/>
-                                        <field name="forecast_expected_date" invisible="1"/>
-                                        <field name="forecast_availability" string="Reserved" attrs="{'invisible': ['|', ('parent.picking_type_code', '!=', 'outgoing'), ('parent.state','=', 'done')]}" widget="forecast_widget"/>
-                                        <field name="quantity_done" string="Done" attrs="{'readonly': [('is_quantity_done_editable', '=', False)]}"/>
-                                        <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft'), ('id', '!=', False)]}" options="{'no_open': True, 'no_create': True}" string="Unit of Measure" groups="uom.group_uom"/>
-                                        <field name="description_picking" string="Description"/>
-                                    </group>
-                                </form>
-                            </field>
-                            <field name="id" invisible="1"/>
-                            <field name="package_level_ids" context="{'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}" attrs="{'readonly': [('state', '=', 'done')], 'invisible': ['|', ('picking_type_entire_packs', '=', False), ('show_operations', '=', True)]}" />
-                            <button class="oe_highlight" name="action_put_in_pack" type="object" string="Put in Pack" attrs="{'invisible': [('state', 'in', ('draft', 'done', 'cancel'))]}" groups="stock.group_tracking_lot" data-hotkey="shift+g"/>
-                        </page>
-                        <page string="Additional Info" name="extra">
-                            <group>
-                                <group string="Other Information" name="other_infos">
-                                    <field name="picking_type_code" invisible="1"/>
-                                    <field name="move_type" attrs="{'invisible': [('picking_type_code', '=', 'incoming')]}"/>
-                                    <field name="user_id" domain="[('share', '=', False)]"/>
-                                    <field name="group_id" groups="base.group_no_one"/>
-                                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}" force_save="1"/>
-                                </group>
-                            </group>
-                        </page>
-                        <page string="Note" name="note">
-                            <field name="note" string="Note" placeholder="Add an internal note that will be printed on the Picking Operations sheet"/>
-                        </page>
-                    </notebook>
-                </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
-                </form>
-          </field>
-      </record>
+      <!-- MIGRACIÓN V19: se elimina `stock_alm_0_14_form` (duplicaba
+           íntegramente el formulario estándar de stock.picking de 15.0, sin
+           ninguna personalización propia visible, y usaba campos que ya no
+           existen: `immediate_transfer`, `quantity_done`,
+           `move_line_nosuggest_ids`, `show_validate`, etc.). Al no aportar
+           ninguna customización real, se usa directamente el formulario
+           estándar `stock.view_picking_form` de 19.0 para esta acción, en
+           vez de mantener una copia duplicada y frágil. -->
       <record model="ir.actions.act_window" id="action_alm0_alm14">
           <field name="name">Solicitudes ALM14-ALM0</field>
           <field name="res_model">stock.picking</field>
-          <field name="view_mode">tree,form</field>
+          <field name="view_mode">list,form</field>
           <field name="context">{'contact_display': 'partner_address', 'default_company_id': allowed_company_ids[0]}</field>
           <field name="domain">['&amp;', ['location_id', 'ilike', 'ALM14'], ['location_dest_id', 'ilike', 'ALM-0']]</field>
           <field name="view_ids" eval="[(5, 0, 0),
-                (0,0, {'view_mode': 'tree', 'view_id': ref('stock.vpicktree')}),
-                (0, 0, {'view_mode': 'form', 'view_id': ref('vehiculos.stock_alm_0_14_form')})]"/>
+                (0,0, {'view_mode': 'list', 'view_id': ref('stock.vpicktree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('stock.view_picking_form')})]"/>
       </record>
       <menuitem id="menu_item_actio_alm_0_14" action="action_alm0_alm14"  parent="stock.menu_stock_warehouse_mgmt"/>
 

@@ -6,27 +6,34 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//form/header/field[@name='authorized_transaction_ids']" position="before">
+            <!-- MIGRACIÓN V19: `field[@name='authorized_transaction_ids']`
+                 ya no existe como tal en el header (el core usa solo el
+                 booleano calculado `has_authorized_transaction_ids`); se
+                 usa el botón "Create Invoice" (`id="create_invoice"`) como
+                 ancla estable en su lugar. -->
+            <xpath expr="//form/header/button[@id='create_invoice']" position="before">
                 <field name="edit_blocked" invisible="1"/>
                 <field name="block_invoicing" invisible="1"/>
                 <field name="invoice_approved" invisible="1"/>
                 <field name="approve_invoicing_requested" invisible="1"/>
             </xpath>
-            <xpath expr="//form/header/button[@name='328']" position="attributes">
-                <attribute name="attrs">{'invisible': [
-                    '|',
-                    ('invoice_status', '!=', 'to invoice'),
-                    ('block_invoicing', '=', True)
-                    ]}</attribute>
+            <!-- MIGRACIÓN V19: `button[@name='328']` era el ID numérico
+                 (resuelto en esa base de datos específica) de la acción
+                 `sale.action_view_sale_advance_payment_inv` -el botón
+                 "Create Invoice" del core-, no una acción de Studio. Se
+                 referencia por su `id` estable en vez del número; `attrs`
+                 -> `invisible` inline. -->
+            <xpath expr="//form/header/button[@id='create_invoice']" position="attributes">
+                <attribute name="invisible">invoice_status != 'to invoice' or block_invoicing</attribute>
             </xpath>
             <header>
                 <button name="approve_invoicing" string="Aprobar facturación" type="object"
-                        attrs="{'invisible': [('approve_invoicing_requested','!=',True)]}"/>
+                        invisible="approve_invoicing_requested != True"/>
                 <button name="request_approve_invoicing" string="Solicitar Aprobación de facturación" type="object"
-                        attrs="{'invisible': ['|','|',('state','!=','sale'), ('block_invoicing','!=',True), ('approve_invoicing_requested','=',True)]}"/>
+                        invisible="state != 'sale' or block_invoicing != True or approve_invoicing_requested == True"/>
             </header>
             <xpath expr="//form/sheet/notebook/page/field[@name='order_line']" position="attributes">
-                <attribute name="attrs">{'readonly':[('edit_blocked','=',True)]}</attribute>
+                <attribute name="readonly">edit_blocked == True</attribute>
             </xpath>
         </field>
     </record>

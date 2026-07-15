@@ -2,7 +2,7 @@
 {
     'name': "Utilidades para la orden de venta",
 
-    'summary':  """
+    'summary': """
                     Utilidades para las órdenes de venta.
                 """,
 
@@ -13,23 +13,18 @@
         - Solucitud de desbloqueo de la facturación cuando la orden está surtida parcialmente
     """,
 
+    'license': 'LGPL-3',
     'author': "My Company",
     'website': "http://www.yourcompany.com",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '19.0.1.0.0',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base', 'sale', 'purchase','product','sale_purchase_confirm'],
+    'depends': ['base', 'sale', 'purchase', 'product', 'sale_purchase_confirm'],
 
-    # always loaded
     'data': [
         'security/ir.model.access.csv',
         'views/sale_order.xml',
         'views/data_validate.xml',
-        # 'wizard/sale_purchase_order_alerta.xml',
     ],
 }

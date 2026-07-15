@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-from dateutil.relativedelta import relativedelta
-
 from odoo import api, fields, models, _
-from odoo.osv import expression
 
 
 class MarcaAutomovil(models.Model):
@@ -11,7 +8,7 @@ class MarcaAutomovil(models.Model):
     name = fields.Char('Marca', required=True)
     imagen=fields.Binary()
 
-    
+
 class ModelAutomovil(models.Model):
     _name = 'modelo.automovil'
     _description = 'Modelo de Automovil'
@@ -25,11 +22,16 @@ class Automovil(models.Model):
     _name = 'automovil'
     _description = 'Automovil'
     name = fields.Char(store=True)
-    active = fields.Boolean('Active', default=True, track_visibility="onchange")
+    # MIGRACIÓN V19: `track_visibility="onchange"` ya no existe (removido
+    # desde hace varias versiones); el equivalente moderno es `tracking=True`.
+    active = fields.Boolean('Active', default=True, tracking=True)
     compania = fields.Many2one('res.company', 'Company')
     license_plate = fields.Char()
     vin_sn = fields.Char('Chassis Number')
-    driver_id = fields.Many2one('res.partner', 'Driver', track_visibility="onchange", help='Driver of the vehicle', copy=False, auto_join=True)
+    # MIGRACIÓN V19: `auto_join` ya no es un parámetro válido en un modelo
+    # propio salvo que se override `_valid_field_parameter` (era solo un
+    # hint de optimización de queries, no cambia el comportamiento).
+    driver_id = fields.Many2one('res.partner', 'Driver', tracking=True, help='Driver of the vehicle', copy=False)
     modelo = fields.Many2one('modelo.automovil', 'Model')
     fecha_adquisicion = fields.Date('Fecha de Adquisición')
     color = fields.Char(help='Color')
@@ -70,16 +72,6 @@ class StockPicking(models.Model):
     _inherit = 'stock.picking'
     carrier_tracking_ref = fields.Char(string='Tracking Reference')
     guia = fields.Char(string='No de Guia')
-    # def _compute_address(self):
-    #     for record in self:
-    #         #if record.sale_id:
-    #         record.update({'carrier_tracking_ref': record.sale_id.carrier_tracking_ref})
-    #         #else:
-    #          #   record.update({'carrier_tracking_ref': False})
-    #
-    # def _inverse_street(self):
-    #     for company in self:
-    #         company.sale_id.carrier_tracking_ref = company.carrier_tracking_ref
 
     def write(self, vals):
         if 'carrier_tracking_ref' in vals:
@@ -88,15 +80,14 @@ class StockPicking(models.Model):
         return super(StockPicking, self).write(vals)
 
 
+# MIGRACIÓN V19: se elimina la clase `StockPickingLL` (heredaba
+# `stock.immediate.transfer`, un wizard eliminado en 19.0: el flujo de
+# "transferencia inmediata" ya no existe como paso de confirmación aparte,
+# `button_validate()` decide directamente si hace falta un backorder). Los
+# campos `evidencia`/`code` de ese wizard nunca se sincronizaban con
+# `stock.picking.evidencia` (el campo real, definido en ruta.py) - ya eran
+# funcionalidad muerta en 15.0.
 
-class StockPickingLL(models.TransientModel):
-    _inherit = 'stock.immediate.transfer'
-    evidencia = fields.Binary('Evidencia')
-    code = fields.Boolean(default=False)
-
-    def process(self):
-        r = super(StockPickingLL, self).process()
-        return r
 
 class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'
@@ -116,7 +107,3 @@ class StockMoveLine(models.Model):
     def get_facturas(self):
         for record in self:
             record.facturas = record.picking_id.sudo().mapped('sale_id.invoice_ids')
-
-
-
-

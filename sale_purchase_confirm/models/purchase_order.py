@@ -25,6 +25,7 @@ class PurchaseOrder(models.Model):
 
 class PurchaseWizard(models.TransientModel):
     _name = 'purchase.wizard.conf'
+    _description = 'Confirmación masiva de órdenes de compra'
 
     def confirm(self):
         purchases = self.env['purchase.order'].browse(self._context.get('active_ids', []))
@@ -33,6 +34,7 @@ class PurchaseWizard(models.TransientModel):
 
 class PurchaseWizardMerge(models.TransientModel):
     _name = 'purchase.wizard.merge'
+    _description = 'Fusión de órdenes de compra'
 
     def confirm(self):
         purchases = self.env['purchase.order'].browse(self._context.get('active_ids', [])).filtered(lambda x: x.state == 'draft')
@@ -45,9 +47,9 @@ class PurchaseWizardMerge(models.TransientModel):
             pl.write({'active':False})
         return {
             'name':_("Ordens"),
-            'view_mode': 'tree',
+            'view_mode': 'list',
             'view_id': False,
-            'view_type': 'tree',
+            'view_type': 'list',
             'res_model': 'purchase.order',
             'type': 'ir.actions.act_window',
         }

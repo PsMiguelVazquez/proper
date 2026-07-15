@@ -9,8 +9,8 @@ class SaleOrderAlerta(models.TransientModel):
     def confirmar_validacion(self):
         r = super(SaleOrderAlerta, self).confirmar_validacion()
         order_lines = self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero
-                                                                  + x.x_cantidad_disponible_compra
-                                                                  - x.product_uom_qty) < 0)
+                                                                    + x.x_cantidad_disponible_compra
+                                                                    - x.product_uom_qty) < 0)
         if order_lines:
             for line in order_lines:
                 data_validate = self.env['data.validate'].search([('order_line_id', '=', line.id)])
