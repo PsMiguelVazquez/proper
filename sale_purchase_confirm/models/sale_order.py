@@ -395,10 +395,15 @@ class SaleOrder(models.Model):
     @api.depends('partner_id', 'partner_child')
     def get_partner(self):
         for record in self:
-            group = self.env.ref('sales_team.group_sale_salesman')
-            group_s = self.env.ref('sales_team.group_sale_salesman_all_leads')
-            grup_ss = self.env.ref('sales_team.group_sale_manager')
-            if self.env.user.id in group.users.ids and self.env.user.id not in group_s.users.ids and self.env.user.id not in grup_ss.users.ids:
+            user = self.env.user
+            # MIGRACIÓN V19: `res.groups.users` ya no existe (renombrado a
+            # `user_ids`/`all_user_ids`); se usa `has_group`, que ya resuelve
+            # la pertenencia incluyendo grupos implicados.
+            if (
+                user.has_group('sales_team.group_sale_salesman')
+                and not user.has_group('sales_team.group_sale_salesman_all_leads')
+                and not user.has_group('sales_team.group_sale_manager')
+            ):
                 partner = self.env['res.partner'].search(['|', '|', ['x_nombre_agente_venta', '=', self.env.user.name], ['agente_temporal', '=', self.env.user.name], ['x_nombre_agente_venta', '=', False]])
             else:
                 partner = self.env['res.partner'].search([])
