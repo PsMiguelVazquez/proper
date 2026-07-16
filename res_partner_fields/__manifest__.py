@@ -18,6 +18,8 @@
 
     'depends': ['base', 'l10n_mx_edi'],
 
+    'pre_init_hook': 'pre_init_hook',
+
     'data': [
         'security/ir.model.access.csv',
         'views/res_partner.xml',

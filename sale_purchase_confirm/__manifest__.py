@@ -29,6 +29,8 @@
     # (product.template) usa `stock.valuation.layer`, definido ahí.
     'depends': ['base', 'sale', 'purchase', 'stock', 'stock_account', 'web_studio', 'res_partner_fields', 'l10n_mx_edi'],
 
+    'pre_init_hook': 'pre_init_hook',
+
     'data': [
         'security/ir.model.access.csv',
         'views/views.xml',
