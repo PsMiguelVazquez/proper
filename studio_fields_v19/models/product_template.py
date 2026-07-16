@@ -7,10 +7,13 @@ from .common import studio_get
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
+    # MIGRACIÓN V19: sin `store` a propósito (ver `common.py`): sin
+    # `@api.depends`, `store=True` sólo calcularía estos campos una vez, al
+    # crear el registro, y nunca se volverían a evaluar.
     x_studio_volumen_c_m = fields.Float(
-        string='Volumen c-m', compute='_compute_x_studio_volumen_c_m', store=True)
+        string='Volumen c-m', compute='_compute_x_studio_volumen_c_m')
     x_vol = fields.Float(
-        string='Volumen', compute='_compute_x_vol', store=True)
+        string='Volumen', compute='_compute_x_vol')
 
     # MIGRACIÓN V19: sin `@api.depends` a propósito, ver `common.py`
     # (`x_studio_alto_c_m`/`x_studio_ancho_c_m`/`x_studio_largo_c_m` no

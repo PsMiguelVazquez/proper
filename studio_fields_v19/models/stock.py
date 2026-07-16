@@ -7,10 +7,13 @@ from .common import studio_get
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
+    # MIGRACIÓN V19: sin `store` a propósito (ver `common.py`): sin
+    # `@api.depends`, `store=True` sólo calcularía este campo una vez, al
+    # crear el registro, y nunca se volvería a evaluar.
     x_estado_documento = fields.Selection(
         [('Documentos entregados', 'Documentos entregados'),
          ('Documentos no entregados', 'Documentos no entregados')],
-        string='Estado de documentos', compute='_compute_x_estado_documento', store=True)
+        string='Estado de documentos', compute='_compute_x_estado_documento')
     x_studio_distancia_1 = fields.Html(
         string='Distancia', compute='_compute_x_studio_distancia_1')
     x_studio_suma_total = fields.Float(

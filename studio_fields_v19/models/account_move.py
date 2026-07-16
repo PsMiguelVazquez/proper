@@ -25,9 +25,13 @@ class AccountMove(models.Model):
         string='Utilidad %', compute='_compute_x_utilidad_total', store=True)
     # MIGRACIÓN V19: etiqueta de Studio "New Entero"; el cálculo original
     # tenía la lógica real comentada y sólo dejaba el valor fijo en 1. Se
-    # preserva tal cual para no perder los datos ya guardados.
+    # preserva tal cual para no perder los datos ya guardados. Sin `store`
+    # a propósito (ver `common.py`): un compute sin `@api.depends` y
+    # `store=True` sólo se calcula una vez, al crear el registro, y nunca
+    # se vuelve a evaluar -queda pegado en el valor inicial-; sin `store`
+    # se recalcula en cada lectura.
     x_studio_integer_field_Dg6kN = fields.Integer(
-        string='New Entero', compute='_compute_x_studio_integer_field_Dg6kN', store=True)
+        string='New Entero', compute='_compute_x_studio_integer_field_Dg6kN')
 
     @api.depends('invoice_line_ids')
     def _compute_x_cant_prod_facturados(self):

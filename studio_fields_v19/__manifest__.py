@@ -48,5 +48,13 @@
         'l10n_mx_edi_stock',
     ],
 
-    'data': [],
+    'data': [
+        'views/report_saleorder_document_copy_3.xml',
+        'views/report_saleorder_document_copy_3_customization.xml',
+        'views/document_tax_totals_copy_1.xml',
+        'views/report_saleorder_pro_forma_copy_1.xml',
+        'views/report_saleorder_document_copy_3_copy_1.xml',
+        'views/document_tax_totals_copy_1_copy_1.xml',
+        'views/report_saleorder_pro_forma_copy_1_copy_1.xml',
+    ],
 }
