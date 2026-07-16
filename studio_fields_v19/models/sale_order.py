@@ -6,6 +6,8 @@ se excluyó (subsistema de Requerimientos/Propuestas de compra).
 """
 from odoo import models, fields, api
 
+from .common import studio_get
+
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -86,10 +88,13 @@ class SaleOrder(models.Model):
         for record in self:
             record.x_studio_char_field_5mFSv = _fecha_larga_cdmx()
 
-    @api.depends('order_line', 'order_line.x_pedido', 'write_date')
+    # MIGRACIÓN V19: sin `x_pedido` en `@api.depends` a propósito, ver
+    # `common.py` (no existe en todas las bases).
+    @api.depends('order_line', 'write_date')
     def _compute_x_studio_pedido(self):
         for record in self:
-            record.x_studio_pedido = False if False in record.mapped('order_line.x_pedido') else True
+            pedidos = [studio_get(line, 'x_pedido', True) for line in record.order_line]
+            record.x_studio_pedido = False if False in pedidos else True
 
 
 class SaleOrderLine(models.Model):
@@ -125,11 +130,13 @@ class SaleOrderLine(models.Model):
         for record in self:
             record.x_invoiced_subtotal = record.qty_invoiced * record.price_unit
 
-    @api.depends('product_uom_qty', 'x_Reservado', 'qty_delivered')
+    # MIGRACIÓN V19: sin `x_Reservado` en `@api.depends` a propósito, ver
+    # `common.py` (no existe en todas las bases).
+    @api.depends('product_uom_qty', 'qty_delivered')
     def _compute_x_por_surtir(self):
         for record in self:
             if record.qty_delivered == 0:
-                record.x_por_surtir = record.product_uom_qty - record.x_Reservado
+                record.x_por_surtir = record.product_uom_qty - studio_get(record, 'x_Reservado')
             else:
                 record.x_por_surtir = record.product_uom_qty - record.qty_delivered
 

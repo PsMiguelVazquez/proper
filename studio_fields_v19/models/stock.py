@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
 
+from .common import studio_get
+
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
@@ -14,10 +16,11 @@ class StockPicking(models.Model):
     x_studio_suma_total = fields.Float(
         string='Suma Total', compute='_compute_x_studio_suma_total', store=True)
 
-    @api.depends('x_documento_entregado')
+    # MIGRACIÓN V19: sin `@api.depends` a propósito, ver `common.py`
+    # (`x_documento_entregado` no existe en todas las bases).
     def _compute_x_estado_documento(self):
         for record in self:
-            if record.x_documento_entregado:
+            if studio_get(record, 'x_documento_entregado', False):
                 record.x_estado_documento = 'Documentos entregados'
             else:
                 record.x_estado_documento = 'Documentos no entregados'
@@ -46,8 +49,9 @@ class StockMove(models.Model):
     x_studio_costo_total = fields.Float(
         string='Costo total', compute='_compute_x_studio_costo_total', store=True)
 
-    # MIGRACIÓN V19: `quantity_done` -> `quantity`.
-    @api.depends('quantity', 'x_studio_costo_de_compra')
+    # MIGRACIÓN V19: `quantity_done` -> `quantity`. Sin `x_studio_costo_de_compra`
+    # en `@api.depends` a propósito, ver `common.py`.
+    @api.depends('quantity')
     def _compute_x_studio_costo_total(self):
         for record in self:
-            record.x_studio_costo_total = record.quantity * record.x_studio_costo_de_compra
+            record.x_studio_costo_total = record.quantity * studio_get(record, 'x_studio_costo_de_compra')

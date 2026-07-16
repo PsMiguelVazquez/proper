@@ -18,7 +18,12 @@ class ResPartner(models.Model):
     def _compute_x_x_holding__res_partner_count(self):
         # MIGRACIÓN V19: el original usaba `read_group` con la firma antigua
         # (diccionarios con clave `<campo>_count`); se reescribe con
-        # `search_count`, más simple y compatible.
+        # `search_count`, más simple y compatible. `x_holding` es un campo
+        # de Odoo Studio que puede no existir en todas las bases (ver
+        # `common.py`); si no existe, el conteo queda en 0.
+        if 'x_holding' not in self._fields:
+            self.x_x_holding__res_partner_count = 0
+            return
         for record in self:
             record.x_x_holding__res_partner_count = self.env['res.partner'].search_count(
                 [('x_holding', '=', record.id)])
