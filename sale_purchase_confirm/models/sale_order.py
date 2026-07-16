@@ -714,7 +714,8 @@ class SaleOrderLine(models.Model):
                         record.cantidad_asignada = 0
                 else:
                     producto = picking_lines[0].product_id
-                    total_reservado = sum(picking_lines.mapped('reserved_availability'))
+                    # MIGRACIÓN V19: `reserved_availability` -> `quantity`.
+                    total_reservado = sum(picking_lines.mapped('quantity'))
                     lineas_pedido = record.order_id.order_line.filtered(lambda x: x.product_id == producto)
                     if len(lineas_pedido) > 1:
                         for linea in lineas_pedido:
