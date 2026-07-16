@@ -3,6 +3,8 @@ import datetime
 
 from odoo import models, fields, api
 
+from .common import studio_get
+
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
@@ -32,10 +34,10 @@ class AccountMove(models.Model):
         for record in self:
             record.x_cant_prod_facturados = sum(record.invoice_line_ids.mapped('quantity'))
 
-    @api.depends('amount_untaxed', 'x_studio_utilidad')
+    @api.depends('amount_untaxed')
     def _compute_x_costo_total(self):
         for record in self:
-            record.x_costo_total = record.amount_untaxed * (1 - record.x_studio_utilidad / 100)
+            record.x_costo_total = record.amount_untaxed * (1 - studio_get(record, 'x_studio_utilidad') / 100)
 
     @api.depends('invoice_date')
     def _compute_x_fecha_factura(self):
@@ -75,7 +77,8 @@ class AccountMove(models.Model):
         for record in self:
             record.x_utilidad_total = sum(record.invoice_line_ids.mapped('x_utilidad'))
 
-    @api.depends('x_studio_fecha_de_revisin')
+    # MIGRACIÓN V19: sin `@api.depends` a propósito, ver `common.py`
+    # (`x_studio_fecha_de_revisin` no existe en todas las bases).
     def _compute_x_studio_integer_field_Dg6kN(self):
         for record in self:
             record.x_studio_integer_field_Dg6kN = 1
@@ -93,10 +96,10 @@ class AccountMoveLine(models.Model):
     x_utilidad = fields.Float(
         string='Utilidad', compute='_compute_x_utilidad', store=True)
 
-    @api.depends('x_costo', 'quantity')
+    @api.depends('quantity')
     def _compute_x_costo_total(self):
         for record in self:
-            record.x_costo_total = record.x_costo * record.quantity
+            record.x_costo_total = studio_get(record, 'x_costo') * record.quantity
 
     @api.depends('quantity', 'price_subtotal', 'price_total')
     def _compute_x_tax_value(self):
@@ -114,10 +117,10 @@ class AccountMoveLine(models.Model):
             else:
                 record.x_unit_tax_value = 0.0
 
-    @api.depends('x_costo', 'price_unit')
+    @api.depends('price_unit')
     def _compute_x_utilidad(self):
         for record in self:
             if record.price_unit > 0:
-                record.x_utilidad = (record.price_unit - record.x_costo) / record.price_unit * 100
+                record.x_utilidad = (record.price_unit - studio_get(record, 'x_costo')) / record.price_unit * 100
             else:
                 record.x_utilidad = 0
