@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: `sale.report_saleorder_pro_forma_copy_1` es el
+        wrapper QWeb del reporte "Remisión MKP" (el punto de entrada real
+        que invoca el botón Imprimir; llama internamente a
+        `report_saleorder_document_copy_3`). No tenía ninguna referencia a
+        campos renombrados, se formaliza tal cual.
+    -->
+    <record id="report_saleorder_pro_forma_copy_1_view" model="ir.ui.view">
+        <field name="name">report_saleorder_pro_forma copy(1)</field>
+        <field name="type">qweb</field>
+        <field name="key">sale.report_saleorder_pro_forma_copy_1</field>
+        <field name="arch" type="xml">
+            <t t-name="sale.report_saleorder_pro_forma_copy_1">
+                <t t-call="web.html_container">
+                    <t t-set="is_pro_forma" t-value="True"/>
+                    <t t-set="docs" t-value="docs.with_context(proforma=True)"/>
+                    <t t-foreach="docs" t-as="doc">
+                        <t t-call="sale.report_saleorder_document_copy_3" t-lang="doc.partner_id.lang"/>
+                    </t>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="action_report_remision_mkp" model="ir.actions.report">
+        <field name="name">Remisión MKP</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">sale.report_saleorder_pro_forma_copy_1</field>
+        <field name="print_report_name">'PROFORMA - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="sale.model_sale_order"/>
+        <field name="binding_type">report</field>
+        <field name="group_ids" eval="[(6, 0, [ref('sale.group_proforma_sales')])]"/>
+    </record>
+</odoo>

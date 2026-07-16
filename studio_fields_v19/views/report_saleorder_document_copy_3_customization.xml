@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: extensión (vía xpath) creada en Odoo Studio sobre
+        `report_saleorder_document_copy_3_view` (ver ese archivo), usada
+        también para el reporte "Remisión MKP". Se formaliza tal cual, con
+        dos correcciones:
+        - Se quitan 3 bloques `<xpath expr="/t/t/div/div[9|10|11]"
+          position="after">` (COMENTARIOS/ATENCIÓN/OBSERVACIONES) que Odoo
+          marcaba como "localizadores no válidos" -apuntaban a posiciones
+          que ya no existen tras las demás modificaciones de esta misma
+          vista- y que por eso no tenían ningún efecto.
+        - `line.product_uom.display_name` -> `line.product_uom_id.display_name`.
+    -->
+    <record id="report_saleorder_document_copy_3_customization" model="ir.ui.view">
+        <field name="name">Odoo Studio: report_saleorder_document copy(3) customization</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="report_saleorder_document_copy_3_view"/>
+        <field name="mode">extension</field>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="/t/t/div/div[2]" position="after">
+                    <div class="row">
+                        <div class="col-4">
+                            <span/>
+                            <div>
+                                <b style="font-size: 14px; color: black;">Referencia:</b>
+                                <span style="font-size: 14px; color: black;" t-field="doc.name"/>
+                            </div>
+                            <div>
+                                <b style="font-size: 14px; color: black;">Tipo de Relación:</b>
+                                <span style="font-size: 14px; color: black;"/>
+                            </div>
+                            <div>
+                                <b style="font-size: 14px; color: black;">CFDI Relacionado:</b>
+                                <span style="font-size: 14px; color: black;"/>
+                            </div>
+                            <div>
+                                <b>
+                                    <font style="font-size: 14px; color: black;">Timbra:</font>
+                                </b>
+                                <span style="font-size: 14px; color: black;"/>
+                            </div>
+                            <div>
+                                <b style="font-size: 14px; color: black;">Ejecutivo Cuenta:</b>
+                                <span style="font-size: 14px; color: black;" t-field="doc.partner_id.x_nom_corto_agente_venta"/>
+                            </div>
+                            <div>
+                                <b style="font-size: 14px; color: black;">Supervisor CXC:</b>
+                                <span style="font-size: 14px; color: black;" t-field="doc.partner_id.x_clave_supervisor_credito"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Almacén:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;" t-field="doc.x_studio_almacn"/>
+                            </div>
+                            <div>
+                                <b style="font-size: 14px; color: black;">Número de Cliente:</b>
+                                <span style="font-size: 14px; color: black;" t-field="doc.partner_id.x_num_cliente"/>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <span/>
+                            <div>
+                                <b style="font-size: 14px; color: black;">Orden de Compra:</b>
+                                <span style="font-size: 14px; color: black;" t-field="doc.x_studio_n_orden_de_compra"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Solicitó:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;" t-field="doc.x_studio_solicit"/>
+                            </div>
+                            <div>
+                                <b>
+                                    <font style="font-size: 14px; color: black;">No. Proveedor:</font>
+                                </b>
+                                <span/>
+                                <span style="font-size: 14px; color: black;" t-field="doc.x_num_pro"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Condiciones de Pago:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;" t-field="doc.payment_term_id"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Método de Pago:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Forma de Pago:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;" t-field="doc.partner_id_payment_method_code"/>
+                                <span style="font-size: 14px; color: black;">-</span>
+                                <span style="font-size: 14px; color: black;" t-field="doc.partner_id_payment_method"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Uso de CFDI:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;" t-field="doc.partner_id_uso_cfdi"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Regimen Fiscal Cliente:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 13px; color: black;" t-field="doc.partner_id.property_account_position_id.display_name"/>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <span/>
+                            <div>
+                                <span style="font-size: 14px; color: black;">
+                                    <b>Folio Fiscal:</b>
+                                </span>
+                                <span style="font-size: 13px; color: black;"/>
+                            </div>
+                            <div>
+                                <span style="font-size: 14px; color: black;">
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Tipo de Comprobante:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Fecha y Hora de Emisión:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;" t-field="doc.date_order"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Lugar Emisión:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;" t-field="res_company.l10n_mx_edi_locality"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Código Postal Expedición:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;" t-field="doc.company_id.zip"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Versión CFDI:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;"/>
+                            </div>
+                            <div>
+                                <span>
+                                    <b>
+                                        <font style="font-size: 14px; color: black;">Moneda:</font>
+                                    </b>
+                                </span>
+                                <span style="font-size: 14px; color: black;" t-field="doc.currency_id.display_name"/>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+                <xpath expr="/t/t/div/div[3]" position="after">
+                    <div class="row">
+                        <div class="col-6 bg-200" style="border-top: black 1px solid; border-left: black 1px solid; border-bottom: black 1px solid; border-right: black 1px solid;">
+                            <span/>
+                            <div style="margin-right:-15px">
+                                <span style="font-size: 12px;margin-left:9px; color: black;">DATOS DEL RECEPTOR</span>
+                            </div>
+                        </div>
+                        <div class="col-6 bg-200" style="border-top: black 1px solid; border-bottom: black 1px solid; border-right: black 1px solid;">
+                            <span/>
+                            <div style="margin-left:-15px">
+                                <span style="font-size: 12px;margin-left:9px; color: black;">LUGAR DE ENTREGA</span>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+                <xpath expr="/t/t/div/div[4]" position="after">
+                    <div class="row" style="margin-bottom:15px">
+                        <div class="col-6" style="border-left: black 1px solid; border-bottom: black 1px solid; border-right: black 1px solid;">
+                            <span/>
+                            <div>
+                                <span style="font-size: 12px;margin-left:220px; color: black;">R.F.C.</span>
+                                <span style="font-size: 12px; color:black;" t-field="doc.partner_id.vat"/>
+                                <div>
+                                    <span style="font-size: 12px; color: black;" t-field="doc.partner_id.name"/>
+                                </div>
+                                <div>
+                                    <span style="font-size: 12px; color: black;" t-field="doc.partner_id.street_name"/>
+                                    <span style="font-size: 12px; color: black;">No.</span>
+                                    <span style="font-size: 12px; color: black;" t-field="doc.partner_id.street_number"/>
+                                    <span style="font-size: 12px; color: black;">,</span>
+                                    <span style="font-size: 12px; color: black;" t-field="doc.partner_id.l10n_mx_edi_colony"/>
+                                </div>
+                                <div>
+                                    <b>
+                                        <span style="font-size: 12px; color: black;">C.Postal:</span>
+                                    </b>
+                                    <b>
+                                        <span style="font-size: 12px; color: black;" t-field="doc.partner_id.zip"/>
+                                    </b>
+                                    <span style="font-size: 12px; color: black;" t-field="doc.partner_id.city"/>
+                                    <span style="font-size: 12px; color: black;">,</span>
+                                    <span style="font-size: 12px; color: black;" t-field="doc.partner_id.state_id.name"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6" style="border-bottom: black 1px solid; border-right: black 1px solid;">
+                            <span/>
+                            <div>
+                                <div style="font-size: 12px; color: black;" t-field="doc.partner_shipping_id" t-options-widget="'contact'" t-options-fields="['name', 'address', 'phone', 'mobile']"/>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+                <xpath expr="/t/t/div/table/thead/tr/th[2]" position="replace">
+                    <th name="th_quantity" class="text-end">Cant</th>
+                </xpath>
+                <xpath expr="/t/t/div/table/thead/tr/th[2]" position="after">
+                    <th>
+                        <span>Referencia</span>
+                    </th>
+                </xpath>
+                <xpath expr="/t/t/div/table/tbody/t[2]/tr/t[1]/td[2]" position="after">
+                    <td>
+                        <span t-field="line.product_id.code"/>
+                    </td>
+                </xpath>
+                <xpath expr="/t/t/div/table/tbody/t[2]/t[3]/tr/td" position="attributes">
+                    <attribute name="colspan">101</attribute>
+                </xpath>
+                <xpath expr="/t/t/div/table/thead/tr/th[3]" position="replace">
+                    <th>
+                        <span>Código</span>
+                        <br/>
+                    </th>
+                </xpath>
+                <xpath expr="/t/t/div/table/thead/tr/th[3]" position="after">
+                    <th>
+                        <span>Nombre</span>
+                    </th>
+                </xpath>
+                <xpath expr="/t/t/div/table/tbody/t[2]/tr/t[1]/td[3]" position="after">
+                    <td>
+                        <span t-field="line.product_id.name"/>
+                    </td>
+                </xpath>
+                <xpath expr="/t/t/div/table/tbody/t[2]/t[3]/tr/td" position="attributes">
+                    <attribute name="colspan">102</attribute>
+                </xpath>
+                <xpath expr="/t/t/div/table/thead/tr/th[4]/span" position="replace">
+                    <span>DESCRIPCIÓN</span>
+                </xpath>
+                <xpath expr="/t/t/div/table/thead/tr/th[4]" position="after">
+                    <th>
+                        <span>Código de barras</span>
+                    </th>
+                </xpath>
+                <xpath expr="/t/t/div/table/tbody/t[2]/tr/t[1]/td[4]" position="after">
+                    <td>
+                        <span t-field="line.product_id.barcode"/>
+                    </td>
+                </xpath>
+                <xpath expr="/t/t/div/table/tbody/t[2]/t[3]/tr/td" position="attributes">
+                    <attribute name="colspan">103</attribute>
+                </xpath>
+                <xpath expr="/t/t/div/table/thead/tr/th[5]" position="replace">
+                    <th>
+                        <span>Códigobarras</span>
+                    </th>
+                </xpath>
+                <xpath expr="/t/t/div/table/thead/tr/th[7]" position="replace">
+                    <th name="th_priceunit" class="text-end">Precio</th>
+                </xpath>
+                <xpath expr="/t/t/div/table/thead/tr/th[5]" position="after">
+                    <th>
+                        <span>Nombre en pantalla</span>
+                    </th>
+                </xpath>
+                <xpath expr="/t/t/div/table/tbody/t[2]/tr/t[1]/td[5]" position="after">
+                    <td>
+                        <span t-field="line.product_uom_id.display_name"/>
+                    </td>
+                </xpath>
+                <xpath expr="/t/t/div/table/tbody/t[2]/t[3]/tr/td" position="attributes">
+                    <attribute name="colspan">104</attribute>
+                </xpath>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/tbody[1]/t[2]/tr[1]/t[1]/td[1]" position="replace"/>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/thead[1]/tr[1]/th[1]" position="replace"/>
+                <xpath expr="/t/t/div/table/thead/tr/th[5]" position="replace">
+                    <th>
+                        <span>UNIDAD</span>
+                        <br/>
+                    </th>
+                </xpath>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/tbody[1]/t[2]/tr[1]/t[1]/td[6]" position="replace"/>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/thead[1]/tr[1]/th[6]" position="replace"/>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/tbody[1]/t[2]/tr[1]/t[1]/td[8]" position="replace"/>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/thead[1]/tr[1]/th[8]" position="replace"/>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/thead[1]/tr[1]/th[1]" position="attributes">
+                    <attribute name="class">text-right bg-200</attribute>
+                </xpath>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/thead[1]/tr[1]/th[2]" position="attributes">
+                    <attribute name="class">bg-200</attribute>
+                </xpath>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/thead[1]/tr[1]/th[3]" position="attributes">
+                    <attribute name="class">bg-200</attribute>
+                </xpath>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/thead[1]/tr[1]/th[4]" position="attributes">
+                    <attribute name="class">bg-200</attribute>
+                </xpath>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/thead[1]/tr[1]/th[6]" position="attributes">
+                    <attribute name="class">text-right bg-200</attribute>
+                </xpath>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/thead[1]/tr[1]/th[8]" position="attributes">
+                    <attribute name="class">text-right bg-200</attribute>
+                </xpath>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/thead[1]/tr[1]/th[5]" position="attributes">
+                    <attribute name="class">bg-200</attribute>
+                </xpath>
+                <xpath expr="/t[1]/t[1]/div[1]/table[1]/tbody[1]/t[2]/tr[1]/t[1]/td[8]" position="attributes">
+                    <attribute name="class">text-right o_price_total bg-white</attribute>
+                </xpath>
+                <xpath expr="/t/t/div/h2/t[2]/span" position="replace">
+                    <span>Remisión MKP #</span>
+                </xpath>
+                <xpath expr="/t[1]/t[1]/div[1]/div[2]/div[2]" position="replace"/>
+                <xpath expr="/t[1]/t[1]/div[1]/div[2]/div[5]" position="replace"/>
+            </data>
+        </field>
+    </record>
+</odoo>

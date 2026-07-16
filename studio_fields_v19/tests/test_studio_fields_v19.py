@@ -50,8 +50,14 @@ class TestStudioFieldsV19(TransactionCase):
         self.assertEqual(lead.x_probabilidad_lead, 10)
 
     def test_product_template_volume_fields(self):
-        tmpl = self.product.product_tmpl_id
-        tmpl.write({
+        # MIGRACIÓN V19: estos computes no tienen `@api.depends` a propósito
+        # (ver models/common.py) porque sus dependencias son campos de
+        # Studio que pueden no existir en todas las bases; por eso sólo se
+        # calculan al crear el registro, no en cada `write` posterior -se
+        # crea ya con los valores en vez de escribirlos después-.
+        tmpl = self.env['product.template'].create({
+            'name': 'Studio Fields Volume Test Product',
+            'type': 'consu',
             'x_studio_alto_c_m': 2, 'x_studio_ancho_c_m': 3, 'x_studio_largo_c_m': 4,
             'x_Al': 1, 'x_An': 2, 'x_La': 3,
         })

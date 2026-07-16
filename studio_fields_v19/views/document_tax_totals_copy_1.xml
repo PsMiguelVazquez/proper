@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: `account.document_tax_totals_copy_1` es la plantilla
+        de totales/impuestos usada por `report_saleorder_document_copy_3`
+        ("Remisión MKP"), creada en Odoo Studio. El contenido que el
+        usuario había pegado manualmente (copiado de
+        `account.document_tax_totals_company_currency_template`) no
+        funciona en este reporte: usa `o.company_currency_id` -campo que
+        sólo existe en account.move, no en sale.order- y además abre su
+        propio `<div><table>`, generando una tabla anidada dentro del
+        `<table>` que ya arma `report_saleorder_document_copy_3` alrededor
+        del `t-call`.
+
+        Se usa en su lugar el contenido de la plantilla "simple" real de
+        Odoo `account.document_tax_totals_template`
+        (addons/account/views/report_invoice.xml) -filas `<tr>` sueltas,
+        pensadas para insertarse dentro de un `<table>` ya existente-, que
+        además usa `currency`, ya definida correctamente por quien llama
+        (`t-set="currency" t-value="doc.currency_id"`) antes del `t-call`.
+    -->
+    <record id="document_tax_totals_copy_1_view" model="ir.ui.view">
+        <field name="name">document_tax_totals copy(1)</field>
+        <field name="type">qweb</field>
+        <field name="key">account.document_tax_totals_copy_1</field>
+        <field name="arch" type="xml">
+            <t t-name="account.document_tax_totals_copy_1">
+                <t t-set="same_tax_base" t-value="tax_totals['same_tax_base']"/>
+                <t t-foreach="tax_totals['subtotals']" t-as="subtotal">
+                    <tr t-if="subtotal['tax_groups']" class="o_subtotal">
+                        <td>
+                            <span t-out="subtotal['name']">Untaxed Amount</span>
+                        </td>
+                        <td class="text-end">
+                            <span t-att-class="oe_subtotal_footer_separator"
+                                  t-out="subtotal['base_amount_currency']"
+                                  t-options="{'widget': 'monetary', 'display_currency': currency}"
+                            >27.00</span>
+                        </td>
+                    </tr>
+
+                    <t t-foreach="subtotal['tax_groups']" t-as="tax_group">
+                        <tr class="o_taxes">
+                            <t t-if="same_tax_base or tax_group['display_base_amount_currency'] is False">
+                                <td style="max-width: 200px;">
+                                    <span t-out="tax_group['group_name']">Tax 15%</span>
+                                </td>
+                                <td class="text-end o_price_total">
+                                    <span class="text-nowrap"
+                                          t-out="tax_group['tax_amount_currency']"
+                                          t-options="{'widget': 'monetary', 'display_currency': currency}"
+                                    >1.05</span>
+                                </td>
+                            </t>
+                            <t t-else="">
+                                <td>
+                                    <span t-out="tax_group['group_name']">Tax 15%</span>
+                                    <span> on </span>
+                                    <span class="text-nowrap"
+                                          t-out="tax_group['display_base_amount_currency']"
+                                          t-options="{'widget': 'monetary', 'display_currency': currency}"
+                                    >27.00</span>
+                                </td>
+                                <td class="text-end o_price_total">
+                                    <span class="text-nowrap"
+                                          t-out="tax_group['tax_amount_currency']"
+                                          t-options="{'widget': 'monetary', 'display_currency': currency}"
+                                    >4.05</span>
+                                </td>
+                            </t>
+                        </tr>
+                    </t>
+                </t>
+
+                <tr t-if="'cash_rounding_base_amount_currency' in tax_totals">
+                    <td>Rounding</td>
+                    <td class="text-end">
+                        <span t-out="tax_totals['cash_rounding_base_amount_currency']"
+                              t-options="{'widget': 'monetary', 'display_currency': currency}"
+                        >0</span>
+                    </td>
+                </tr>
+
+                <!--Total amount with all taxes-->
+                <tr class="o_total">
+                    <td><strong>Total</strong></td>
+                    <td class="text-end">
+                        <strong t-out="tax_totals['total_amount_currency']"
+                                t-options="{'widget': 'monetary', 'display_currency': currency}"
+                        >31.05</strong>
+                    </td>
+                </tr>
+            </t>
+        </field>
+    </record>
+</odoo>
