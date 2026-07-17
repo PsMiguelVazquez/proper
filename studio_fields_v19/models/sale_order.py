@@ -41,6 +41,27 @@ class SaleOrder(models.Model):
     x_studio_pedido = fields.Boolean(
         string='pedido', compute='_compute_x_studio_pedido', store=True)
 
+    # MIGRACIÓN V19: campos manuales de Studio (no calculados) usados desde
+    # `stock.picking` vía `related=` en la vista formalizada del formulario
+    # de traslado (`stock.py`). Se declaran aquí, igual que en Studio, para
+    # que sobrevivan a un rebuild de la base (Studio los perdería).
+    x_doc_entrega = fields.Selection(
+        [('factura', 'Factura'),
+         ('remision_sin_costo', 'Remisión sin costo'),
+         ('remision_con_costo', 'Remisión con costo')],
+        string='Documentos de entrega')
+    x_estado_surtido = fields.Selection(
+        [('pendiente', 'Pendiente'), ('surtir', 'Surtir')],
+        string='Estado de surtido')
+    x_metodo_entrega = fields.Selection(
+        [('flotilla', 'Flotilla'), ('paqueteria', 'Paqueteria'),
+         ('recolecta', 'Recolecta'), ('Foráneo', 'Foráneo')],
+        string='Método de entrega')
+    x_otros_documentos = fields.Many2many('ir.attachment', string='Otros documentos')
+    x_studio_comentarios = fields.Text(string='Comentarios')
+    x_studio_etiquetas = fields.Binary(string='Etiquetas')
+    x_studio_orden_de_compra = fields.Binary(string='Orden de Compra')
+
     @api.depends('order_line.cantidad_asignada')
     def _compute_x_studio_cant_asignada(self):
         for record in self:

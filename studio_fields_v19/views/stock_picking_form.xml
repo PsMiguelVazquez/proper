@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: formaliza la personalización de Odoo Studio sobre
+        `stock.view_picking_form` (antes vivía sólo como
+        `ir.ui.view` state=manual, se perdía en cada rebuild de Odoo.sh).
+
+        Cambios de v15 -> v19 aplicados aquí (no en la vista original):
+        - `attrs="{...}"` / `states=` -> atributos directos
+          (`invisible=`/`readonly=`/`required=`).
+        - Se quitan los xpaths que en v15 sólo escribían `attrs="{}"` sobre
+          campos ya invisibles/no usados (`state`, `location_id`,
+          `location_dest_id`, `country_code`, `l10n_mx_edi_*`, `delivery_type`,
+          `weight`, campo `version`, columna `picking_type_code` de "extra"):
+          eran ruido sin efecto visible, no personalizaciones reales.
+        - `l10n_mx_edi_is_export` ya no existe como campo (se elimina el
+          xpath que lo tocaba).
+        - `l10n_mx_edi_sat_status` -> `l10n_mx_edi_cfdi_sat_state`.
+        - `move_ids_without_package` -> `move_ids`.
+        - La tabla de detalle (antes embebida vía
+          `move_line_ids_without_package`) ya no existe en el formulario
+          principal: Odoo 19 la movió a la acción/vista separada
+          "Operaciones detalladas" (botón `action_detailed_operations`,
+          vista `stock.view_stock_move_line_detailed_operation_tree`). La
+          única columna realmente personalizada de esa tabla
+          (`sale_price_ls`, definida en el módulo `vehiculos`) se engancha
+          ahí en `stock_move_line_detailed_operation_tree.xml`, en vez de
+          forzar la tabla vieja de vuelta al formulario.
+    -->
+    <record id="stock_picking_form_customization" model="ir.ui.view">
+        <field name="name">stock.picking.form.customization</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//field[@name='origin']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='scheduled_date']" position="before">
+                    <field name="related_purchase_id"/>
+                    <field name="x_studio_estado_de_surtido_de_productos"/>
+                </xpath>
+                <xpath expr="//field[@name='date_deadline']" position="after">
+                    <field name="x_studio_empleado_validacin_salida"/>
+                    <field name="x_studio_salida_de_almacn"/>
+                    <field name="activity_user_id" string="Responsable de recepción"/>
+                    <field name="sale_id"/>
+                </xpath>
+                <xpath expr="//field[@name='picking_properties']" position="before">
+                    <group name="studio_group_e2Kki">
+                        <group name="studio_group_e2Kki_left" string="Motivo de transferencia"
+                               invisible="picking_type_code != 'internal'">
+                            <field name="x_studio_motivo" string="Motivo"/>
+                        </group>
+                    </group>
+                </xpath>
+                <xpath expr="//page[@name='operations']//list//field[@name='product_uom']" position="after">
+                    <field name="x_studio_costo_de_compra" optional="show"/>
+                    <field name="x_studio_costo_total" string="Costo Total" optional="show"/>
+                </xpath>
+                <xpath expr="//button[@name='action_put_in_pack']" position="after">
+                    <field name="x_studio_suma_total" string="Suma Total"/>
+                </xpath>
+                <xpath expr="//field[@name='shipping_weight']" position="attributes">
+                    <attribute name="widget">float</attribute>
+                </xpath>
+                <xpath expr="//notebook" position="inside">
+                    <page string="Documentos de entrega" name="studio_page_9DOi2">
+                        <group name="studio_group_9DOi2">
+                            <group name="studio_group_9DOi2_left" string="Documentos de entrega">
+                                <field name="x_documento_entrega_a"
+                                       required="x_studio_estado_de_surtido_de_productos != False"
+                                       string="Documentos de entrega"/>
+                                <field name="x_studio_etiquetas"/>
+                                <field name="x_documento_entregado"
+                                       required="x_studio_estado_de_surtido_de_productos != False"/>
+                                <field name="guia" readonly="1" invisible="not guia" string="No Guia Ventas"/>
+                                <field name="carrier_tracking_ref" string="No Guia"/>
+                            </group>
+                            <group name="studio_group_9DOi2_right" string="Información Adicional">
+                                <field name="x_studio_orden_de_compra"/>
+                                <field name="x_studio_related_field_5mfxb"/>
+                            </group>
+                        </group>
+                        <group name="studio_group_96FLm">
+                            <group name="studio_group_96FLm_left" string="Método de Entrega">
+                                <field name="x_met_entrega"
+                                       required="x_studio_estado_de_surtido_de_productos != False"/>
+                            </group>
+                        </group>
+                    </page>
+                    <page string="Evidencia de entrega" name="studio_page_hyM6x">
+                        <group name="studio_group_hyM6x">
+                            <group name="studio_group_hyM6x_left">
+                                <field name="x_studio_remisin_firmada"/>
+                                <field name="x_studio_otros_1"/>
+                            </group>
+                            <group name="studio_group_hyM6x_right">
+                                <field name="x_studio_comentarios"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </data>
+        </field>
+    </record>
+</odoo>
