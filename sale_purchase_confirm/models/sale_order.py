@@ -594,7 +594,11 @@ class SaleOrder(models.Model):
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
-    existencia = fields.Char('Cantidades', compute='get_stock')
+    # MIGRACIÓN V19: declarado como `Html` (antes `Char`) porque el compute
+    # guarda markup HTML (`<table>...`) y la vista usa `widget="html"` para
+    # mostrarlo; con `Char`, v19 ya no lo renderiza y se ve el HTML crudo
+    # como texto.
+    existencia = fields.Html('Cantidades', compute='get_stock')
     check_price_reduce = fields.Boolean('Solicitud', default=False, store=True, compute='_compute_check_price_reduce')
     price_reduce_v = fields.Float('Precio solicitado')
     price_reduce_solicit = fields.Boolean('Solicitud', default=False)
@@ -605,7 +609,9 @@ class SaleOrderLine(models.Model):
     proposal_id = fields.Many2one('proposal.purchases', 'Propuesta de origen')
     utilidad_esperada = fields.Integer('Utilidad esperada', compute='_compute_utilidad_esperada')
     existencia_alm_0 = fields.Float(related='product_id.stock_quant_warehouse_zero')
-    existencia_html = fields.Char(string="", compute='_compute_existencia_html')
+    # MIGRACIÓN V19: `Html` en vez de `Char`, mismo motivo que `existencia`
+    # arriba (el compute guarda un `<img>` y la vista usa `widget="html"`).
+    existencia_html = fields.Html(string="", compute='_compute_existencia_html')
     cantidad_asignada = fields.Integer(string="Cantidad asignada", compute='_compute_cantidad_asignada')
     facturas = fields.Char('Facturas', compute='_compute_facturas')
     existencias_mkp = fields.Html(compute='get_stock')
@@ -758,20 +764,23 @@ class SaleOrderLine(models.Model):
                 record.price_reduce_v = record.price_unit
                 record.check_price_reduce = True
 
+    # MIGRACIÓN V19: `product_id_change`/`product_uom_change` ya no existen
+    # como métodos públicos en `sale.order.line` (el core los reemplazó por
+    # `_onchange_product_id` -privado- y campos `compute` para el precio,
+    # que se recalculan solos); no hay implementación de la clase base que
+    # llamar por `super()`. También se corrige `product_uom` -> `product_uom_id`
+    # en el segundo `@api.onchange`, que con el nombre viejo nunca se
+    # disparaba al cambiar la unidad de medida.
     @api.onchange('product_id')
     def product_id_change(self):
-        r = super(SaleOrderLine, self).product_id_change()
         self.limit_price()
-        return r
 
-    @api.onchange('product_uom', 'product_uom_qty')
+    @api.onchange('product_uom_id', 'product_uom_qty')
     def product_uom_change(self):
         old_price = self.price_unit
-        r = super(SaleOrderLine, self).product_uom_change()
         self.limit_price()
         if round(old_price, 2) != round(self.price_unit, 2):
             self.price_unit = old_price
-        return r
 
     @api.depends('product_uom_qty', 'product_id')
     def _compute_existencia_html(self):
