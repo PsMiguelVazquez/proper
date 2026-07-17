@@ -128,11 +128,13 @@ class SaleOrder(models.Model):
                     if default_warehouse:
                         self.warehouse_id = default_warehouse
 
+    # MIGRACIÓN V19: `onchange_partner_id` ya no existe en `sale.order`
+    # (el core reemplazó ese onchange por campos compute con
+    # `@api.depends('partner_id', ...)`, que se recalculan solos); no hay
+    # implementación de la clase base que llamar por `super()`.
     @api.onchange('partner_id')
     def onchange_partner_id(self):
-        r = super(SaleOrder, self).onchange_partner_id()
         self.update({'user_id': self.env.user.id})
-        return r
 
     def update_stock(self):
         for rec in self.order_line:
