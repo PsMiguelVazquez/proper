@@ -1,15 +1,17 @@
-from . import models
+# -*- coding: utf-8 -*-
+"""
+MIGRACIÓN V19: mismo fix que `pre_init_hook` en `__init__.py`, pero para el
+caso de actualización (`-u`) en vez de instalación limpia -este módulo ya
+estaba instalado antes de agregar este fix, así que `pre_init_hook` (que
+sólo corre en instalación limpia) nunca se ejecutaría en el próximo
+deploy-. Ver la nota en `res_partner_fields/migrations/0.0.0/pre-fix_studio_model_xmlids.py`
+para el detalle de por qué `pre_init_hook` no alcanza, y `__init__.py` de
+este módulo para el detalle de qué hace esta función (duplicada aquí en
+vez de importada: los scripts de migración no se cargan como parte normal
+del paquete del módulo, un `from .. import` falla con ImportError).
+"""
+from odoo import api, SUPERUSER_ID
 
-# MIGRACIÓN V19: las vistas/reportes formalizados aquí (ver views/) usan a
-# propósito el mismo `key`/`t-name` técnico que las vistas originales
-# creadas en Odoo Studio, para que cualquier referencia externa (acciones
-# de reporte, otros `t-call`) siga apuntando al mismo lugar. Pero eso deja
-# a las vistas viejas de Studio (`studio_customization.*`, `state='manual'`)
-# convivendo en la base de datos junto a estas nuevas -Odoo no las
-# reemplaza automáticamente-, y dependiendo de cuál gane la resolución de
-# QWeb, el reporte puede seguir usando el contenido viejo y roto (con los
-# nombres de campo de antes de la migración). Este hook desactiva esas
-# vistas viejas para que sólo quede activa la versión formalizada aquí.
 OLD_STUDIO_VIEW_XMLIDS = [
     'studio_customization.report_saleorder_doc_67c4399c-f382-4d8e-932e-e820104b7fd',
     'studio_customization.odoo_studio_report_s_07964ef2-b734-4ddc-8a9a-88137e048216',
@@ -18,10 +20,6 @@ OLD_STUDIO_VIEW_XMLIDS = [
     'studio_customization.report_saleorder_pro_19c7eaa3-bc03-42de-9f78-0863b2efaea8',
 ]
 
-# Además de esos 5 xmlids conocidos, se busca por `key` cualquier otra
-# vista de Studio con el mismo nombre técnico que las formalizadas aquí,
-# por si hay una que no tengamos identificada por xmlid (p.ej. la de
-# "Productos de Muestra" o su plantilla de totales).
 OWN_VIEW_KEYS = [
     'sale.report_saleorder_document_copy_3',
     'sale.report_saleorder_document_copy_3_copy_1',
@@ -32,7 +30,8 @@ OWN_VIEW_KEYS = [
 ]
 
 
-def _deactivate_old_studio_report_views(env):
+def migrate(cr, version):
+    env = api.Environment(cr, SUPERUSER_ID, {})
     IrUiView = env['ir.ui.view']
     to_deactivate = env['ir.ui.view']
 
@@ -41,7 +40,7 @@ def _deactivate_old_studio_report_views(env):
         if view:
             to_deactivate |= view
 
-    own_views = IrUiView.search([
+    own_views = IrUiView.with_context(active_test=False).search([
         ('key', 'in', OWN_VIEW_KEYS),
         ('id', 'not in', to_deactivate.ids or [0]),
     ])
@@ -51,7 +50,3 @@ def _deactivate_old_studio_report_views(env):
 
     if to_deactivate:
         to_deactivate.write({'active': False})
-
-
-def pre_init_hook(env):
-    _deactivate_old_studio_report_views(env)
