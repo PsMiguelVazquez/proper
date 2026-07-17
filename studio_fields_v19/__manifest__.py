@@ -34,7 +34,7 @@
     'website': "http://www.novucentral.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.3',
+    'version': '19.0.1.0.4',
     'license': 'LGPL-3',
 
     'pre_init_hook': 'pre_init_hook',
@@ -51,6 +51,8 @@
         'l10n_mx_edi_stock',
         'costo_promedio_proper',
         'vehiculos',
+        'hr_expense',
+        'product_email_template',
     ],
 
     'data': [
@@ -63,5 +65,6 @@
         'views/report_saleorder_pro_forma_copy_1_copy_1.xml',
         'views/stock_picking_form.xml',
         'views/stock_move_line_detailed_operation_tree.xml',
+        'views/product_template_form.xml',
     ],
 }

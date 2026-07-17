@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: formaliza la personalización de Odoo Studio sobre
+        `product.product_template_only_form_view` (el "Ver nombre" en la
+        base era "Odoo Studio: product.template.product.form
+        customization", vista heredada "product.template.product.form" =
+        este xmlid). Antes vivía sólo como `ir.ui.view` state=manual, se
+        perdía en cada rebuild de Odoo.sh.
+
+        Cambios de v15 -> v19 aplicados aquí (no en la vista original):
+        - `attrs="{...}"` -> atributos directos (`invisible=`/`domain=`/etc).
+        - Se quitan los xpaths que sólo escribían `attrs="{}"` sobre campos
+          sin ningún otro cambio real (`list_price`... no, ver abajo:
+          `weight_uom_name`): eran ruido de Studio sin efecto visible.
+        - `detailed_type` ya no existe como campo (v17 lo unificó con
+          `type`); los dos xpaths que lo usaban como anchor se retocan
+          hacia `field[@name='type']`.
+        - El xpath que insertaba un `<tree>` completo dentro de
+          `field[@name='seller_ids']` (position="inside") se quita: en v15
+          probablemente reemplazaba una vista embebida más pobre, pero en
+          v19 ese campo ya trae un `<list>` nativo con columnas
+          equivalentes (incluye `discount`, que Studio no tenía); insertar
+          un segundo `<list>` ahí rompe la instalación (un `<field>` sólo
+          puede tener una vista embebida).
+        - El xpath que "movía" `uom_id`/`uom_po_id` después de
+          `company_id` se quita: `uom_po_id` ya no existe como campo
+          independiente, y `uom_id` ahora se muestra nativamente en línea
+          junto a `list_price` y `standard_price`; ya no hay nada útil que
+          mover ahí. Los 3 campos comentados en el original
+          (`x_studio_de_hogar`/`x_studio_proper`/`x_studio_tienda_en_linea`)
+          ya estaban comentados en la personalización original -Studio los
+          había desactivado porque estos datos ya se guardan como
+          `de_hogar`/`proper`/`tienda_linea` en el módulo
+          `novu_tiendas_15_19`, así que tampoco se portan.
+        - `group[@name='payables']` no existe en v19: en v15 el grupo
+          "properties" tenía dos subgrupos separados ("Receivables" y
+          "Payables", este último con `name="payables"`); v19 los
+          fusionó en un único subgrupo "Cost and Revenue"
+          (`group[@name='properties']/group[1]`). Los dos xpaths
+          originales (uno por `group[1]`, otro por `name='payables'`)
+          apuntaban size a los mismos dos subgrupos v15; en v19 son el
+          mismo nodo, así que se deja un solo xpath.
+    -->
+    <record id="product_template_only_form_view_customization" model="ir.ui.view">
+        <field name="name">product.template.product.form.customization</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//field[@name='image_1920']" position="attributes">
+                    <attribute name="help">Las medidas de la imagen deben ser 230px X 250px</attribute>
+                </xpath>
+                <xpath expr="//form[@name='Product Template']/sheet[@name='product_form']/div[not(@name)][1]/h1[1]/div[1]/field[@name='name']"
+                       position="attributes">
+                    <attribute name="string">Descripción corta</attribute>
+                </xpath>
+                <xpath expr="//field[@name='sale_ok']" position="attributes">
+                    <attribute name="groups">account_payment_proper.group_purchase_maneger</attribute>
+                </xpath>
+                <xpath expr="//field[@name='purchase_ok']" position="attributes">
+                    <attribute name="groups">account_payment_proper.group_purchase_maneger</attribute>
+                </xpath>
+                <xpath expr="//field[@name='active']" position="before">
+                    <field name="can_be_expensed" string="Es un Gasto"/>
+                    <field name="x_es_auto_moto" invisible="1"/>
+                    <field name="x_tipo_transporte_ma"/>
+                    <field name="x_producto_propuesta"/>
+                    <field name="x_num_propuesta"/>
+                </xpath>
+                <!-- MIGRACIÓN V19: `detailed_type` -> `type` (unificados). -->
+                <xpath expr="//field[@name='type']" position="attributes">
+                    <attribute name="groups">account_payment_proper.group_purchase_maneger</attribute>
+                </xpath>
+                <xpath expr="//field[@name='type']" position="after">
+                    <field name="x_studio_rama" required="sale_ok == True"/>
+                    <field name="x_studio_many2one_field_0X3u9"/>
+                    <xpath expr="//field[@name='categ_id']" position="move"/>
+                    <field name="x_studio_many2one_field_RWuq7"/>
+                    <field name="x_studio_many2one_field_LZOP8"/>
+                    <field name="x_studio_many2one_field_CGUKb"/>
+                    <field name="x_studio_color" string="Color"/>
+                    <field name="x_studio_many2one_field_et5Lo"/>
+                    <field name="x_fabricante" help="Marca" placeholder="Marca del producto"/>
+                    <xpath expr="//field[@name='default_code']" position="move"/>
+                    <field name="x_studio_many2one_field_AqNlU" string="Modelo del producto anterior"/>
+                    <xpath expr="//field[@name='barcode']" position="move"/>
+                    <field name="x_studio_many2one_field_NsBLe" string="Número de serie articulo"/>
+                    <xpath expr="//field[@name='unspsc_code_id']" position="move"/>
+                </xpath>
+                <xpath expr="//field[@name='list_price']" position="attributes">
+                    <attribute name="force_save">True</attribute>
+                </xpath>
+                <xpath expr="//field[@name='taxes_id']" position="after">
+                    <field name="x_studio_costo_de_lista" string="Costo de lista" force_save="True" readonly="1"/>
+                    <field name="x_studio_ultimo_costo" string="Ultimo Costo" force_save="True"/>
+                </xpath>
+                <xpath expr="//label[@id='standard_price_label']" position="attributes">
+                    <attribute name="string">Costo Promedio</attribute>
+                </xpath>
+                <xpath expr="//field[@name='standard_price']" position="attributes">
+                    <attribute name="force_save">True</attribute>
+                </xpath>
+                <xpath expr="//page[@name='general_information']/group[1]" position="after">
+                    <group name="studio_group_uElYh" invisible="1">
+                        <group name="studio_group_uElYh_left" string="Información de vehículo">
+                            <field name="x_numero_serie_vemot"/>
+                            <field name="x_num_motor_vemot"/>
+                        </group>
+                        <group name="studio_group_uElYh_right"/>
+                    </group>
+                    <group name="studio_group_8YvbK">
+                        <group name="studio_group_8YvbK_left">
+                            <field name="x_studio_eliminar_producto" string="Eliminar Producto"/>
+                            <field name="x_studio_peso_caja_master" string="Peso caja master" invisible="1"/>
+                            <field name="x_studio_volumen_c_m" string="Volumen c-m" invisible="1"/>
+                            <field name="x_studio_alto_c_m" string="Alto c-m" invisible="1"/>
+                            <field name="x_studio_largo_c_m" string="Largo c-m" invisible="1"/>
+                            <field name="x_studio_ancho_c_m" string="Ancho c-m" invisible="1"/>
+                        </group>
+                    </group>
+                </xpath>
+                <xpath expr="//page[@name='variants']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//page[@name='purchase']" position="attributes">
+                    <attribute name="groups">account_payment_proper.group_purchase_maneger</attribute>
+                </xpath>
+                <xpath expr="//field[@name='responsible_id']" position="after">
+                    <field name="x_Al" string="Alto"/>
+                    <field name="x_An" string="Ancho"/>
+                    <field name="x_La" string="Largo"/>
+                    <field name="x_vol"/>
+                    <field name="x_studio_alto_c_m_1" help="Indica el alto de la caja master"/>
+                    <field name="x_studio_ancho_c_m_1" help="Indica el ancho de la caja master"/>
+                    <field name="x_studio_largo_c_m_2" string="Largo c-m" help="Indica el largo de la caja master"/>
+                    <field name="x_studio_volumen_c_m_2" string="Volumen c-m"/>
+                    <field name="x_Alto" invisible="1"/>
+                    <field name="x_largo" invisible="1"/>
+                </xpath>
+                <xpath expr="//div[@name='weight']/field[@name='weight']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//div[@name='weight']/field[@name='weight']" position="after">
+                    <field name="x_studio_volumen" string="Volumen" invisible="1"/>
+                    <field name="x_studio_alto" string="Alto" invisible="1"/>
+                    <field name="x_studio_largo_2" invisible="1"/>
+                    <field name="x_studio_ancho_1" string="Ancho" invisible="1"/>
+                </xpath>
+                <xpath expr="//div[@name='volume']/field[@name='volume']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='volume_uom_name']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//group[@name='traceability']" position="attributes">
+                    <attribute name="groups"></attribute>
+                </xpath>
+                <xpath expr="//field[@name='property_stock_inventory']" position="attributes">
+                    <attribute name="domain">[]</attribute>
+                </xpath>
+                <xpath expr="//page[@name='invoicing']" position="attributes">
+                    <attribute name="groups">account.group_account_invoice,account.group_account_readonly,purchase.group_purchase_manager</attribute>
+                </xpath>
+                <!-- MIGRACIÓN V19: en v15 "Receivables"/"Payables" eran dos
+                     subgrupos separados dentro de "properties"; v19 los
+                     fusionó en uno solo ("Cost and Revenue" = group[1]). -->
+                <xpath expr="//page[@name='invoicing']//group[@name='properties']/group[1]" position="attributes">
+                    <attribute name="groups">account.group_account_manager</attribute>
+                </xpath>
+                <xpath expr="//group[@name='unspsc']" position="attributes">
+                    <attribute name="groups">purchase.group_purchase_manager,account.group_account_manager,account.group_account_readonly</attribute>
+                </xpath>
+                <xpath expr="//group[@name='email_template']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//notebook" position="inside">
+                    <page string="Auto/Moto" name="studio_page_ig0bp" invisible="not x_tipo_transporte_ma">
+                        <group name="studio_group_ig0bp">
+                            <group name="datos_generales_left">
+                                <field name="x_bin_auto" string="BIN" invisible="x_tipo_transporte_ma == 'moto'"/>
+                                <field name="x_bin_detalle" string="BIN" invisible="not x_bin_auto"/>
+                                <field name="x_num_motor_vemot" string="Número de motor"
+                                       placeholder="Ejemplo &#9;LC152QMIP6626864"/>
+                            </group>
+                            <group name="datos_generales_right">
+                                <field name="x_numero_serie_vemot" string="Número de serie"
+                                       placeholder="Ejemplo &#9;3SCK19AB0P1027607"
+                                       invisible="x_bin_auto == True" readonly="x_bin_auto == True"/>
+                            </group>
+                            <group name="studio_group_ig0bp_left" string="Información Adicional">
+                                <field name="x_cilindros_auto" string="Cilindros"
+                                       invisible="x_tipo_transporte_ma == 'moto'"/>
+                                <field name="x_clave_vehicular" string="Clave vehicular"
+                                       invisible="x_tipo_transporte_ma == 'moto'"/>
+                                <field name="x_num_puertas" string="Número de puertas"
+                                       invisible="x_tipo_transporte_ma == 'moto'"/>
+                                <field name="x_transmision_auto" string="Transmisión"
+                                       invisible="x_tipo_transporte_ma == 'moto'"/>
+                                <field name="x_version_auto" string="Versión"
+                                       invisible="x_tipo_transporte_ma == 'moto'"/>
+                                <field name="x_placas" string="Placas"/>
+                                <field name="x_repuve" string="REPUVE" invisible="x_tipo_transporte_ma == 'moto'"/>
+                            </group>
+                            <group name="studio_group_ig0bp_right" string="">
+                                <field name="x_modelo_vemot" placeholder="Ejemplo 2009"/>
+                                <field name="x_cilindraje_moto" placeholder="Ejemplo 2009"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+                <xpath expr="//field[@name='default_code']" position="attributes">
+                    <attribute name="invisible">product_variant_count &gt; 1</attribute>
+                    <attribute name="required">sale_ok == True</attribute>
+                    <attribute name="string">Modelo del producto</attribute>
+                </xpath>
+                <xpath expr="//field[@name='unspsc_code_id']" position="attributes">
+                    <attribute name="string">Clave SAT</attribute>
+                </xpath>
+            </data>
+        </field>
+    </record>
+</odoo>
