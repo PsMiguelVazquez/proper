@@ -53,5 +53,34 @@ def _deactivate_old_studio_report_views(env):
         to_deactivate.write({'active': False})
 
 
+# MIGRACIÓN V19: estos 6 elementos de menú del core (`account`/
+# `account_reports`, no duplicados de Studio -confirmado por su ID
+# externo-) tienen `parent_id` vacío en producción, por lo que Odoo los
+# muestra como aplicaciones de nivel superior en vez de submenús de
+# Contabilidad (probablemente Studio los tocó al reordenar menús en algún
+# momento). Studio marca todo lo que toca como `noupdate=True`, así que un
+# `<record>` en un XML de datos NO alcanza para corregirlos -Odoo se salta
+# la escritura en upgrade cuando el registro destino ya tiene
+# `noupdate=True`, sin importar qué módulo la pida (`_load_records` en
+# odoo/orm/models.py)-; hay que escribir el campo directo por código.
+ACCOUNTING_MENU_PARENTS = {
+    'account.menu_action_move_journal_line_form': 'account.account_transactions_menu',
+    'account.menu_action_account_moves_all': 'account.account_audit_control_menu',
+    'account_reports.menu_action_account_report_partner_ledger': 'account.account_reports_partners_reports_menu',
+    'account_reports.menu_action_account_report_aged_receivable': 'account.account_reports_partners_reports_menu',
+    'account_reports.menu_action_account_report_aged_payable': 'account.account_reports_partners_reports_menu',
+    'account_reports.menu_action_account_report_coa': 'account_reports.account_reports_audit_menu',
+}
+
+
+def _fix_accounting_menu_parents(env):
+    for menu_xmlid, parent_xmlid in ACCOUNTING_MENU_PARENTS.items():
+        menu = env.ref(menu_xmlid, raise_if_not_found=False)
+        parent = env.ref(parent_xmlid, raise_if_not_found=False)
+        if menu and parent and menu.parent_id != parent:
+            menu.write({'parent_id': parent.id})
+
+
 def pre_init_hook(env):
     _deactivate_old_studio_report_views(env)
+    _fix_accounting_menu_parents(env)
