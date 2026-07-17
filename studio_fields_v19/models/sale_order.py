@@ -116,8 +116,11 @@ class SaleOrderLine(models.Model):
     # (187 y 80), copiadas tal cual del cálculo original de Studio. Esos ids
     # son específicos de la base de datos de producción de origen; hay que
     # verificar que sigan siendo válidos en la base de destino antes de usar
-    # este campo.
-    x_studio_disponible = fields.Char(
+    # este campo. Se declara `Html` (el export de Studio decía "Carácter",
+    # pero el compute arma una `<table>`; con `Char` un `widget="html"` no
+    # la renderiza en v19 -mismo bug encontrado en `existencia`/`x_detalle`
+    # de `sale_purchase_confirm`-).
+    x_studio_disponible = fields.Html(
         string='Disponible', compute='_compute_x_studio_disponible', store=True)
 
     @api.depends('price_unit', 'comision')

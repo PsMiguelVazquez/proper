@@ -170,7 +170,10 @@ class Proposal(models.Model):
     x_condiciones_de_pago = fields.Char("Condiciones de Pago")
     x_costo = fields.Float("Costo")
     x_descripcion = fields.Char("Descripción")
-    x_detalle = fields.Char("Detalle", compute='_compute_x_detalle')
+    # MIGRACIÓN V19: `Html` en vez de `Char` (mismo motivo que
+    # `proposal.purchases.x_detalle`/`wizard.proposal.x_detalle` en
+    # `requerimiet.py`: el compute arma una `<table>`).
+    x_detalle = fields.Html("Detalle", compute='_compute_x_detalle')
     x_documento = fields.Binary("Documento")
     x_familia_id = fields.Many2one("x_familia", "Familia")
     x_garantias = fields.Text("Garantias")
