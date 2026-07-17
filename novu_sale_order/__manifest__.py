@@ -9,7 +9,10 @@
     'maintainer': '',
     'website': '',
 
-    'depends': ['sale', 'vehiculos', 'web_studio', 'sale_purchase_confirm','sale_stock','sale_line_date_planned','sale_management','mail', 'account','base'],
+    # MIGRACIÓN V19: se agrega `studio_fields_v19`, que define
+    # `x_sale_id_stock_picking_count`, `x_comision`, `x_utilidad` y
+    # `x_utilidad_total` (usados en las vistas de este módulo).
+    'depends': ['sale', 'vehiculos', 'web_studio', 'sale_purchase_confirm','sale_stock','sale_line_date_planned','sale_management','mail', 'account','base', 'studio_fields_v19'],
     'data': [
             'views/sale_order_view.xml',
             'views/sale_order_mkp.xml',
