@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: en v15, Studio agregaba la columna `sale_price_ls`
+        (definida en el módulo `vehiculos`) a la tabla de detalle embebida
+        en el formulario de traslado (`move_line_ids_without_package`). Esa
+        tabla ya no existe en el formulario principal en v19: se movió a la
+        acción separada "Operaciones detalladas"
+        (`stock.picking.action_detailed_operations`), que usa esta vista.
+        Se engancha la columna aquí en vez de forzar la tabla vieja de
+        vuelta al formulario, siguiendo el patrón que usa Odoo 19 ahora.
+    -->
+    <record id="stock_move_line_detailed_operation_tree_customization" model="ir.ui.view">
+        <field name="name">stock.move.line.operations.list.customization</field>
+        <field name="model">stock.move.line</field>
+        <field name="inherit_id" ref="stock.view_stock_move_line_detailed_operation_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='result_package_id']" position="after">
+                <field name="sale_price_ls" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
