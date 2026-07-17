@@ -36,7 +36,14 @@
                 <xpath expr="//field[@name='origin']" position="attributes">
                     <attribute name="invisible">1</attribute>
                 </xpath>
-                <xpath expr="//field[@name='scheduled_date']" position="before">
+                <!-- MIGRACIÓN V19: `scheduled_date` no es un <field> suelto en
+                     el grupo: va envuelto en <label for="scheduled_date"/> +
+                     <div class="o_row"> (para compartir fila con
+                     `json_popover`). Anclar sobre el <field> lo insertaba
+                     DENTRO de ese div, pegado a la fecha y sin fila/label
+                     propios. Se ancla sobre el <label> para que cada campo
+                     nuevo caiga en el grupo y tenga su propia fila. -->
+                <xpath expr="//label[@for='scheduled_date']" position="before">
                     <field name="related_purchase_id"/>
                     <field name="x_studio_estado_de_surtido_de_productos"/>
                 </xpath>
