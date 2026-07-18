@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: formaliza la personalización de Odoo Studio del menú
+        "Contabilidad/Ventas/Marketplace" (`studio_customization.
+        marketplace...` + su vista de lista `sale.order.tree.MKP`, sin
+        xmlid, con dos capas de personalización encima).
+
+        No se formaliza el formulario dedicado que Studio había creado
+        (`sale.order.form.mkp`): era una copia completa del formulario
+        estándar de `sale.order` con ~90% del contenido idéntico, y varios
+        botones con IDs de acción numéricos ya rotos incluso en la base de
+        origen (mismo problema que el botón "Generar Orden" quitado en
+        `sale_order_list_cotizaciones.xml`). Se usa el formulario estándar
+        de `sale.order` en su lugar, que ya incluye todos los campos
+        relevantes.
+    -->
+    <record id="sale_order_list_marketplace" model="ir.ui.view">
+        <field name="name">sale.order.list.marketplace</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <list string="Marketplace" class="o_sale_order" multi_edit="1" sample="1">
+                <field name="message_needaction" invisible="1"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="name" string="Número"/>
+                <field name="x_studio_referencia_de_venta_marketplace" invisible="1"/>
+                <field name="warehouse_id" optional="show"/>
+                <field name="x_studio_n_orden_de_compra"/>
+                <field name="x_studio_origen_mkp"/>
+                <field name="partner_child" string="Solicitante" invisible="1"/>
+                <field name="x_estado_surtido" readonly="1" decoration-bf="1"/>
+                <field name="create_date" string="Creation Date" widget="date" optional="show"/>
+                <field name="commitment_date" widget="date" optional="hide"/>
+                <field name="expected_date" widget="date" optional="hide"/>
+                <field name="partner_id" readonly="1" invisible="1"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="activity_ids" widget="list_activity" invisible="1"/>
+                <field name="team_id" optional="hide"/>
+                <field name="tag_ids" optional="hide" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show" readonly="1"/>
+                <field name="amount_untaxed" sum="Total Tax Excluded" widget="monetary" optional="hide"/>
+                <field name="amount_tax" sum="Tax Total" widget="monetary" optional="hide"/>
+                <field name="amount_total" sum="Total Tax Included" widget="monetary" decoration-bf="1" optional="show"/>
+                <field name="x_utilidad_total" optional="show"/>
+                <field name="state" decoration-success="state == 'sale'" decoration-info="state == 'draft' or state == 'sent'"
+                       widget="badge" optional="show"/>
+                <field name="invoice_ids" optional="show"/>
+                <field name="credit_notes" optional="hide"/>
+                <field name="invoice_status" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="sale_order_action_marketplace" model="ir.actions.act_window">
+        <field name="name">Marketplace</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form,calendar,pivot,graph,activity</field>
+        <field name="view_id" ref="sale_order_list_marketplace"/>
+        <field name="domain">[('x_studio_venta_mostrador', '=', True)]</field>
+    </record>
+</odoo>

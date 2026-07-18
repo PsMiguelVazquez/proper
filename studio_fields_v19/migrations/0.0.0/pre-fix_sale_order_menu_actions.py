@@ -1,0 +1,28 @@
+# -*- coding: utf-8 -*-
+"""
+MIGRACIÓN V19: mismo fix que `_fix_sale_order_menu_actions` en
+`__init__.py`, pero para el caso de actualización (`-u`) en vez de
+instalación limpia. Ver `__init__.py` de este módulo para el detalle.
+"""
+from odoo import api, SUPERUSER_ID
+
+SALE_ORDER_MENU_ACTIONS = {
+    'studio_customization.contabilidad_cotizac_b7903b48-2807-4d8d-8bf6-1949a1d8fc97':
+        'studio_fields_v19.sale_order_action_cotizaciones',
+    'studio_customization.contabilidad_pedidos_5882ae4a-d4c7-490e-b8c2-0ac2e90862e1':
+        'studio_fields_v19.sale_order_action_pedidos',
+    'studio_customization.contabilidad_marketp_5f4c41a1-055a-4c7c-8479-64c1082dd7bb':
+        'studio_fields_v19.sale_order_action_marketplace',
+}
+
+
+def migrate(cr, version):
+    env = api.Environment(cr, SUPERUSER_ID, {})
+    for menu_xmlid, action_xmlid in SALE_ORDER_MENU_ACTIONS.items():
+        menu = env.ref(menu_xmlid, raise_if_not_found=False)
+        action = env.ref(action_xmlid, raise_if_not_found=False)
+        if not (menu and action):
+            continue
+        action_ref = 'ir.actions.act_window,%d' % action.id
+        if menu.action != action_ref:
+            menu.write({'action': action_ref})

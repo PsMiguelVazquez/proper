@@ -34,7 +34,7 @@
     'website': "http://www.novucentral.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.5',
+    'version': '19.0.1.0.6',
     'license': 'LGPL-3',
 
     'pre_init_hook': 'pre_init_hook',
@@ -68,5 +68,8 @@
         'views/stock_move_line_detailed_operation_tree.xml',
         'views/product_template_form.xml',
         'views/crm_lead_form.xml',
+        'views/sale_order_list_cotizaciones.xml',
+        'views/sale_order_list_pedidos.xml',
+        'views/sale_order_list_marketplace.xml',
     ],
 }

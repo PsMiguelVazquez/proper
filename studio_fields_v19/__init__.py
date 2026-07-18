@@ -81,6 +81,38 @@ def _fix_accounting_menu_parents(env):
             menu.write({'parent_id': parent.id})
 
 
+# MIGRACIÓN V19: los 3 menús de "Contabilidad/Ventas" (Cotizaciones por
+# aprobar, Pedidos de ventas, Marketplace) son acciones+vistas 100% de
+# Studio (`studio_customization.*`, sin xmlid la vista de lista). El
+# dominio de la acción puede sobrevivir un rebuild, pero la vista de lista
+# con las columnas extra (Almacén, Cant. Asignada/Entregada, Estado de
+# surtido, etc.) no tiene xmlid -ni siquiera Studio puede reconstruirla
+# de forma confiable-, así que se pierde. Se reasigna cada menú (mismos
+# xmlids desde antes de la migración) a la acción formalizada aquí. Igual
+# que con `ACCOUNTING_MENU_PARENTS`: los menús de Studio quedan
+# `noupdate=True`, así que hay que escribir el campo por código.
+SALE_ORDER_MENU_ACTIONS = {
+    'studio_customization.contabilidad_cotizac_b7903b48-2807-4d8d-8bf6-1949a1d8fc97':
+        'studio_fields_v19.sale_order_action_cotizaciones',
+    'studio_customization.contabilidad_pedidos_5882ae4a-d4c7-490e-b8c2-0ac2e90862e1':
+        'studio_fields_v19.sale_order_action_pedidos',
+    'studio_customization.contabilidad_marketp_5f4c41a1-055a-4c7c-8479-64c1082dd7bb':
+        'studio_fields_v19.sale_order_action_marketplace',
+}
+
+
+def _fix_sale_order_menu_actions(env):
+    for menu_xmlid, action_xmlid in SALE_ORDER_MENU_ACTIONS.items():
+        menu = env.ref(menu_xmlid, raise_if_not_found=False)
+        action = env.ref(action_xmlid, raise_if_not_found=False)
+        if not (menu and action):
+            continue
+        action_ref = 'ir.actions.act_window,%d' % action.id
+        if menu.action != action_ref:
+            menu.write({'action': action_ref})
+
+
 def pre_init_hook(env):
     _deactivate_old_studio_report_views(env)
     _fix_accounting_menu_parents(env)
+    _fix_sale_order_menu_actions(env)
