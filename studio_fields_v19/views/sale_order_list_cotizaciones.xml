@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: formaliza la personalización de Odoo Studio del menú
+        "Contabilidad/Ventas/Cotizaciones por aprobar". Tanto la acción
+        (`studio_customization.cotizaciones_por_apr...`) como la vista de
+        lista con las columnas extra (`Odoo Studio: sale.order.tree
+        customization`, sin xmlid la vista base que duplicaba) vivían sólo
+        como datos de Studio y se perdían en cada rebuild de Odoo.sh -la
+        acción sobrevivió esta vez, pero la vista con las columnas
+        (Almacén, Cant. Asignada/Entregada/x Entregar, Estado de surtido,
+        etc.) no-. Se escribe como una vista de lista completa (no xpath
+        sobre la vista base) para no depender de qué vista "primaria" de
+        `sale.order` gane por prioridad, y se referencia explícitamente
+        desde la acción.
+
+        No incluye `x_lines_proposa` (columna "Propuestas") -campo del
+        subsistema de Requerimientos/Propuestas, excluido del alcance de
+        este módulo, ver `__manifest__.py`-. Se quita el botón "Generar
+        Orden" (`name="581"`): esa acción ya no existía ni en la base de
+        producción de origen (v15), estaba rota desde antes de esta
+        migración.
+    -->
+    <record id="sale_order_list_cotizaciones" model="ir.ui.view">
+        <field name="name">sale.order.list.cotizaciones</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <list string="Sales Orders" class="o_sale_order" sample="1" decoration-muted="state == 'cancel'">
+                <field name="message_needaction" column_invisible="True"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="name" string="Number" readonly="1" decoration-bf="1"/>
+                <field name="x_studio_n_orden_de_compra" optional="show"/>
+                <field name="date_order" optional="show" readonly="state in ['cancel', 'sale']"/>
+                <field name="fechas_factura" optional="hide"/>
+                <field name="commitment_date" optional="hide"/>
+                <field name="expected_date" optional="hide"/>
+                <field name="partner_id" readonly="1"/>
+                <field name="partner_child" optional="show" string="Solicitante"/>
+                <field name="x_studio_origen_mkp" optional="hide"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="x_studio_almacn" optional="show" string="Almacén"/>
+                <field name="team_id" optional="hide"/>
+                <field name="company_id" groups="!base.group_multi_company" column_invisible="True"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show" readonly="1"/>
+                <field name="amount_untaxed" sum="Total Tax Excluded" widget="monetary" optional="hide"/>
+                <field name="amount_tax" sum="Tax Total" widget="monetary" optional="hide"/>
+                <field name="amount_total" sum="Total Tax Included" widget="monetary" decoration-bf="1"
+                       decoration-info="invoice_status == 'to invoice'" optional="show"/>
+                <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" optional="hide"/>
+                <field name="state" decoration-success="state == 'sale'" decoration-info="state == 'draft'"
+                       decoration-primary="state == 'sent'" widget="badge"/>
+                <field name="x_estado_surtido" optional="show"/>
+                <field name="x_metodo_entrega" optional="show"/>
+                <field name="x_doc_entrega" optional="show"/>
+                <field name="cart_quantity" optional="show" string="Cant. Solicitada"/>
+                <field name="x_studio_cant_asignada" optional="show" string="Cant. Asignada"/>
+                <field name="x_studio_cant_entregada" optional="show" string="Cant. Entregada"/>
+                <field name="x_studio_cant_x_entregar" optional="show" string="Cant. x Entregar"/>
+                <field name="x_estado_compra" optional="show"/>
+                <field name="x_estado_almacen"/>
+                <field name="invoice_status" decoration-success="invoice_status == 'invoiced'"
+                       decoration-info="invoice_status == 'to invoice'" decoration-warning="invoice_status == 'upselling'"
+                       widget="badge" optional="hide"/>
+                <field name="invoice_ids" optional="show" widget="many2many_tags"/>
+                <field name="activity_ids" widget="list_activity" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="sale_order_action_cotizaciones" model="ir.actions.act_window">
+        <field name="name">Cotizaciones por aprobar</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form,calendar,pivot,graph,activity</field>
+        <field name="view_id" ref="sale_order_list_cotizaciones"/>
+        <field name="domain">[('state', '=', 'credito_conf')]</field>
+    </record>
+</odoo>

@@ -62,6 +62,48 @@ class SaleOrder(models.Model):
     x_studio_etiquetas = fields.Binary(string='Etiquetas')
     x_studio_orden_de_compra = fields.Binary(string='Orden de Compra')
 
+    # MIGRACIÓN V19: campos manuales de Studio usados por las listas
+    # formalizadas de "Cotizaciones por aprobar"/"Pedidos de
+    # ventas"/"Marketplace" (ver `views/sale_order_list_*.xml`).
+    x_aprovacion_compras = fields.Boolean(string='Aprovacion Compras')
+    x_studio_almacn = fields.Char(related='warehouse_id.name', string='Almacén')
+    x_studio_n_orden_de_compra = fields.Char(string='N° Orden de compra')
+    x_studio_origen_mkp = fields.Selection(
+        [('AMAZON', 'AMAZON'), ('MERCADO LIBRE', 'MERCADO LIBRE'), ('LIVERPOOL', 'LIVERPOOL'),
+         ('LINIO', 'LINIO'), ('CLARO SHOP', 'CLARO SHOP'), ('ELENAS', 'ELENAS'),
+         ('WALMART', 'WALMART'), ('SEARS', 'SEARS'), ('SHEIN', 'SHEIN'),
+         ('SANBORNS', 'SAMBORNS'), ('COPPEL', 'COPPEL'), ('ELEKTRA', 'ELEKTRA'),
+         ('FARMACIAS DEL AHORRO', 'FARMACIAS DEL AHORRO')],
+        string='Origen MKP')
+    x_studio_referencia_de_venta_marketplace = fields.Char(string='Referencia de venta Marketplace')
+    x_studio_venta_mostrador = fields.Boolean(string='Venta Mostrador')
+    # MIGRACIÓN V19: en Studio era `related='albaran.state'`; `albaran` es
+    # `Many2one`, así que se mantiene igual.
+    x_estado_almacen = fields.Selection(
+        related='albaran.state', store=True, string='Estado de almacén de entrega')
+    # MIGRACIÓN V19: en Studio eran `related='purchase_ids.state'`/
+    # `related='invoice_ids.state'`, pero `purchase_ids`/`invoice_ids` son
+    # `Many2many` (puede haber más de una compra/factura por pedido) y
+    # `related=` no soporta atravesar relaciones x2many; se reescriben como
+    # compute tomando el estado del primer registro vinculado.
+    x_estado_compra = fields.Selection(
+        [('draft', 'RFQ'), ('sent', 'RFQ Sent'), ('to approve', 'To Approve'),
+         ('purchase', 'Purchase Order'), ('cancel', 'Cancelled'), ('consolidate', 'Consolidada')],
+        string='Estado de compras', compute='_compute_x_estado_compra', store=True)
+    x_estado_factura = fields.Selection(
+        [('draft', 'Draft'), ('posted', 'Posted'), ('cancel', 'Cancelled')],
+        string='Estado de Facturación', compute='_compute_x_estado_factura', store=True)
+
+    @api.depends('purchase_ids.state')
+    def _compute_x_estado_compra(self):
+        for record in self:
+            record.x_estado_compra = record.purchase_ids[:1].state
+
+    @api.depends('invoice_ids.state')
+    def _compute_x_estado_factura(self):
+        for record in self:
+            record.x_estado_factura = record.invoice_ids[:1].state
+
     @api.depends('order_line.cantidad_asignada')
     def _compute_x_studio_cant_asignada(self):
         for record in self:
