@@ -104,6 +104,11 @@ class ProductProduct(models.Model):
     _inherit = 'product.product'
 
     x_num_pro = fields.Char(string='Num Pro')
+    # MIGRACIÓN V19: campo propio de Studio en `product.product` (no
+    # delegado desde `product.template`), usado por la lista de variantes
+    # embebida en `crm.lead.form` (ver `views/crm_lead_form.xml`).
+    x_studio_many2one_field_AqNlU = fields.Many2one(
+        'x_modelo_del_producto', string='Modelo del producto anterior')
     # MIGRACIÓN V19: en Studio eran `related=` hacia `product_tmpl_id`.
     x_Alto = fields.Char(related='product_tmpl_id.x_Alto', string='Alto')
     x_largo = fields.Char(related='product_tmpl_id.x_largo', string='Largo')
