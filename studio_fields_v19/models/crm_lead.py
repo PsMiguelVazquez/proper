@@ -4,6 +4,12 @@ import datetime
 from odoo import models, fields, api
 
 
+class CrmStage(models.Model):
+    _inherit = 'crm.stage'
+
+    x_probabilidad = fields.Float(string='Probabilidad de la etapa')
+
+
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
 
@@ -11,6 +17,21 @@ class CrmLead(models.Model):
         string='Fecha', compute='_compute_x_fecha', store=True)
     x_probabilidad_lead = fields.Float(
         string='Probabilidad', compute='_compute_x_probabilidad_lead', store=True)
+
+    # MIGRACIÓN V19: campos manuales de Studio usados por la vista de
+    # formulario formalizada (ver `views/crm_lead_form.xml`).
+    x_producto_almacen = fields.Many2many('product.product', string='Productos en almacén')
+    x_studio_relacin_de_vendedor = fields.Many2one('res.users', string='Relación de vendedor')
+    # MIGRACIÓN V19: en Studio eran `related=`; ambos apuntan al mismo
+    # campo de la etapa (`crm.stage.x_probabilidad`, formalizado arriba),
+    # sólo se usan en lugares distintos de la vista (lead vs. oportunidad).
+    x_probabilidad_etapa = fields.Float(
+        related='stage_id.x_probabilidad', store=True, string='Probabilidad etapa')
+    x_studio_probabilidad_venta = fields.Float(
+        related='stage_id.x_probabilidad', store=True, string='Probabilidad venta')
+    x_studio_related_field_KECm2 = fields.Many2one(
+        'x_niveles_de_cliente', related='partner_id.x_nivel_cliente', store=True,
+        string='Nivel de cliente')
 
     @api.depends('partner_id')
     def _compute_x_fecha(self):
