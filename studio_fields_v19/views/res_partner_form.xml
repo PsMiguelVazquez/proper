@@ -68,7 +68,18 @@
                     <field name="x_studio_estatus_de_la_cuenta" string="Estatus de la Cuenta"
                            groups="account.group_account_invoice,account.group_account_manager"/>
                 </xpath>
-                <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/div[1]" position="after">
+                <!-- MIGRACIÓN V19: en Studio (v15) esto apuntaba al primer
+                     `div` de la columna de dirección, que en ese entonces
+                     era el propio bloque de dirección (insertaba estos
+                     campos justo después). En v19 `base.view_partner_form`
+                     agregó un `div` nuevo ANTES de la dirección (el de
+                     "crear empresa" a partir de `company_name`, normalmente
+                     invisible); el mismo xpath ahora apunta a ese div y
+                     mete estos 6 campos ANTES de calle/colonia/ciudad en
+                     vez de después, rompiendo el layout de la columna. Se
+                     ancla directamente al bloque de dirección
+                     (`o_address_format`, único y estable) en su lugar. -->
+                <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/div[hasclass('o_address_format')]" position="after">
                     <field name="x_studio_entre_las_calles"/>
                     <field name="x_studio_plano"/>
                     <field name="x_sector"/>
@@ -94,7 +105,14 @@
                 <xpath expr="//field[@name='category_id']" position="after">
                     <field name="x_cat_com" string="Categoría"/>
                 </xpath>
-                <xpath expr="//form[1]/sheet[1]/group[1]/group[2]" position="after">
+                <!-- MIGRACIÓN V19: apuntar a `group[1]/group[2]` (la
+                     columna derecha) inserta este grupo como tercera
+                     columna DENTRO del grid de 2 columnas de `group[1]`, en
+                     vez de como fila propia a todo lo ancho -por eso se
+                     encimaba con el resto-; se ancla a `group[1]` completo
+                     en su lugar, igual que el resto de los grupos de esta
+                     vista. -->
+                <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
                     <group class="o_row" col="4" colspan="4" string="Horario de Atención" name="studio_group_141ff8">
                         <div class="o_row" name="studio_div_101641">
                             <span>Días</span>
@@ -285,9 +303,15 @@
                         </group>
                     </page>
                     <page name="ProcesoPago" string="Proceso de Revisión y Pago">
-                        <group name="notas">
+                        <!-- MIGRACIÓN V19: sin `col="1"` este grupo cae en
+                             el default de 2 columnas y separa "Notas" en
+                             una columna angosta y el campo en otra más
+                             angosta todavía, partiendo el texto letra por
+                             letra; con `col="1"` cada hijo ocupa el ancho
+                             completo, como en la vista original de Studio. -->
+                        <group name="notas" col="1">
                             <span>Notas</span>
-                            <field name="x_notas_revision" string="Notas de Revisión"/>
+                            <field name="x_notas_revision" string="Notas de Revisión" nolabel="1"/>
                         </group>
                     </page>
                 </xpath>
