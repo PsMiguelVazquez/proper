@@ -10,5 +10,13 @@
         <record id="group_purchase_maneger" model="res.groups">
             <field name="name">Compras</field>
         </record>
+        <!-- MIGRACIÓN V19: en v15 este grupo existía sólo como dato de
+             Studio, con un ID externo generado automáticamente por Odoo
+             (módulo `__export__`, sin sentido fuera de esa base de datos
+             concreta) - se pierde en cada rebuild de Odoo.sh. Se formaliza
+             aquí con un ID externo real. -->
+        <record id="group_cuentas_contables" model="res.groups">
+            <field name="name">Cuentas contables</field>
+        </record>
     </data>
 </odoo>
