@@ -193,7 +193,15 @@
                 <xpath expr="//field[@name='child_ids']//field[@name='comment']" position="before">
                     <field name="x_es_marketplace"/>
                 </xpath>
-                <xpath expr="//field[@name='sales_agent']" position="after">
+                <!-- MIGRACIÓN V19: se ancla en `user_id` (campo base,
+                     siempre presente) en vez de `sales_agent` -ese campo lo
+                     agrega `res_partner_fields` con su propio xpath, y
+                     depender de esa vista ya combinada agrega una
+                     fragilidad de orden entre módulos que no hace falta
+                     aquí; `res_partner_fields` ya coloca `sales_agent`
+                     justo antes de `user_id`, así que el resultado visual
+                     es el mismo. -->
+                <xpath expr="//field[@name='user_id']" position="before">
                     <field name="x_nombre_agente_venta"/>
                     <field name="x_nom_corto_agente_venta"/>
                 </xpath>

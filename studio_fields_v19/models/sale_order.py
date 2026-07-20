@@ -35,9 +35,6 @@ class SaleOrder(models.Model):
     # perder los valores ya guardados en producción.
     x_studio_char_field_5mFSv = fields.Char(
         string='New Texto', compute='_compute_x_studio_char_field_5mFSv', store=True)
-    # MIGRACIÓN V19: depende de `order_line.x_pedido`, campo que sigue
-    # viviendo únicamente como columna de Odoo Studio (no formalizado en
-    # código); se referencia de forma dinámica, funciona igual que antes.
     x_studio_pedido = fields.Boolean(
         string='pedido', compute='_compute_x_studio_pedido', store=True)
 
@@ -151,17 +148,140 @@ class SaleOrder(models.Model):
         for record in self:
             record.x_studio_char_field_5mFSv = _fecha_larga_cdmx()
 
-    # MIGRACIÓN V19: sin `x_pedido` en `@api.depends` a propósito, ver
-    # `common.py` (no existe en todas las bases).
-    @api.depends('order_line', 'write_date')
+    # MIGRACIÓN V19: `order_line.x_pedido` ya está formalizado más abajo, en
+    # `SaleOrderLine`, así que ya no hace falta el workaround `studio_get`.
+    @api.depends('order_line.x_pedido')
     def _compute_x_studio_pedido(self):
         for record in self:
-            pedidos = [studio_get(line, 'x_pedido', True) for line in record.order_line]
+            pedidos = record.order_line.mapped('x_pedido')
             record.x_studio_pedido = False if False in pedidos else True
+
+    # MIGRACIÓN V19: segunda tanda de campos manuales de Studio (export
+    # "Campos (ir.model.fields) (3)"). No incluye `x_req_line`,
+    # `x_req_line_compras`, `x_lines_requirements`, `x_lines_proposa` ni
+    # `x_progreso_requerimiento` -subsistema de Requerimientos/Propuestas,
+    # fuera de alcance, ver descripción del manifest-.
+    x_studio_many2one_field_K1t0z = fields.Many2one('crm.lead', string='Lead/Oportunidad')
+    x_folio = fields.Char(string='Folio')
+    x_tipo_de_articulos = fields.Char(string='Tipo de artículos')
+    x_Empresa = fields.Char(string='Empresa')
+    x_motivo_rechazo = fields.Text(string='Motivo de rechazo')
+    x_orden_compra = fields.Many2one('purchase.order', string='Orden de compra')
+    x_studio_flotilla = fields.Boolean(string='Flotilla')
+    x_studio_recolecta = fields.Boolean(string='Recolecta')
+    x_studio_solicit = fields.Many2one('res.partner', string='Solicitó')
+    x_studio_estado_de_validacin = fields.Selection(
+        [('1', 'Contado'), ('2', 'Excede credito'), ('3', 'Falta información'), ('4', 'Facturas vencidas')],
+        string='Estado de validación')
+    x_no_guia_ventas = fields.Char(string='N° de guía')
+    x_studio_paquetera = fields.Boolean(string='Paquetería')
+    x_studio_many2many_field_yXYzo = fields.Many2many('stock.picking.type', string='Tipo de albarán')
+    x_studio_factura_timbrada = fields.Binary(string='Factura Timbrada')
+    x_studio_factura_timbrada_filename = fields.Char(string='Nombre de archivo (factura timbrada)')
+    x_studio_remisin = fields.Binary(string='Remisión')
+    x_studio_remisin_filename = fields.Char(string='Nombre de archivo (remisión)')
+    x_studio_remisin_ciega = fields.Binary(string='Remisión Ciega')
+    x_studio_remisin_ciega_filename = fields.Char(string='Nombre de archivo (remisión ciega)')
+    x_studio_etiquetas_filename = fields.Char(string='Nombre de archivo (etiquetas)')
+    x_studio_orden_de_compra_filename = fields.Char(string='Nombre de archivo (orden de compra)')
+    x_studio_otros_filename = fields.Char(string='Nombre de archivo (otros)')
+    x_studio_many2many_field_ghmoC = fields.Many2many(
+        'stock.picking', 'sale_order_stock_picking_ghmoC_rel', string='Albarán')
+    x_studio_many2many_field_ma4cB = fields.Many2many(
+        'stock.picking', 'sale_order_stock_picking_ma4cB_rel', string='Albarán')
+    x_studio_con_tiempo_de_entrega = fields.Boolean(string='Con tiempo de entrega')
+    x_mot_canc_comer = fields.Text(string='Motivo de cancelación del comercial')
+    x_requiere_factura = fields.Selection([('SI', 'SI'), ('NO', 'NO')], string='Requiere factura')
+    x_studio_remisin_1 = fields.Boolean(string='Remisión')
+    x_studio_remisin_ciega_1 = fields.Boolean(string='Remisión Ciega')
+    x_studio_factura_timbrada_1 = fields.Boolean(string='Factura Timbrada')
+    x_studio_otros = fields.Binary(string='Otros documentos')
+    x_fecha_devolucion = fields.Date(string='Fecha Devolución')
+    x_es_muestra = fields.Boolean(string='Es Muestra')
+    x_moti_cancel_comp = fields.Char(string='Motivo de rechazo de cancelación')
+    x_acep_cancel_compra = fields.Boolean(string='Aceptar cancelación de venta')
+
+    # MIGRACIÓN V19: en Studio eran `related=` a través de campos
+    # `Many2one` (`partner_id`/`albaran`), se mantienen igual.
+    x_studio_holding_1 = fields.Char(
+        related='partner_id.parent_id.x_holding.display_name', string='Holding')
+    x_studio_empresa = fields.Char(related='partner_id.parent_id.name', string='Empresa')
+    x_studio_holding_2 = fields.Char(related='partner_id.x_holding.name', string='Holding')
+    x_studio_n_de_gua = fields.Char(related='albaran.x_studio_n_de_gua', string='N° de guía')
+    x_studio_n_de_gua_1 = fields.Char(related='albaran.x_studio_n_de_gua', string='N° de guía')
+    x_studio_grupo = fields.Char(related='partner_id.x_grupo_cliente.x_name', string='Grupo')
+    x_studio_plazo_de_pago = fields.Char(
+        related='partner_id.property_payment_term_id.display_name', string='Política de pago')
+    x_fecha_surtido = fields.Datetime(related='albaran.scheduled_date', string='Fecha de surtido')
+    x_studio_rfc = fields.Char(related='partner_id.vat', string='RFC')
+
+    # MIGRACIÓN V19: en Studio era `related='partner_id.x_area'`, pero
+    # `x_area` en `res.partner` es a su vez un compute (toma la primera
+    # oportunidad vinculada, ver `res_partner.py`); un `related=` normal
+    # funciona igual aquí porque el salto sigue siendo `Many2one`
+    # (`partner_id`).
+    x_area = fields.Char(related='partner_id.x_area', string='Área')
+
+    # MIGRACIÓN V19: en Studio era `related='picking_ids.state'`, pero
+    # `picking_ids` es `One2many`/`Many2many` (puede haber más de un
+    # traslado por pedido) y `related=` no soporta atravesar x2many (mismo
+    # caso que `x_estado_compra` en esta misma clase); se reescribe como
+    # compute tomando el estado del primer traslado.
+    x_status_surtido = fields.Selection(
+        [('draft', 'Draft'), ('waiting', 'Waiting Another Move'), ('confirmed', 'Waiting Availability'),
+         ('assigned', 'Ready'), ('done', 'Done'), ('cancel', 'Cancelled')],
+        string='*Estado de surtido', compute='_compute_x_status_surtido')
+
+    @api.depends('picking_ids.state')
+    def _compute_x_status_surtido(self):
+        for record in self:
+            record.x_status_surtido = record.picking_ids[:1].state
 
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
+
+    # MIGRACIÓN V19: segunda tanda de campos manuales de Studio. `x_pedido`
+    # ya se usaba desde `_compute_x_studio_pedido` (arriba, en `SaleOrder`)
+    # a través de `studio_get()` porque todavía no era un campo real; ahora
+    # que se formaliza aquí, ya se puede depender de él normalmente.
+    x_sol_atendido = fields.Boolean(string='Solicitud atendida')
+    x_studio_cantidad_disponible = fields.Integer(string='Cantidad disponible')
+    x_studio_modelo_1 = fields.Char(string='Modelo')
+    x_dias_habiles = fields.Text(string='Días hábiles')
+    x_pedido = fields.Boolean(string='pedido')
+    x_costo_envio = fields.Monetary(string='Costo de envío')
+
+    # MIGRACIÓN V19: en Studio eran `related=` a través de campos
+    # `Many2one` (`product_id`/`product_template_id`/`order_id`), se
+    # mantienen igual.
+    x_studio_cdigo_de_barras = fields.Char(related='product_id.barcode', store=True, string='Código de barras')
+    x_studio_modelo = fields.Char(
+        related='product_id.x_studio_many2one_field_AqNlU.x_name', store=True, string='Modelo')
+    x_studio_cdigo_sat = fields.Many2one(
+        'product.unspsc.code', related='product_id.unspsc_code_id', string='Código SAT')
+    x_studio_related_field_10QsN = fields.Selection(
+        related='product_template_id.invoice_policy', store=True, string='New Campo relacionado')
+    x_modelo_producto = fields.Char(related='product_id.default_code', store=True, string='Modelo producto')
+    x_studio_descripcin_comercial = fields.Text(
+        related='product_id.description_sale', string='Descripción comercial')
+    x_studio_estado_del_pedido = fields.Selection(
+        related='order_id.state', store=True, string='Estado del pedido')
+    x_ultimo_precio_compra = fields.Float(
+        related='product_template_id.ultimo_costo_compra', store=True, string='Último precio de compra')
+    x_studio_categoria_del_producto = fields.Char(
+        related='product_template_id.categ_id.name', store=True, string='Categoría del producto')
+    x_numcliente = fields.Char(
+        related='order_id.partner_id.x_num_cliente', store=True, string='N° cliente')
+    x_studio_familia = fields.Char(
+        related='product_template_id.x_studio_many2one_field_RWuq7.display_name', string='Familia')
+    x_fabricante_producto = fields.Char(
+        related='product_template_id.x_fabricante.display_name', store=True, string='Fabricante')
+    x_grupo_producto = fields.Char(
+        related='product_template_id.x_studio_many2one_field_0X3u9.display_name', store=True, string='Grupo')
+    x_linea_producto = fields.Char(
+        related='product_template_id.x_studio_many2one_field_LZOP8.display_name', store=True, string='Línea')
+    x_fecha_pedido = fields.Datetime(related='order_id.date_order', store=True, string='Fecha de pedido')
 
     x_comision = fields.Monetary(
         string='Comisión', compute='_compute_x_comision', store=True)

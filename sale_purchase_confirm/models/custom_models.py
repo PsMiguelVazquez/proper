@@ -84,12 +84,112 @@ class XSublinea(models.Model):
     x_studio_sequence = fields.Integer(string='Secuencia')
 
 
+class XMarca(models.Model):
+    _name = 'x_marca'
+    _description = 'Marca'
+
+    x_name = fields.Char(string='Name')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_sequence = fields.Integer(string='Secuencia')
+
+
+class XLargo(models.Model):
+    _name = 'x_largo'
+    _description = 'Largo'
+
+    x_name = fields.Char(string='Name')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_sequence = fields.Integer(string='Secuencia')
+
+
+class XMarcaDelProducto(models.Model):
+    _name = 'x_marca_del_producto'
+    _description = 'Marca del producto'
+
+    x_name = fields.Char(string='Name')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_notes = fields.Text(string='Notas')
+    x_studio_sequence = fields.Integer(string='Secuencia')
+
+
 class XModeloDelProducto(models.Model):
     _name = 'x_modelo_del_producto'
     _description = 'Modelo del producto'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_sequence = fields.Integer(string='Secuencia')
+    # MIGRACIÓN V19: usados por `product.template.x_studio_fabricante_del_producto`/
+    # `x_studio_marca` (formalizados en `studio_fields_v19`).
+    x_studio_many2one_field_KjDbr = fields.Many2one('x_fabricante', string='Fabricante')
+    x_studio_many2one_field_qQUTn = fields.Many2one('x_marca_del_producto', string='Marca del producto')
+
+
+class XEstadoDelProducto(models.Model):
+    _name = 'x_estado_del_producto'
+    _description = 'Estado del producto'
+
+    x_name = fields.Char(string='Name')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_sequence = fields.Integer(string='Secuencia')
+
+
+class XConceptosDeBaja(models.Model):
+    _name = 'x_conceptos_de_baja'
+    _description = 'Conceptos de baja'
+
+    x_name = fields.Char(string='Name')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_sequence = fields.Integer(string='Secuencia')
+
+
+class XConceptosBasicosDe(models.Model):
+    _name = 'x_conceptos_basicos_de'
+    _description = 'Conceptos básicos de operación'
+
+    x_name = fields.Char(string='Name')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_sequence = fields.Integer(string='Secuencia')
+
+
+class XWizardPartner(models.Model):
+    _name = 'x_wizard_partner'
+    _description = 'Asistente de nuevo cliente'
+
+    x_partner_id = fields.Many2one('res.partner', string='Cliente')
+    x_sale_id = fields.Many2one('sale.order', string='Pedido de venta')
+    x_solicitud_credito = fields.Binary(string='Solicitud Credito')
+    x_uso_cfdi = fields.Selection(
+        [('P01', 'P01 - Por definir'), ('G01', 'G01 - Adquisición de mercancías'),
+         ('G03', 'G03 - Gastos en general')],
+        string='Uso de CFDI')
+    x_rfc = fields.Char(string='RFC')
+    x_correo = fields.Char(string='Correo')
+    x_copia_estado_cuenta = fields.Binary(string='Copia Estado Cuenta')
+    x_copia_identificaion = fields.Binary(string='Copia Identificación')
+    x_metodo_pago = fields.Many2one('l10n_mx_edi.payment.method', string='Método de pago')
+    x_constancia_fiscal = fields.Binary(string='Constancia Fiscal')
+
+
+class XTemporadas(models.Model):
+    _name = 'x_temporadas'
+    _description = 'Temporadas'
+
+    x_name = fields.Char(string='Name')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_sequence = fields.Integer(string='Secuencia')
+    x_color = fields.Integer(string='Color')
+    x_fecha1 = fields.Date(string='Fecha inicio')
+    x_fecha2 = fields.Date(string='Fecha fin')
+
+
+class XSegmento(models.Model):
+    _name = 'x_segmento'
+    _description = 'Segmento'
+
+    x_name = fields.Char(string='Segmento')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_descripcion = fields.Char(string='Criterio del segmento')
     x_studio_sequence = fields.Integer(string='Secuencia')
 
 

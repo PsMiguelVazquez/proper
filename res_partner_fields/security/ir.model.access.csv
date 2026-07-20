@@ -5,3 +5,6 @@ access_x_grupo_cliente,access_x_grupo_cliente,model_x_grupo_cliente,base.group_u
 access_x_clave_p,access_x_clave_p,model_x_clave_p,base.group_user,1,1,1,1
 access_x_grupo_proveedor,access_x_grupo_proveedor,model_x_grupo_proveedor,base.group_user,1,1,1,1
 access_x_ref_comercial,access_x_ref_comercial,model_x_ref_comercial,base.group_user,1,1,1,1
+access_x_agente_de_venta,access_x_agente_de_venta,model_x_agente_de_venta,base.group_user,1,1,1,1
+access_x_ref_banco,access_x_ref_banco,model_x_ref_banco,base.group_user,1,1,1,1
+access_x_subcategia_compania,access_x_subcategia_compania,model_x_subcategia_compania,base.group_user,1,1,1,1
