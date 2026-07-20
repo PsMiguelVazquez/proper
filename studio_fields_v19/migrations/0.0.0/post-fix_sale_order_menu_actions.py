@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 MIGRACIÓN V19: mismo fix que `_fix_sale_order_menu_actions` en
-`__init__.py`, pero para el caso de actualización (`-u`) en vez de
-instalación limpia. Ver `__init__.py` de este módulo para el detalle.
+`__init__.py` (llamada desde `post_init_hook`), pero para el caso de
+actualización (`-u`) en vez de instalación limpia. Va como migración
+`post-` (no `pre-`) a propósito: depende de que las acciones
+`studio_fields_v19.sale_order_action_*` ya existan, y esas las crea este
+mismo módulo vía `data/` -las migraciones `pre-` corren antes de que Odoo
+cargue los `data` del módulo, así que en ese momento `env.ref(...)`
+todavía no las encuentra-. Ver `__init__.py` de este módulo para el
+detalle completo.
 """
 from odoo import api, SUPERUSER_ID
 

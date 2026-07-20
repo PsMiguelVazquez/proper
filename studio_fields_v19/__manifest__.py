@@ -34,10 +34,11 @@
     'website': "http://www.novucentral.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.6',
+    'version': '19.0.1.0.7',
     'license': 'LGPL-3',
 
     'pre_init_hook': 'pre_init_hook',
+    'post_init_hook': 'post_init_hook',
 
     'depends': [
         'sale_purchase_confirm',
