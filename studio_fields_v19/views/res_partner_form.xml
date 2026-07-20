@@ -105,31 +105,6 @@
                 <xpath expr="//field[@name='category_id']" position="after">
                     <field name="x_cat_com" string="Categoría"/>
                 </xpath>
-                <!-- MIGRACIÓN V19: apuntar a `group[1]/group[2]` (la
-                     columna derecha) inserta este grupo como tercera
-                     columna DENTRO del grid de 2 columnas de `group[1]`, en
-                     vez de como fila propia a todo lo ancho -por eso se
-                     encimaba con el resto-; se ancla a `group[1]` completo
-                     en su lugar, igual que el resto de los grupos de esta
-                     vista. -->
-                <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
-                    <group class="o_row" col="4" colspan="4" string="Horario de Atención" name="studio_group_141ff8">
-                        <div class="o_row" name="studio_div_101641">
-                            <span>Días</span>
-                            <field name="x_dia1" string="Día laboral"/>
-                            <span>a</span>
-                            <field name="x_dia2" string="Día laboral"/>
-                            <field name="x_hora1" string="Hora" placeholder="E.j. 9:00am a 10:00pm"/>
-                        </div>
-                        <div class="o_row" name="studio_div_721a2c">
-                            <span>Y</span>
-                            <field name="x_dia3" string="Dia laboral"/>
-                            <span>a</span>
-                            <field name="x_dia4" string="Dia laboral"/>
-                            <field name="x_hora2" string="Hora" placeholder="E.j. 9:00am a 10:00pm"/>
-                        </div>
-                    </group>
-                </xpath>
                 <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
                     <group name="studio_group_NOnPe">
                         <group name="studio_group_NOnPe_left" string="Información adicional">
@@ -179,6 +154,36 @@
                             <field name="x_grupo_cliente"/>
                         </group>
                         <group name="studio_group_Y5OWP_right" string="Datos de Cliente"/>
+                    </group>
+                </xpath>
+                <!-- MIGRACIÓN V19: apuntar a `group[1]/group[2]` (la
+                     columna derecha) insertaba este grupo como tercera
+                     columna DENTRO del grid de 2 columnas de `group[1]`, en
+                     vez de como fila propia a todo lo ancho -por eso se
+                     encimaba con el resto-; se ancla a `group[1]` completo
+                     en su lugar. Además, como varios `<xpath position="after">`
+                     de esta vista comparten ese mismo anclaje `group[1]`,
+                     Odoo los apila en orden INVERSO al orden del archivo (el
+                     último que se aplica termina más cerca del ancla); este
+                     bloque se coloca deliberadamente al final de ese grupo
+                     de xpaths para que "Horario de Atención" quede primero
+                     después de `group[1]`, en vez de hasta abajo del todo. -->
+                <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
+                    <group class="o_row" col="4" colspan="4" string="Horario de Atención" name="studio_group_141ff8">
+                        <div class="o_row" name="studio_div_101641">
+                            <span>Días</span>
+                            <field name="x_dia1" string="Día laboral"/>
+                            <span>a</span>
+                            <field name="x_dia2" string="Día laboral"/>
+                            <field name="x_hora1" string="Hora" placeholder="E.j. 9:00am a 10:00pm"/>
+                        </div>
+                        <div class="o_row" name="studio_div_721a2c">
+                            <span>Y</span>
+                            <field name="x_dia3" string="Dia laboral"/>
+                            <span>a</span>
+                            <field name="x_dia4" string="Dia laboral"/>
+                            <field name="x_hora2" string="Hora" placeholder="E.j. 9:00am a 10:00pm"/>
+                        </div>
                     </group>
                 </xpath>
                 <xpath expr="//group[@name='studio_group_Y5OWP_right']" position="inside">
