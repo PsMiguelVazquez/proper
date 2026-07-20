@@ -91,6 +91,15 @@ def _fix_accounting_menu_parents(env):
 # xmlids desde antes de la migración) a la acción formalizada aquí. Igual
 # que con `ACCOUNTING_MENU_PARENTS`: los menús de Studio quedan
 # `noupdate=True`, así que hay que escribir el campo por código.
+#
+# IMPORTANTE: a diferencia de `_fix_accounting_menu_parents` (apunta a
+# xmlids de `account`/`account_reports`, ya cargados antes de que este
+# módulo empiece), esta función depende de acciones creadas por ESTE MISMO
+# módulo (`data/` en el manifest). `pre_init_hook` y las migraciones
+# `pre-*` corren ANTES de que Odoo cargue los `data` del módulo (ver
+# `odoo/modules/loading.py`), así que en ese momento `env.ref(...)` todavía
+# no encuentra la acción y la función no hace nada silenciosamente. Por
+# eso va en `post_init_hook`/una migración `post-*`, que corren después.
 SALE_ORDER_MENU_ACTIONS = {
     'studio_customization.contabilidad_cotizac_b7903b48-2807-4d8d-8bf6-1949a1d8fc97':
         'studio_fields_v19.sale_order_action_cotizaciones',
@@ -115,4 +124,7 @@ def _fix_sale_order_menu_actions(env):
 def pre_init_hook(env):
     _deactivate_old_studio_report_views(env)
     _fix_accounting_menu_parents(env)
+
+
+def post_init_hook(env):
     _fix_sale_order_menu_actions(env)
