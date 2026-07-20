@@ -34,7 +34,7 @@
     'website': "http://www.novucentral.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.9',
+    'version': '19.0.1.0.13',
     'license': 'LGPL-3',
 
     'pre_init_hook': 'pre_init_hook',
@@ -56,6 +56,9 @@
         'product_email_template',
         'res_partner_fields',
         'account_payment_proper',
+        'website',
+        'helpdesk',
+        'hr',
     ],
 
     'data': [

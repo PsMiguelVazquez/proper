@@ -6,3 +6,5 @@ from . import purchase_order
 from . import product_template
 from . import crm_lead
 from . import res_partner
+from . import hr_employee
+from . import helpdesk_ticket

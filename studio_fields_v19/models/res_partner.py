@@ -180,6 +180,137 @@ class ResPartner(models.Model):
     x_studio_ref_comercial = fields.One2many(
         'x_ref_comercial', 'x_rel_id', string='Referencias Comerciales')
 
+    # MIGRACIÓN V19: segunda tanda de campos manuales de Studio,
+    # identificados a partir del export "Campos (ir.model.fields) (3)"
+    # cruzado contra uso real en la base (vistas, cómputos, dominios,
+    # `related`/`depends` de otros campos). No se agregan a ninguna vista
+    # -eso quedó fuera de alcance de esta tanda-, sólo se formalizan como
+    # campos reales para que no se pierdan en el próximo rebuild.
+    x_studio_text_field_EqoDJ = fields.Text(string='New Texto de líneas múltiples')
+    x_check_holding = fields.Boolean(string='Holding')
+    x_holding = fields.Many2one('res.partner', string='Empresa')
+    x_studio_char_field_p0ppC = fields.Char(string='X Studio Char Field P0Ppc')
+    x_studio_uid = fields.Char(string='uid')
+    x_studio_clasificacin_lista_de_precios = fields.Char(string='Clasificación lista de precios')
+    x_studio_clasificacin_lista_de_precios_1 = fields.Many2one(
+        'x_niveles_de_cliente', string='Clasificación lista de precios')
+    x_studio_clasificacin_lista_de_precios_2 = fields.Selection(
+        [('COMERCIALIZADORA 1', 'COMERCIALIZADORA 1'), ('COMERCIALIZADORA 2', 'COMERCIALIZADORA 2'),
+         ('CATALOGO 1', 'CATALOGO 1'), ('CATALOGO 2', 'CATALOGO 2'), ('VENTA DIRECTA', 'VENTA DIRECTA'),
+         ('CORPORATIVO', 'CORPORATIVO')],
+        string='Clasificación lista de precios')
+    x_studio_clasificacin_lista_de_precios_3 = fields.Selection(
+        [('COMERCIALIZADORA', 'COMERCIALIZADORA'), ('CORPORATIVO', 'CORPORATIVO'), ('CATALOGO', 'CATALOGO'),
+         ('VENTA DIRECTA', 'VENTA DIRECTA')],
+        string='Clasificación lista de precios')
+    x_studio_many2many_field_myq3e = fields.Many2many(
+        'l10n_mx_edi.payment.method', 'res_partner_l10n_mx_edi_payment_method_myq3e_rel',
+        string='Método de Pago para México, datos del SAT')
+    x_studio_many2many_field_JdErd = fields.Many2many(
+        'l10n_mx_edi.payment.method', 'res_partner_l10n_mx_edi_payment_method_jderd_rel',
+        string='Método de Pago para México, datos del SAT')
+    x_studio_solicitud_credito = fields.Binary(string='Solicitud Credito')
+    x_studio_solicitud_credito_filename = fields.Char(string='Nombre de archivo (solicitud de crédito)')
+    x_studio_copia_estado_cuenta = fields.Binary(string='Copia Estado Cuenta')
+    x_studio_copia_estado_cuenta_filename = fields.Char(string='Nombre de archivo (copia estado cuenta)')
+    x_studio_copia_identificacion_filename = fields.Char(string='Nombre de archivo (copia identificación)')
+    x_studio_copia_del_convenio = fields.Binary(string='Copia del convenio')
+    x_studio_copia_del_convenio_filename = fields.Char(string='Nombre de archivo (copia del convenio)')
+    x_studio_copia_del_acta_constitutiva_filename = fields.Char(
+        string='Nombre de archivo (copia acta constitutiva)')
+    x_studio_copia_del_comprobante_de_domicilio_filename = fields.Char(
+        string='Nombre de archivo (copia comprobante domicilio)')
+    x_studio_declaracin_anual_actual = fields.Binary(string='Declaración anual actual')
+    x_studio_declaracin_anual_actual_filename = fields.Char(string='Nombre de archivo (declaración anual actual)')
+    x_studio_declaracin_anual_anterior = fields.Binary(string='Declaración anual anterior')
+    x_studio_declaracin_anual_anterior_filename = fields.Char(
+        string='Nombre de archivo (declaración anual anterior)')
+    x_studio_moroso = fields.Boolean(string='Moroso')
+    x_studio_copia_de_los_estados_financieros_filename = fields.Char(
+        string='Nombre de archivo (estados financieros)')
+    x_studio_observaciones = fields.Char(string='Observaciones')
+    x_studio_cdula_rfc_con_el_domicilio_fiscal = fields.Binary(string='Cédula RFC con el Domicilio Fiscal')
+    x_studio_cdula_rfc_con_el_domicilio_fiscal_filename = fields.Char(
+        string='Nombre de archivo (cédula RFC con domicilio fiscal)')
+    x_credit_valid = fields.Boolean(string='Credito Valido')
+    x_studio_a = fields.Float(string='A')
+    x_studio_es_fabricante = fields.Boolean(string='Es fabricante')
+    x_studio_password = fields.Char(string='Password')
+    x_studio_horario = fields.Float(string='Horario de')
+    x_studio_poderes = fields.Boolean(string='Poderes')
+    x_a = fields.Float(string='A')
+    x_de = fields.Float(string='Horario de')
+    x_studio_constancia_sat = fields.Binary(string='Constancia SAT')
+    x_studio_constancia_sat_filename = fields.Char(string='Nombre de archivo (constancia SAT)')
+    x_studio_comprobante_de_domicilio = fields.Binary(string='Comprobante de domicilio')
+    x_studio_comprobante_de_domicilio_filename = fields.Char(string='Nombre de archivo (comprobante de domicilio)')
+    x_studio_cuentas_de_bancos = fields.Binary(string='Cuentas de bancos')
+    x_studio_cuentas_de_bancos_filename = fields.Char(string='Nombre de archivo (cuentas de bancos)')
+    x_studio_many2one_field_J7oqB = fields.Many2one('website.page', string='Página')
+    x_num_cli_ant = fields.Char(string='N° de cliente anterior')
+    x_studio_many2one_field_yzVQY = fields.Many2one('res.partner', string='Contacto')
+    x_studio_char_field_kXXwW = fields.Char(string='New Texto')
+
+    # MIGRACIÓN V19: modelos propios de Studio `x_agente_de_venta`/
+    # `x_ref_banco`, formalizados en `res_partner_fields/models/models.py`.
+    x_agente_venta_ok = fields.Many2many('x_agente_de_venta', string='Agente de venta')
+    x_nom_agen_venta = fields.Many2one('x_agente_de_venta', string='Agente de venta')
+    x_studio_referencia_bancaria = fields.One2many(
+        'x_ref_banco', 'x_ref_cliente', string='Referencias Bancarias')
+
+    # MIGRACIÓN V19: en Studio eran `related=`, a través de un único salto
+    # `Many2one` (`user_id`/`x_studio_many2one_field_yzVQY`), así que se
+    # mantienen igual.
+    x_studio_equipo_de_ventas = fields.Char(
+        related='user_id.sale_team_id.display_name', string='Equipo de ventas')
+    x_gerente_venta = fields.Char(
+        related='user_id.sale_team_id.user_id.display_name', string='Nombre de Gerente de venta')
+    x_studio_account_payable = fields.Many2one(
+        'account.account', related='property_account_payable_id', string='Cuenta a pagar')
+    # MIGRACIÓN V19: en Studio era `related='team_id.user_id...'`, pero
+    # `team_id` nunca existió como campo real de `res.partner` (mismo caso
+    # que `x_ad_equipo_venta_gerente`, ver comentario arriba).
+    x_nom_corto_gerente_venta = fields.Char(
+        related='user_id.sale_team_id.user_id.x_studio_clave_del_vendedor_1',
+        string='Clave de gerente de venta')
+    x_clave_gerente_ventas = fields.Char(
+        related='user_id.sale_team_id.user_id.x_studio_clave_del_vendedor_1',
+        string='Clave de gerente de ventas')
+    x_clave_agente_de_venta = fields.Char(
+        related='user_id.x_studio_clave_del_vendedor_1', string='Clave agente de venta')
+    x_studio_related_field_uJYht = fields.Char(
+        related='x_studio_many2one_field_yzVQY.name', string='New Campo relacionado')
+
+    # MIGRACIÓN V19: en Studio eran `related=` cruzando `child_ids`
+    # (`Many2one` a `One2many`), algo que `related=` no soporta (mismo
+    # problema que `x_estado_compra`/`x_estado_factura` en `sale.order`);
+    # se reescriben como compute tomando el primer hijo.
+    x_studio_related_field_r96bz = fields.Char(
+        string='New Campo relacionado', compute='_compute_x_studio_contacto_child_name')
+    x_studio_related_field_yAI6C = fields.Char(
+        string='New Campo relacionado', compute='_compute_x_studio_contacto_child_name')
+    # MIGRACIÓN V19: en Studio era `related='self.opportunity_ids.x_area_lead'`
+    # -el prefijo `self.` no es válido en `related=` (probablemente una
+    # fórmula de compute copiada por error al crear el campo como
+    # related)-, y además `opportunity_ids` es `One2many`; se reescribe
+    # como compute tomando la primera oportunidad.
+    x_area_trabajo = fields.Char(string='Área de trabajo', compute='_compute_x_area')
+    x_area = fields.Char(string='Área', compute='_compute_x_area')
+
+    @api.depends('x_studio_many2one_field_yzVQY.child_ids.name')
+    def _compute_x_studio_contacto_child_name(self):
+        for record in self:
+            name = record.x_studio_many2one_field_yzVQY.child_ids[:1].name
+            record.x_studio_related_field_r96bz = name
+            record.x_studio_related_field_yAI6C = name
+
+    @api.depends('opportunity_ids.x_area_lead')
+    def _compute_x_area(self):
+        for record in self:
+            area = record.opportunity_ids[:1].x_area_lead
+            record.x_area = area
+            record.x_area_trabajo = area
+
     def _compute_x_partner_id_account_move_count(self):
         for record in self:
             record.x_partner_id_account_move_count = self.env['account.move'].search_count(
@@ -188,12 +319,8 @@ class ResPartner(models.Model):
     def _compute_x_x_holding__res_partner_count(self):
         # MIGRACIÓN V19: el original usaba `read_group` con la firma antigua
         # (diccionarios con clave `<campo>_count`); se reescribe con
-        # `search_count`, más simple y compatible. `x_holding` es un campo
-        # de Odoo Studio que puede no existir en todas las bases (ver
-        # `common.py`); si no existe, el conteo queda en 0.
-        if 'x_holding' not in self._fields:
-            self.x_x_holding__res_partner_count = 0
-            return
+        # `search_count`, más simple y compatible. `x_holding` ya está
+        # formalizado como campo real más abajo en esta misma clase.
         for record in self:
             record.x_x_holding__res_partner_count = self.env['res.partner'].search_count(
                 [('x_holding', '=', record.id)])

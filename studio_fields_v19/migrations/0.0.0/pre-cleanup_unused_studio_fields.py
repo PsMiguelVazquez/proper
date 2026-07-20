@@ -1,0 +1,108 @@
+# -*- coding: utf-8 -*-
+"""
+MIGRACIÓN V19: mismo fix que `_cleanup_unused_studio_fields` en
+`__init__.py` (llamada desde `pre_init_hook`), pero para el caso de
+actualización (`-u`) en vez de instalación limpia. Ver `__init__.py` de
+este módulo para el detalle completo de por qué se eliminan estos campos.
+"""
+from odoo import api, SUPERUSER_ID
+
+UNUSED_STUDIO_FIELDS = [
+    ('purchase.order', 'x_id_wizard'),
+    ('stock.picking', 'x_studio_binary_field_U2SJO'),
+    ('hr.employee', 'x_studio_char_field_3jYFV'),
+    ('hr.employee', 'x_studio_char_field_Shl3z'),
+    ('stock.picking', 'x_studio_contacto'),
+    ('purchase.order', 'x_studio_contacto_del_proveedor_2'),
+    ('purchase.order', 'x_studio_date_field_ot4PB'),
+    ('stock.picking', 'x_studio_estadodefacturacion'),
+    ('hr.expense', 'x_studio_many2many_field_BPqnG'),
+    ('crm.lead', 'x_studio_many2many_field_TEfWq'),
+    ('purchase.order', 'x_studio_many2many_field_g3klO'),
+    ('helpdesk.ticket', 'x_studio_many2one_field_LSlgL'),
+    ('stock.move.line', 'x_studio_many2one_field_TDCoI'),
+    ('stock.picking', 'x_studio_many2one_field_VbVzT'),
+    ('crm.lead', 'x_studio_many2one_field_gXydV'),
+    ('stock.picking', 'x_studio_many2one_field_oVjTr'),
+    ('sale.order', 'x_studio_many2one_field_u4jVV'),
+    ('sale.order.line', 'x_studio_one2many_field_9IYYS'),
+    ('stock.warehouse.orderpoint', 'x_studio_one2many_field_nONnm'),
+    ('purchase.order', 'x_studio_related_field_1S2Hw'),
+    ('stock.picking', 'x_studio_related_field_1zowW'),
+    ('stock.picking', 'x_studio_related_field_4dnKs'),
+    ('purchase.order', 'x_studio_related_field_7qHNz'),
+    ('stock.quant', 'x_studio_related_field_8lPbT'),
+    ('sale.order', 'x_studio_related_field_Bxpio'),
+    ('stock.picking', 'x_studio_related_field_D32We'),
+    ('stock.move.line', 'x_studio_related_field_DX5P3'),
+    ('stock.picking', 'x_studio_related_field_DlNTt'),
+    ('crm.lead', 'x_studio_related_field_HCLHF'),
+    ('sale.order', 'x_studio_related_field_ILzQo'),
+    ('stock.move.line', 'x_studio_related_field_IiDLu'),
+    ('stock.picking', 'x_studio_related_field_IiiYX'),
+    ('stock.picking', 'x_studio_related_field_JrAgC'),
+    ('helpdesk.ticket', 'x_studio_related_field_KauYZ'),
+    ('stock.move', 'x_studio_related_field_MKUoB'),
+    ('stock.move.line', 'x_studio_related_field_MMOYs'),
+    ('res.groups', 'x_studio_related_field_MeJGg'),
+    ('stock.quant', 'x_studio_related_field_O9PXe'),
+    ('stock.move.line', 'x_studio_related_field_OLM4N'),
+    ('stock.picking', 'x_studio_related_field_PXVOp'),
+    ('stock.move.line', 'x_studio_related_field_PZviD'),
+    ('creacion.ruta', 'x_studio_related_field_Qfchv'),
+    ('stock.picking', 'x_studio_related_field_RWdrp'),
+    ('stock.picking', 'x_studio_related_field_S4pt4'),
+    ('stock.move.line', 'x_studio_related_field_SJWVK'),
+    ('purchase.order', 'x_studio_related_field_SPaH7'),
+    ('sale.order', 'x_studio_related_field_ToH0i'),
+    ('stock.picking', 'x_studio_related_field_UHlS7'),
+    ('stock.picking', 'x_studio_related_field_UZld3'),
+    ('stock.move.line', 'x_studio_related_field_VYaJF'),
+    ('helpdesk.ticket', 'x_studio_related_field_VgrKI'),
+    ('stock.picking', 'x_studio_related_field_W8qAb'),
+    ('stock.move.line', 'x_studio_related_field_WLrvY'),
+    ('stock.move', 'x_studio_related_field_Yzeyb'),
+    ('stock.picking', 'x_studio_related_field_aI3jO'),
+    ('stock.picking', 'x_studio_related_field_cAdjn'),
+    ('stock.move.line', 'x_studio_related_field_cxLmz'),
+    ('purchase.order', 'x_studio_related_field_eWEyV'),
+    ('stock.move.line', 'x_studio_related_field_enbMq'),
+    ('stock.picking', 'x_studio_related_field_ep4lV'),
+    ('stock.move.line', 'x_studio_related_field_gEKBp'),
+    ('stock.move.line', 'x_studio_related_field_jDRZO'),
+    ('stock.picking', 'x_studio_related_field_kEXg3'),
+    ('stock.picking', 'x_studio_related_field_keuaH'),
+    ('stock.picking', 'x_studio_related_field_ldNfa'),
+    ('helpdesk.ticket', 'x_studio_related_field_n7DfB'),
+    ('stock.picking', 'x_studio_related_field_njrg1'),
+    ('stock.move.line', 'x_studio_related_field_nnb1r'),
+    ('stock.quant', 'x_studio_related_field_oBnIu'),
+    ('sale.order.line', 'x_studio_related_field_oQUFO'),
+    ('stock.picking', 'x_studio_related_field_oUiuh'),
+    ('stock.picking', 'x_studio_related_field_pYlrY'),
+    ('purchase.order', 'x_studio_related_field_pZzGA'),
+    ('creacion.ruta', 'x_studio_related_field_ppn8E'),
+    ('helpdesk.ticket', 'x_studio_related_field_qXj6L'),
+    ('stock.move.line', 'x_studio_related_field_qZMtF'),
+    ('stock.picking', 'x_studio_related_field_qwt7c'),
+    ('hr.employee', 'x_studio_related_field_sPacb'),
+    ('stock.move.line', 'x_studio_related_field_u9fb1'),
+    ('stock.move.line', 'x_studio_related_field_uCpSv'),
+    ('stock.move', 'x_studio_related_field_wORzK'),
+    ('stock.picking', 'x_studio_related_field_wrqJD'),
+    ('stock.move.line', 'x_studio_related_field_x8MVw'),
+    ('stock.move.line', 'x_studio_related_field_xKS6Y'),
+    ('stock.move.line', 'x_studio_related_field_xRYH1'),
+    ('stock.picking', 'x_studio_related_field_zAbcR'),
+    ('sale.order', 'x_studio_selection_field_hBVNg'),
+    ('purchase.order', 'x_studio_text_field_uiFIR'),
+]
+
+
+def migrate(cr, version):
+    env = api.Environment(cr, SUPERUSER_ID, {})
+    IrModelFields = env['ir.model.fields']
+    for model, name in UNUSED_STUDIO_FIELDS:
+        field = IrModelFields.search([('model', '=', model), ('name', '=', name), ('state', '=', 'manual')])
+        if field:
+            field.unlink()

@@ -33,6 +33,29 @@ class AccountMove(models.Model):
     x_studio_integer_field_Dg6kN = fields.Integer(
         string='New Entero', compute='_compute_x_studio_integer_field_Dg6kN')
 
+    # MIGRACIÓN V19: segunda tanda de campos manuales de Studio (export
+    # "Campos (ir.model.fields) (3)"). No se agregan a ninguna vista -eso
+    # quedó fuera de alcance de esta tanda-, sólo se formalizan como
+    # campos reales para que no se pierdan en el próximo rebuild.
+    x_studio_fecha_de_revisin = fields.Date(string='Fecha de revisión')
+    x_numero_de_proveedor = fields.Char(string='Número de proveedor')
+    x_sucursal = fields.Char(string='Sucursal')
+    x_solicito = fields.Char(string='Solicitó')
+    x_studio_notas = fields.Text(string='Notas')
+    x_color = fields.Integer(string='Color')
+    x_studio_mkp = fields.Char(string='MKP')
+
+    # MIGRACIÓN V19: en Studio eran `related=` a través de campos
+    # `Many2one` (`reversed_entry_id`/`sale_id`), se mantienen igual.
+    x_studio_ref = fields.Char(related='reversed_entry_id.display_name', string='Ref.')
+    x_studio_mkp_1 = fields.Selection(related='sale_id.x_studio_origen_mkp', store=True, string='MKP')
+    x_studio_nombre_del_solicitante = fields.Char(
+        related='sale_id.partner_child.name', store=True, string='Nombre del solicitante')
+    x_utilidad_venta = fields.Float(related='sale_id.x_utilidad_total', store=True, string='Utilidad venta')
+    x_studio_cant_prod_pedido = fields.Integer(
+        related='sale_id.cart_quantity', string='Cant. prod. pedido')
+    x_studio_utilidad = fields.Float(related='sale_id.x_utilidad_total', string='Utilidad')
+
     @api.depends('invoice_line_ids')
     def _compute_x_cant_prod_facturados(self):
         for record in self:

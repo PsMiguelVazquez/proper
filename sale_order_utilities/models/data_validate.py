@@ -23,6 +23,11 @@ class DataValidate(models.Model):
     description = fields.Char(string='Descripción')
     vigencia = fields.Char(string='Vigencia')
     request_answered = fields.Selection(string='Propuesta atendida', selection=[('Atendido', 'Atendido'), ('Noatendido', 'No atendido')])
+    # MIGRACIÓN V19: campos manuales de Studio (export "Campos
+    # (ir.model.fields) (3)"). `x_studio_vigencia` es un duplicado de
+    # `vigencia` (arriba) con otro nombre técnico.
+    x_fecha_pedido = fields.Datetime(related='order_id.create_date', string='Fecha de pedido')
+    x_studio_vigencia = fields.Char(string='Vigencia')
 
     def migrate_lines(self):
         lines_to_migrate = self.env['sale.order.line'].search([

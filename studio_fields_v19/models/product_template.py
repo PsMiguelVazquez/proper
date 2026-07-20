@@ -47,19 +47,51 @@ class ProductTemplate(models.Model):
     x_modelo_vemot = fields.Integer(string='Año Modelo')
     x_cilindraje_moto = fields.Char(string='Cilindraje')
 
-    # MIGRACIÓN V19: en Studio eran `related=`; se mantienen igual.
-    x_studio_alto = fields.Char(related='product_variant_id.x_Alto', store=True, string='Alto')
-    x_studio_largo_2 = fields.Char(related='product_variant_id.x_largo', store=True, string='Largo')
+    # MIGRACIÓN V19: en Studio eran `related='product_variant_id...'`.
+    # `product_variant_id` es un campo `compute` sin `search=` (no se puede
+    # buscar por él), así que Odoo no puede armar el árbol de disparo para
+    # saber qué plantillas recalcular cuando cambia el dato en la variante
+    # -eso es lo que avisa el `UserWarning: ... should be searchable`, no
+    # rompe nada pero el campo puede quedar desactualizado en caché-. Se
+    # reescriben como compute normal a través de `product_variant_ids`
+    # (el One2many real, almacenado y buscable) tomando la primera
+    # variante, que si dispara los recálculos correctamente.
+    x_studio_alto = fields.Char(
+        string='Alto', compute='_compute_x_studio_alto_largo', store=True)
+    x_studio_largo_2 = fields.Char(
+        string='Largo', compute='_compute_x_studio_alto_largo', store=True)
     x_studio_alto_c_m_1 = fields.Float(
-        related='product_variant_id.x_studio_alto_c_m', string='Alto c-m')
+        string='Alto c-m', compute='_compute_x_studio_medidas_c_m_1')
     x_studio_ancho_c_m_1 = fields.Float(
-        related='product_variant_id.x_studio_ancho_c_m', string='Ancho c-m')
+        string='Ancho c-m', compute='_compute_x_studio_medidas_c_m_1')
     x_studio_largo_c_m_2 = fields.Float(
-        related='product_variant_id.x_studio_largo_c_m', string='Largo c-m')
+        string='Largo c-m', compute='_compute_x_studio_medidas_c_m_1')
     x_studio_volumen_c_m_2 = fields.Float(
-        related='product_variant_id.x_studio_volumen_c_m', string='Volumen c-m')
+        string='Volumen c-m', compute='_compute_x_studio_medidas_c_m_1')
     x_num_propuesta = fields.Char(
-        related='product_variant_id.x_num_pro', store=True, string='Numero de propuesta')
+        string='Numero de propuesta', compute='_compute_x_num_propuesta', store=True)
+
+    @api.depends('product_variant_ids.x_Alto', 'product_variant_ids.x_largo')
+    def _compute_x_studio_alto_largo(self):
+        for record in self:
+            variant = record.product_variant_ids[:1]
+            record.x_studio_alto = variant.x_Alto
+            record.x_studio_largo_2 = variant.x_largo
+
+    @api.depends('product_variant_ids.x_studio_alto_c_m', 'product_variant_ids.x_studio_ancho_c_m',
+                 'product_variant_ids.x_studio_largo_c_m', 'product_variant_ids.x_studio_volumen_c_m')
+    def _compute_x_studio_medidas_c_m_1(self):
+        for record in self:
+            variant = record.product_variant_ids[:1]
+            record.x_studio_alto_c_m_1 = variant.x_studio_alto_c_m
+            record.x_studio_ancho_c_m_1 = variant.x_studio_ancho_c_m
+            record.x_studio_largo_c_m_2 = variant.x_studio_largo_c_m
+            record.x_studio_volumen_c_m_2 = variant.x_studio_volumen_c_m
+
+    @api.depends('product_variant_ids.x_num_pro')
+    def _compute_x_num_propuesta(self):
+        for record in self:
+            record.x_num_propuesta = record.product_variant_ids[:1].x_num_pro
 
     # MIGRACIÓN V19: modelos propios de Studio, formalizados en
     # `sale_purchase_confirm/models/custom_models.py` (junto con
@@ -99,6 +131,121 @@ class ProductTemplate(models.Model):
         for record in self:
             record.x_vol = record.x_Al * record.x_An * record.x_La
 
+    # MIGRACIÓN V19: segunda tanda de campos manuales de Studio (export
+    # "Campos (ir.model.fields) (3)"). No se agregan a ninguna vista -eso
+    # quedó fuera de alcance de esta tanda-, sólo se formalizan como
+    # campos reales para que no se pierdan en el próximo rebuild.
+    x_studio_many2one_field_Dp30u = fields.Many2one('stock.picking', string='Albarán')
+    x_studio_cantidad_a_pedir = fields.Text(string='Cantidad a pedir')
+    x_studio_adquirir = fields.Boolean(string='Adquirir')
+    x_studio_many2one_field_3tVuB = fields.Many2one('x_marca', string='X Studio Many2One Field 3Tvub')
+    x_studio_marca_1 = fields.Char(string='Marca')
+    x_studio_many2one_field_KG3IS = fields.Many2one('x_marca', string='Marca')
+    x_studio_many2one_field_voXz4 = fields.Many2one(
+        'x_marca_del_producto', string='X Studio Many2One Field Voxz4')
+    x_studio_float_field_XqVhh = fields.Float(string='New Decimal')
+    x_studio_many2one_field_RteqX = fields.Many2one('x_largo', string='Largo')
+    x_studio_many2one_field_Nzndt = fields.Many2one('x_largo', string='Largo')
+    x_studio_ancho = fields.Integer(string='Ancho')
+    x_studio_monetary_field_ppjZO = fields.Monetary(string='New Monetario')
+    # MIGRACIÓN V19: estos 3 son duplicados con nombre de Studio de los
+    # campos reales `de_hogar`/`proper`/`tienda_linea` (módulo
+    # `novu_tiendas_15_19`) -esos ya están formalizados con su propio
+    # nombre técnico, comentados en la vista de Studio-; se formalizan
+    # igual porque sí tienen datos propios guardados en producción.
+    x_studio_de_hogar = fields.Boolean(string='De Hogar')
+    x_studio_proper = fields.Boolean(string='Proper')
+    x_studio_tienda_en_linea = fields.Boolean(string='Tienda en linea')
+
+    # MIGRACIÓN V19: en Studio eran `related=` a través de campos
+    # `Many2one` (`property_stock_inventory`/`x_studio_many2one_field_AqNlU`),
+    # se mantienen igual.
+    x_studio_related_field_xVNKQ = fields.Char(
+        related='property_stock_inventory.name', string='New Campo relacionado')
+    x_studio_related_field_jjrgH = fields.Char(
+        related='property_stock_inventory.location_id.parent_path', string='New Campo relacionado')
+    # MIGRACIÓN V19: `warehouse_id` en `product.template`/`product.product`
+    # es `store=False` sin `compute=` -existe sólo para recibir un valor
+    # desde el contexto de búsqueda y así filtrar otros campos calculados,
+    # nunca tiene un valor real en un registro normal (ver
+    # `addons/stock/models/product.py`)-. Un `related=` a través de él
+    # nunca traería dato real (ni en Studio, en v15 tenía la misma
+    # limitación) y además dispara el `UserWarning: ... should be
+    # searchable` porque Odoo no puede saber cuándo recalcularlo; se
+    # dejan como campos planos en vez de `related=`.
+    x_studio_related_field_ZYZfw = fields.Selection(
+        [('view', 'View'), ('internal', 'Internal'), ('customer', 'Customer'), ('vendor', 'Vendor'),
+         ('inventory', 'Inventory'), ('production', 'Production'), ('transit', 'Transit Location')],
+        string='New Campo relacionado')
+    x_studio_related_field_RFqJS = fields.Char(string='New Campo relacionado')
+    x_studio_fabricante_del_producto = fields.Many2one(
+        'x_fabricante', related='x_studio_many2one_field_AqNlU.x_studio_many2one_field_KjDbr',
+        string='Fabricante del producto')
+    x_studio_marca = fields.Many2one(
+        'x_marca_del_producto', related='x_studio_many2one_field_AqNlU.x_studio_many2one_field_qQUTn',
+        string='*Marca')
+    # MIGRACIÓN V19: en Studio eran `related='product_variant_id...'`;
+    # igual que el bloque de medidas más arriba, se reescriben como
+    # compute a través de `product_variant_ids` (buscable) en vez de
+    # `product_variant_id` (compute sin `search=`, dispara el
+    # `UserWarning: ... should be searchable`).
+    x_studio_largo = fields.Char(string='Largo', compute='_compute_x_studio_largo_variante')
+    x_studio_largo_1 = fields.Many2one(
+        'x_largo', string='Largo', compute='_compute_x_studio_largo_variante')
+    x_studio_stock_disponible = fields.Float(
+        string='Stock Total', compute='_compute_x_studio_stock_disponible')
+    # MIGRACIÓN V19: en Studio era `related='product_variant_id.price'`,
+    # pero `price` (precio contextual por lista de precios) ya no existe
+    # como campo de `product.product` -mismo campo que ya se quitó de la
+    # vista de `crm.lead.form` por esta razón-; se deja como campo plano.
+    x_studio_related_field_hPxQY = fields.Float(string='New Campo relacionado')
+    x_studio_related_field_HW6gD = fields.Selection(
+        [('sale', 'Ventas'), ('purchase', 'Compras'), ('none', 'Ninguno')],
+        string='New Campo relacionado', compute='_compute_x_studio_related_field_HW6gD')
+    x_studio_largo_c_m_1 = fields.Float(
+        string='New Campo relacionado', compute='_compute_x_studio_largo_c_m_1')
+    # MIGRACIÓN V19: `warehouse_id` en `product.product` tiene la misma
+    # limitación explicada arriba (`store=False` sin `compute=`, nunca
+    # tiene valor real); se deja como campo plano en vez de `related=`.
+    x_studio_related_field_sPlxt = fields.Char(string='New Campo relacionado')
+    x_studio_related_field_TcPtR = fields.Char(
+        string='New Campo relacionado', compute='_compute_x_studio_related_field_TcPtR')
+
+    # MIGRACIÓN V19: en Studio era `related=` a través de
+    # `product_variant_id` (`Many2one`) hacia `supplier_taxes_id`
+    # (`Many2many` en `product.product`); `related=` no soporta ese último
+    # salto x2many, así que se declara igual que el campo que referencia
+    # (`Many2many` propio, sin `related=`) en vez de intentar heredarlo.
+    x_studio_related_field_wVH62 = fields.Many2many(
+        'account.tax', 'product_template_supplier_taxes_wVH62_rel', string='New Campo relacionado')
+
+    @api.depends('product_variant_ids.x_largo', 'product_variant_ids.x_studio_many2one_field_RteqX')
+    def _compute_x_studio_largo_variante(self):
+        for record in self:
+            variant = record.product_variant_ids[:1]
+            record.x_studio_largo = variant.x_largo
+            record.x_studio_largo_1 = variant.x_studio_many2one_field_RteqX
+
+    @api.depends('product_variant_ids.qty_available')
+    def _compute_x_studio_stock_disponible(self):
+        for record in self:
+            record.x_studio_stock_disponible = record.product_variant_ids[:1].qty_available
+
+    @api.depends('product_variant_ids.supplier_taxes_id.type_tax_use')
+    def _compute_x_studio_related_field_HW6gD(self):
+        for record in self:
+            record.x_studio_related_field_HW6gD = record.product_variant_ids[:1].supplier_taxes_id[:1].type_tax_use
+
+    @api.depends('product_variant_ids.x_studio_largo_c_m')
+    def _compute_x_studio_largo_c_m_1(self):
+        for record in self:
+            record.x_studio_largo_c_m_1 = record.product_variant_ids[:1].x_studio_largo_c_m
+
+    @api.depends('product_variant_ids.property_stock_inventory.name')
+    def _compute_x_studio_related_field_TcPtR(self):
+        for record in self:
+            record.x_studio_related_field_TcPtR = record.product_variant_ids[:1].property_stock_inventory.name
+
 
 class ProductProduct(models.Model):
     _inherit = 'product.product'
@@ -117,3 +264,16 @@ class ProductProduct(models.Model):
     x_studio_largo_c_m = fields.Float(related='product_tmpl_id.x_studio_largo_c_m', string='Largo c-m')
     x_studio_volumen_c_m = fields.Float(
         related='product_tmpl_id.x_studio_volumen_c_m', string='Volumen c-m')
+
+    # MIGRACIÓN V19: en Studio era `related='product_variant_id.stock_quant_ids.
+    # x_studio_cantidad_reservada'` -`stock_quant_ids` es `One2many`, no
+    # soportado por `related=`-; se reescribe como compute sumando los
+    # quants del producto.
+    x_studio_cantidad_reservada = fields.Float(
+        string='Cantidad reservada', compute='_compute_x_studio_cantidad_reservada')
+
+    @api.depends('stock_quant_ids.x_studio_cantidad_reservada')
+    def _compute_x_studio_cantidad_reservada(self):
+        for record in self:
+            record.x_studio_cantidad_reservada = sum(
+                record.stock_quant_ids.mapped('x_studio_cantidad_reservada'))

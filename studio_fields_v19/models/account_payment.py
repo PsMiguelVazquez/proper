@@ -41,3 +41,25 @@ class AccountPayment(models.Model):
     def _compute_x_vendedores(self):
         for record in self:
             record.x_vendedores = ','.join(record.reconciled_invoice_ids.mapped('invoice_user_id.name'))
+
+
+class AccountBankStatement(models.Model):
+    _inherit = 'account.bank.statement'
+
+    # MIGRACIÓN V19: en Studio era `related='line_ids.rel_payment'`, pero
+    # `line_ids` es `One2many` (puede haber más de un apunte por extracto)
+    # y `related=` no soporta atravesar x2many; se reescribe como compute
+    # tomando el primer apunte.
+    x_pagos_extracto = fields.Many2one(
+        'account.payment', string='Pagos extracto', compute='_compute_x_pagos_extracto')
+
+    @api.depends('line_ids.rel_payment')
+    def _compute_x_pagos_extracto(self):
+        for record in self:
+            record.x_pagos_extracto = record.line_ids[:1].rel_payment
+
+
+class ResPartnerBank(models.Model):
+    _inherit = 'res.partner.bank'
+
+    x_referencia_bancaria = fields.Char(string='Referencia bancaria')

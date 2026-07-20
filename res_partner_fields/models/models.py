@@ -62,6 +62,16 @@ regimenes = [('601', '601- General de Ley Personas Morales')
 # modelos fuera de alcance).
 
 
+class XSubcategiaCompania(models.Model):
+    _name = 'x_subcategia_compania'
+    _description = 'Subcategoría de compañía'
+
+    x_name = fields.Char(string='Name')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_notes = fields.Text(string='Notas')
+    x_studio_sequence = fields.Integer(string='Secuencia')
+
+
 class XCategoriaCompania(models.Model):
     _name = 'x_categoria_compania'
     _description = 'Categoría de compañía'
@@ -70,6 +80,9 @@ class XCategoriaCompania(models.Model):
     x_active = fields.Boolean(string='Activo', default=True)
     x_studio_notes = fields.Text(string='Notas')
     x_studio_sequence = fields.Integer(string='Secuencia')
+    # MIGRACIÓN V19: una ronda posterior de formalización sí encontró uso
+    # real de este campo (antes se había omitido a propósito).
+    x_sub_cat = fields.Many2one('x_subcategia_compania', string='Subcategoría')
 
 
 class XNivelesDeCliente(models.Model):
@@ -97,6 +110,28 @@ class XGrupoCliente(models.Model):
     x_active = fields.Boolean(string='Activo', default=True)
     x_responsable_grupo_cliente = fields.Many2one('res.users', string='Responsable')
     x_studio_sequence = fields.Integer(string='Secuencia')
+
+
+class XAgenteDeVenta(models.Model):
+    _name = 'x_agente_de_venta'
+    _description = 'Agente de venta'
+
+    x_name = fields.Char(string='Name')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_sequence = fields.Integer(string='Secuencia')
+    x_studio_user_id = fields.Many2one('res.users', string='Responsable')
+
+
+class XRefBanco(models.Model):
+    _name = 'x_ref_banco'
+    _description = 'Referencias Bancarias'
+
+    x_banco = fields.Char(string='Banco')
+    x_no_cuenta = fields.Char(string='No Cuenta')
+    x_contacto = fields.Char(string='Contacto')
+    x_telefono = fields.Char(string='Telefono')
+    x_anos_apertura = fields.Integer(string='Años de apertura')
+    x_ref_cliente = fields.Many2one('res.partner', string='cliente')
 
 
 class XClaveP(models.Model):
