@@ -2,3 +2,6 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_x_categoria_compania,access_x_categoria_compania,model_x_categoria_compania,base.group_user,1,1,1,1
 access_x_niveles_de_cliente,access_x_niveles_de_cliente,model_x_niveles_de_cliente,base.group_user,1,1,1,1
 access_x_grupo_cliente,access_x_grupo_cliente,model_x_grupo_cliente,base.group_user,1,1,1,1
+access_x_clave_p,access_x_clave_p,model_x_clave_p,base.group_user,1,1,1,1
+access_x_grupo_proveedor,access_x_grupo_proveedor,model_x_grupo_proveedor,base.group_user,1,1,1,1
+access_x_ref_comercial,access_x_ref_comercial,model_x_ref_comercial,base.group_user,1,1,1,1

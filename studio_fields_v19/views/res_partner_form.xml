@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: formaliza la personalización de Odoo Studio sobre
+        `base.view_partner_form`. Antes vivía sólo como `ir.ui.view`
+        state=manual, se perdía en cada rebuild de Odoo.sh.
+
+        Cambios de v15 -> v19 aplicados aquí (no en la vista original):
+        - `attrs="{...}"` -> atributos directos (`invisible=`/`readonly=`).
+        - `is_published` ya no es un campo de `res.partner` en v19 (era de
+          otro contexto); el botón "Facturas de Clientes" se reubica junto
+          a los demás botones de `button_box`.
+        - `mobile_blacklisted` y `team_id` ya no aparecen en el formulario
+          base (el primero porque `mobile` se unificó con `phone`, el
+          segundo porque ese campo simplemente no se expone ahí); los
+          campos que colgaban de esos anchors se reubican junto a
+          `website`/`user_id` respectivamente. Ambos siguen existiendo como
+          campos reales del modelo, sólo cambia dónde se anclan en la vista.
+        - `property_account_payable_id`/`property_account_receivable_id`
+          ya no se muestran en el formulario base (existen en el modelo,
+          vía `account`, pero no hay un `<field>` que "mover"); en vez de
+          `position="move"` se agregan como campos nuevos directamente.
+        - No existen `group[@name='accounting_entries']` ni
+          `page[@name='addenda']` en v19; esos dos xpaths sólo aplicaban
+          `attrs="{}"`/`invisible` sobre ellos, sin agregar contenido, así
+          que se quitan. Lo mismo con `group[@name='inventory']` y
+          `field[@name='l10n_mx_type_of_third']`: en v19 el core ya los
+          deja `invisible` por su cuenta, la personalización era redundante.
+        - El grupo de seguridad `__export__.res_groups_110_b96d992f`
+          (nombre real: "Cuentas contables") era un grupo de Studio con un
+          ID externo autogenerado por Odoo al exportar, sin sentido fuera
+          de la base de origen; se formaliza como
+          `account_payment_proper.group_cuentas_contables` (ver
+          `account_payment_proper/security/security.xml`).
+        - La condición `user_ids == 'sales_team.group_sale_manager'` (en
+          `x_nivel_cliente`) y `user_ids != '__export__.res_groups_110_...'`
+          (en el bloque de cuentas contables) comparaban un campo
+          `Many2many` contra un string de grupo -ya estaban rotas/sin
+          sentido desde v15, probablemente un límite del creador de
+          condiciones de Studio-; se quita esa condición y, donde aplica,
+          se usa `groups=` (una restricción de verdad) en su lugar.
+        - El botón "Facturas de Clientes" usaba `name="1316"`, un ID
+          numérico crudo específico de la base de origen; esa acción
+          también era 100% de Studio
+          (`studio_customization.facturas_de_clientes...`), se formaliza
+          aquí también y se referencia por xmlid.
+    -->
+    <record id="action_facturas_de_clientes" model="ir.actions.act_window">
+        <field name="name">Facturas de Clientes</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('partner_id', '=', active_id), ('move_type', '=', 'out_invoice'), ('state', '!=', 'cancel')]</field>
+        <field name="context">{'search_default_partner_id': active_id, 'default_partner_id': active_id, 'default_move_type': 'out_invoice'}</field>
+    </record>
+
+    <record id="res_partner_form_customization" model="ir.ui.view">
+        <field name="name">res.partner.form.customization</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//button[@name='action_view_partner_invoices']" position="after">
+                    <button class="oe_stat_button" icon="fa-envelope" type="action" name="%(action_facturas_de_clientes)d">
+                        <field widget="statinfo" name="x_partner_id_account_move_count" string="Facturas de Clientes"/>
+                    </button>
+                </xpath>
+                <xpath expr="//span[@name='address_name']" position="before">
+                    <field name="x_studio_estatus_de_la_cuenta" string="Estatus de la Cuenta"
+                           groups="account.group_account_invoice,account.group_account_manager"/>
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/div[1]" position="after">
+                    <field name="x_studio_entre_las_calles"/>
+                    <field name="x_studio_plano"/>
+                    <field name="x_sector"/>
+                    <field name="x_es_cliente" string="Tipo de compañía"/>
+                    <field name="x_estado_cli_actua" string="Estado de Actualización"/>
+                    <field name="x_conductor" string="Es conductor" invisible="is_company"/>
+                </xpath>
+                <xpath expr="//field[@name='l10n_mx_edi_operator_licence']" position="attributes">
+                    <attribute name="invisible">not x_conductor</attribute>
+                </xpath>
+                <xpath expr="//field[@name='website']" position="after">
+                    <field name="x_tel_oficina" string="Teléfono de oficina" invisible="not is_company"/>
+                    <field name="x_ext" string="Ext." invisible="not is_company"/>
+                    <field name="x_otro_tel" string="Otro teléfono" invisible="not is_company"/>
+                    <field name="x_otra_ext" string="Ext." invisible="not is_company"/>
+                </xpath>
+                <xpath expr="//field[@name='website']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='category_id']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='category_id']" position="after">
+                    <field name="x_cat_com" string="Categoría"/>
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/group[1]/group[2]" position="after">
+                    <group class="o_row" col="4" colspan="4" string="Horario de Atención" name="studio_group_141ff8">
+                        <div class="o_row" name="studio_div_101641">
+                            <span>Días</span>
+                            <field name="x_dia1" string="Día laboral"/>
+                            <span>a</span>
+                            <field name="x_dia2" string="Día laboral"/>
+                            <field name="x_hora1" string="Hora" placeholder="E.j. 9:00am a 10:00pm"/>
+                        </div>
+                        <div class="o_row" name="studio_div_721a2c">
+                            <span>Y</span>
+                            <field name="x_dia3" string="Dia laboral"/>
+                            <span>a</span>
+                            <field name="x_dia4" string="Dia laboral"/>
+                            <field name="x_hora2" string="Hora" placeholder="E.j. 9:00am a 10:00pm"/>
+                        </div>
+                    </group>
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
+                    <group name="studio_group_NOnPe">
+                        <group name="studio_group_NOnPe_left" string="Información adicional">
+                            <field name="x_studio_por_segmento_de_vendedor"/>
+                            <field name="x_studio_temporalidad"/>
+                            <field name="x_studio_giro_1"/>
+                        </group>
+                        <group name="studio_group_NOnPe_right" string="Tipos de compra">
+                            <field name="x_studio_catlogos_revista_especial" string="Catálogos Revista Especial"/>
+                            <field name="x_studio_revista_asesoras"/>
+                            <field name="x_studio_incentivos_1" string="Incentivos"/>
+                            <field name="x_studio_reventa"/>
+                            <field name="x_studio_campaas_1" string="Campañas"/>
+                            <field name="x_studio_programa_especial" string="Programa especial"/>
+                            <field name="x_studio_consumo_interno"/>
+                            <field name="x_studio_catlogos" string="Catálogos"/>
+                            <field name="x_studio_regalos_de_fin_de_ao" string="Regalos fin de año"/>
+                        </group>
+                    </group>
+                    <group name="studio_group_tfkrW">
+                        <group name="studio_group_tfkrW_left">
+                            <field name="codigo_uso_cfdi" invisible="1"/>
+                            <field name="x_studio_uso_de_cfdi" string="Uso de CFDI"/>
+                        </group>
+                        <group name="studio_group_tfkrW_right"/>
+                    </group>
+                </xpath>
+                <xpath expr="//group[@name='studio_group_tfkrW_right']" position="inside">
+                    <xpath expr="//field[@name='property_account_position_id']" position="move"/>
+                    <field name="x_fecha_alta" string="Fecha de alta"/>
+                    <field name="write_date" string="Fecha de última edición"/>
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
+                    <group name="studio_group_H6EDs">
+                        <group name="studio_group_H6EDs_right" string="Nivel del cliente">
+                            <field name="x_nivel_cliente" widget="radio" options="{&quot;horizontal&quot;:true}"/>
+                        </group>
+                    </group>
+                    <group name="studio_group_Y5OWP">
+                        <group name="studio_group_Y5OWP_left" string="Datos de Proveedor"
+                               groups="purchase.group_purchase_user,purchase.group_purchase_manager,account_payment_proper.group_credito_c">
+                            <field name="property_supplier_payment_term_id" position="move"/>
+                            <field name="x_clave_proveedor"/>
+                            <field name="x_studio_nombre_corto"/>
+                            <field name="x_grupo_proveedor" invisible="1"/>
+                            <field name="x_comprador_proveedor"/>
+                            <field name="x_grupo_cliente"/>
+                        </group>
+                        <group name="studio_group_Y5OWP_right" string="Datos de Cliente"/>
+                    </group>
+                </xpath>
+                <xpath expr="//group[@name='studio_group_Y5OWP_right']" position="inside">
+                    <field name="property_payment_term_id" position="move"/>
+                    <field name="x_nombre_corto_tpago" string="Método de pago"/>
+                    <field name="x_num_cliente"/>
+                    <field name="x_studio_triple_a"/>
+                    <field name="x_num_pro"/>
+                    <field name="x_studio_mtodo_de_pago" string="Método de Pago" context="{'show_code': True}" widget="selection"/>
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/notebook[1]" position="before">
+                    <group name="studio_group_NfgA8" groups="account_payment_proper.group_cuentas_contables">
+                        <group name="studio_group_NfgA8_left">
+                            <field name="property_account_payable_id"/>
+                            <field name="property_account_creditor"/>
+                        </group>
+                        <group name="studio_group_NfgA8_right">
+                            <field name="property_account_receivable_id"/>
+                        </group>
+                    </group>
+                    <group name="studio_group_bFfiH" groups="account_payment_proper.group_cuentas_contables">
+                        <group name="studio_group_bFfiH_left">
+                            <field name="x_cuenta_proveedor" string="Cuenta a cobrar"/>
+                        </group>
+                        <group name="studio_group_bFfiH_right">
+                            <field name="x_cuenta_cliente" string="Cuenta a cobrar"/>
+                        </group>
+                    </group>
+                </xpath>
+                <xpath expr="//field[@name='child_ids']//field[@name='comment']" position="before">
+                    <field name="x_es_marketplace"/>
+                </xpath>
+                <xpath expr="//field[@name='sales_agent']" position="after">
+                    <field name="x_nombre_agente_venta"/>
+                    <field name="x_nom_corto_agente_venta"/>
+                </xpath>
+                <xpath expr="//field[@name='user_id']" position="after">
+                    <field name="x_ad_equipo_venta_gerente"/>
+                </xpath>
+                <xpath expr="//group[@name='misc']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//group[@name='container_row_2']" position="after">
+                    <group name="studio_group_6YqLE">
+                        <group name="studio_group_6YqLE_left">
+                            <field name="x_nombre_supervisor_credito"/>
+                            <field name="x_nombre_agente_servicio"/>
+                        </group>
+                        <group name="studio_group_6YqLE_right">
+                            <field name="x_clave_supervisor_credito"/>
+                            <field name="x_clave_agente_servicio"/>
+                        </group>
+                    </group>
+                    <group name="studio_group_YWwM8" groups="account.group_account_invoice,account.group_account_manager">
+                        <group name="studio_group_YWwM8_left">
+                            <field name="credit"/>
+                            <field name="x_studio_saldo_vencido"/>
+                            <field name="x_studio_saldo_por_vencer"/>
+                            <field name="credit_rest"/>
+                            <field name="credit_limit"/>
+                        </group>
+                    </group>
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
+                    <page name="Politica Pagos" string="Politica Pagos">
+                        <group name="studio_group_webs">
+                            <group name="studio_group_webs2">
+                                <field name="website"/>
+                                <field name="x_studio_usuario"/>
+                                <field name="x_contra_usu_portal" string="Password"/>
+                                <field name="x_studio_manejo_de_portal"/>
+                                <field name="x_archivo_alta_cliente"/>
+                                <field name="x_studio_requiere_un_nmero_de_entrada_para_revision"/>
+                                <field name="x_studio_documentacion_cuando_se_entrega_mercancia"/>
+                                <field name="x_studio_dias_de_revision"/>
+                                <field name="x_nota_dia_revision"/>
+                                <field name="x_studio_dias_de_pago"/>
+                                <field name="x_nota_dia_pago"/>
+                                <field name="x_studio_maneja_factoraje"/>
+                                <field filename="x_studio_adjunto_poltica_de_pagos_filename"
+                                       name="x_studio_adjunto_poltica_de_pagos" string="Política de pagos"/>
+                                <field filename="x_studio_binary_field_1omC5_filename"
+                                       name="x_studio_binary_field_1omC5" string="Manual del portal"/>
+                                <field filename="x_studio_otros_1_filename" name="x_studio_otros_1" string="Otros 1"/>
+                                <field invisible="1" name="x_studio_otros_1_filename"/>
+                                <field invisible="1" name="x_studio_binary_field_1omC5_filename"/>
+                                <field invisible="1" name="x_studio_adjunto_poltica_de_pagos_filename"/>
+                            </group>
+                            <group name="studio_group_webs_right" groups="account.group_account_invoice,account.group_account_manager">
+                                <field name="x_studio_acta_constitutiva"/>
+                                <field name="x_studio_copia_del_acta_constitutiva"/>
+                                <field name="x_studio_constancia_situacin_fiscal"/>
+                                <field name="x_studio_constancia_fiscal"/>
+                                <field name="x_studio_fecha_de_constancia"/>
+                                <field name="x_studio_opinion_de_cumplimiento" string="Opinión de Cumplimiento"/>
+                                <field filename="x_studio_binary_field_vmKoa_filename"
+                                       name="x_studio_binary_field_vmKoa" string="Para la opinión de cumplimiento"/>
+                                <field invisible="1" name="x_studio_binary_field_vmKoa_filename"/>
+                                <field name="x_estados_financieros"/>
+                                <field name="x_studio_copia_de_los_estados_financieros"/>
+                                <field name="x_declaracion_anual"/>
+                                <field name="x_estado_cuenta_bancario"/>
+                                <field name="x_studio_copia_del_comprobante_de_domicilio"/>
+                                <field name="x_pagare"/>
+                                <field name="x_studio_copia_identificacion"/>
+                                <field name="x_comprobante_domicilio"/>
+                                <field name="x_copia_INE"/>
+                                <field name="x_aval_nombre"/>
+                                <field name="x_notificaciones_fiscales_cliente"/>
+                            </group>
+                        </group>
+                        <group name="studio_group_webs2_bottom">
+                            <field name="x_studio_ref_comercial"/>
+                        </group>
+                    </page>
+                    <page name="ProcesoPago" string="Proceso de Revisión y Pago">
+                        <group name="notas">
+                            <span>Notas</span>
+                            <field name="x_notas_revision" string="Notas de Revisión"/>
+                        </group>
+                    </page>
+                </xpath>
+            </data>
+        </field>
+    </record>
+</odoo>

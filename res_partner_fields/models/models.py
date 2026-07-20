@@ -99,6 +99,41 @@ class XGrupoCliente(models.Model):
     x_studio_sequence = fields.Integer(string='Secuencia')
 
 
+class XClaveP(models.Model):
+    _name = 'x_clave_p'
+    _description = 'Clave proveedor'
+
+    x_name = fields.Char(string='Clave')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_sequence = fields.Integer(string='Secuencia')
+    x_user_id = fields.Many2one('res.users', string='Usuario')
+
+
+class XGrupoProveedor(models.Model):
+    _name = 'x_grupo_proveedor'
+    _description = 'Grupo proveedor'
+
+    x_name = fields.Char(string='Nombre')
+    x_active = fields.Boolean(string='Activo', default=True)
+    x_studio_notes = fields.Text(string='Notas')
+    x_studio_sequence = fields.Integer(string='Secuencia')
+    x_studio_user_id = fields.Many2one('res.users', string='Responsable')
+
+
+class XRefComercial(models.Model):
+    _name = 'x_ref_comercial'
+    _description = 'Referencias Comerciales'
+
+    x_razon_social = fields.Char(string='Razón social')
+    x_contacto = fields.Char(string='Contacto')
+    x_telefono = fields.Char(string='Telefono')
+    x_puesto = fields.Char(string='Puesto')
+    x_anos_operar = fields.Integer(string='Años de operar')
+    x_plazo = fields.Integer(string='Plazo')
+    x_linea_credito = fields.Float(string='Linea de Credito')
+    x_rel_id = fields.Many2one('res.partner', string='cliente')
+
+
 class ResUsers(models.Model):
     _inherit = 'res.users'
     x_studio_clave_del_vendedor_1 = fields.Char(string='Clave Corta')
