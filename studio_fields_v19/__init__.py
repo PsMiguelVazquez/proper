@@ -292,11 +292,38 @@ def _fix_broken_l10n_mx_edi_reports(env):
             view.write({'arch_db': new_arch})
 
 
+# MIGRACIÓN V19: bug preexistente en las plantillas de Studio (ya estaba
+# roto en v15, no es algo que haya cambiado en la migración): usan
+# `o.x_num_pro` -"Num Pro"- directo sobre la factura (`account.move`), pero
+# ese campo sólo existe en el cliente (`res.partner`, ver
+# `res_partner_fields/models/models.py`). En v15 esto no lanzaba error
+# porque los campos Studio evaluaban `getattr(o, 'x_num_pro', False)` -sin
+# fallar si no existe-; en v19, con el campo ya formalizado como código en
+# `res.partner`, `t-field` sobre un modelo que no lo tiene sí revienta con
+# `KeyError`. El único uso encontrado en todas las plantillas afectadas es
+# como valor a mostrar en el reporte, así que se corrige el camino
+# (`o.partner_id.x_num_pro`, el número de cliente real) en vez de solo
+# esconder el error.
+def _fix_broken_studio_report_field_refs(env):
+    views = env['ir.ui.view'].search([
+        ('type', '=', 'qweb'),
+        ('arch_db', 'like', 'o.x_num_pro'),
+    ])
+    for view in views:
+        arch = view.arch_db
+        if not arch:
+            continue
+        new_arch = arch.replace('o.x_num_pro', 'o.partner_id.x_num_pro')
+        if new_arch != arch:
+            view.write({'arch_db': new_arch})
+
+
 def pre_init_hook(env):
     _deactivate_old_studio_report_views(env)
     _fix_accounting_menu_parents(env)
     _cleanup_unused_studio_fields(env)
     _fix_broken_l10n_mx_edi_reports(env)
+    _fix_broken_studio_report_field_refs(env)
 
 
 def post_init_hook(env):

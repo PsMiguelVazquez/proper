@@ -118,6 +118,7 @@ class Requirement(models.Model):
     """
     _name = 'x_client_requirement'
     _description = 'Solicitud de requerimiento del cliente (legado Studio)'
+    _rec_name = 'x_name'
 
     x_cantidad = fields.Float("cantidad")
     x_comprar = fields.Boolean("Comprar")
@@ -160,6 +161,7 @@ class Proposal(models.Model):
     """
     _name = 'x_proposal_purchase'
     _description = 'Propuesta de Compras (legado Studio)'
+    _rec_name = 'x_name'
 
     x_rel_id = fields.Many2one('x_client_requirement', "Requerimiento")
     x_agente_compra = fields.Char(".")

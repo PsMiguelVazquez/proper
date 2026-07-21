@@ -7,6 +7,7 @@ class RequerimientClient(models.Model):
     _inherit = 'mail.thread'
     _name = 'requiriment.client'
     _description = 'Requerimiento de cliente'
+    _rec_name = 'x_name'
     x_cantidad = fields.Float("cantidad")
     x_comprar = fields.Boolean("Comprar")
     x_count = fields.Integer("count", compute='set_count')
@@ -73,6 +74,7 @@ class ProposalPurchase(models.Model):
     _inherit = 'mail.thread'
     _name = 'proposal.purchases'
     _description = 'Propuesta de compra'
+    _rec_name = 'x_name'
     rel_id = fields.Many2one('requiriment.client')
     x_agente_compra = fields.Char("Agente de compra")
     x_archivo = fields.Binary("Archivo")
@@ -237,6 +239,7 @@ class ProposalPurchase(models.Model):
 class WizarPropo(models.TransientModel):
     _name = 'wizard.proposal'
     _description = 'Asistente de nueva propuesta'
+    _rec_name = 'x_name'
     x_agente_compra = fields.Char("Agente de Compra")
     x_archivo = fields.Binary("Imagen del producto")
     x_archivo_2 = fields.Binary("*Archivo")

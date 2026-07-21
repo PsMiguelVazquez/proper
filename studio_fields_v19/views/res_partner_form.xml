@@ -177,8 +177,13 @@
                          quita del grupo. `colspan="4"` tampoco tiene efecto
                          aquí (el grupo no está anidado dentro de otro con
                          columnas que repartir), era resto de la sintaxis
-                         vieja de Studio. -->
-                    <group col="4" string="Horario de Atención" name="studio_group_141ff8">
+                         vieja de Studio.
+                         `col="4"` metía los dos `<div>` (cada uno ya arma su
+                         propia fila horizontal con `o_row`) como 2 de las 4
+                         columnas del grid, uno junto al otro en la MISMA
+                         fila en vez de apilados; con `col="1"` cada `<div>`
+                         ocupa el ancho completo de su propia fila. -->
+                    <group col="1" string="Horario de Atención" name="studio_group_141ff8">
                         <div class="o_row" name="studio_div_101641">
                             <span>Días</span>
                             <field name="x_dia1" string="Día laboral"/>
