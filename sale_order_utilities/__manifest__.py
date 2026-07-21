@@ -18,9 +18,15 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.2',
+    'version': '19.0.1.0.4',
 
-    'depends': ['base', 'sale', 'purchase', 'product', 'sale_purchase_confirm'],
+    # MIGRACIÓN V19: `data.validate.branch` depende de
+    # `product.template.x_studio_rama` -formalizado en `studio_fields_v19`,
+    # no en este módulo-; sin esta dependencia declarada, el campo puede no
+    # existir todavía cuando este módulo carga (el orden real dependía de
+    # que este módulo también declarara su propia copia de `x_studio_rama`,
+    # ya eliminada por duplicada, ver `models/sale_order.py`).
+    'depends': ['base', 'sale', 'purchase', 'product', 'sale_purchase_confirm', 'studio_fields_v19'],
 
     'data': [
         'security/ir.model.access.csv',

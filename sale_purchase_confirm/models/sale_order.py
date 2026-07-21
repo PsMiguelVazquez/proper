@@ -8,7 +8,34 @@ from odoo.exceptions import ValidationError
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
     total_in_text = fields.Char(compute='set_amount_text', string='Total en letra')
-    state = fields.Selection([('draft', 'Quotation'), ('sent', 'Quotation Sent'), ('sale_conf', 'Validación ventas'), ('purchase_conf', 'Validación compras'), ('credito_conf', 'Validación credito'), ('sale', 'Sales Order'), ('done', 'Locked'), ('cancel', 'Cancelled'), ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
+    # MIGRACIÓN V19: antes se sobreescribía `state` con la lista completa a
+    # mano -mismo problema que `purchase.order.state`: "overrides existing
+    # selection"-. Se usa `selection_add` para agregar sólo los 4 estados
+    # propios sobre la selección real del core (`draft`, `sent`, `sale`,
+    # `cancel`; ya no incluye `done`/Locked como estado -ahora es el
+    # booleano `locked`-, salvo que aquí `done` SÍ se sigue usando como
+    # estado propio, ver `write({'state': 'done', ...})` más abajo, así que
+    # se conserva). Los singletons `('sale',)`/`('cancel',)` son anclas de
+    # posición -no agregan nada nuevo, sólo indican dónde insertar lo que
+    # va antes- para mantener el mismo orden visual que tenía la lista
+    # completa original.
+    state = fields.Selection(
+        selection_add=[
+            ('sale_conf', 'Validación ventas'),
+            ('purchase_conf', 'Validación compras'),
+            ('credito_conf', 'Validación credito'),
+            ('sale',),
+            ('done', 'Locked'),
+            ('cancel',),
+        ],
+        ondelete={
+            'sale_conf': 'set default',
+            'purchase_conf': 'set default',
+            'credito_conf': 'set default',
+            'done': 'set default',
+        },
+        string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft',
+    )
     purchase_ids = fields.Many2many('purchase.order', string='OC', readonly=True)
     check_solicitudes = fields.Boolean(default=False, compute='solicitud_reduccion')
     albaran = fields.Many2one('stock.picking', 'Albaran')
@@ -1065,6 +1092,7 @@ class SaleInvoice(models.TransientModel):
 
 class SaleInvoiceWizard(models.TransientModel):
     _name = 'sale.line.wizar'
+    _description = 'Wizard linea orden de venta'
     sale_line_id = fields.Many2one('sale.order.line')
     order_id = fields.Many2one(related='sale_line_id.order_id')
     product_id = fields.Many2one(related='sale_line_id.product_id')

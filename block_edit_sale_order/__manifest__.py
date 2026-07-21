@@ -15,7 +15,7 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
 
     # MIGRACIÓN V19: `es_orden_parcial` es un campo real definido por
     # `sale_purchase_confirm` (Lote 3), no declarado en el manifest
