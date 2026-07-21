@@ -169,35 +169,34 @@
                      de xpaths para que "Horario de Atención" quede primero
                      después de `group[1]`, en vez de hasta abajo del todo. -->
                 <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
-                    <!-- MIGRACIÓN V19: `class="o_row"` en el propio `<group>`
-                         (no en los `<div>` internos, donde sí corresponde)
-                         hacía que el título "Horario de Atención" se
-                         renderizara en la misma fila flex que el contenido
-                         en vez de como encabezado en su propia línea; se
-                         quita del grupo. `colspan="4"` tampoco tiene efecto
-                         aquí (el grupo no está anidado dentro de otro con
-                         columnas que repartir), era resto de la sintaxis
-                         vieja de Studio.
-                         `col="4"` metía los dos `<div>` (cada uno ya arma su
-                         propia fila horizontal con `o_row`) como 2 de las 4
-                         columnas del grid, uno junto al otro en la MISMA
-                         fila en vez de apilados; con `col="1"` cada `<div>`
-                         ocupa el ancho completo de su propia fila. -->
-                    <group col="1" string="Horario de Atención" name="studio_group_141ff8">
-                        <div class="o_row" name="studio_div_101641">
-                            <span>Días</span>
-                            <field name="x_dia1" string="Día laboral"/>
-                            <span>a</span>
-                            <field name="x_dia2" string="Día laboral"/>
-                            <field name="x_hora1" string="Hora" placeholder="E.j. 9:00am a 10:00pm"/>
-                        </div>
-                        <div class="o_row" name="studio_div_721a2c">
-                            <span>Y</span>
-                            <field name="x_dia3" string="Dia laboral"/>
-                            <span>a</span>
-                            <field name="x_dia4" string="Dia laboral"/>
-                            <field name="x_hora2" string="Hora" placeholder="E.j. 9:00am a 10:00pm"/>
-                        </div>
+                    <!-- MIGRACIÓN V19: mismo patrón que "Nivel del cliente"
+                         (`studio_group_H6EDs`/`studio_group_H6EDs_right` más
+                         abajo): grupo contenedor + grupo interno con
+                         `string=`, así el título queda con su línea propia
+                         a todo lo ancho en vez de compartir fila con el
+                         contenido -variante encontrada y confirmada por
+                         prueba directa-.
+                         `class="mx-1"` en los `<span>` y `class="oe_inline"`
+                         con ancho mínimo en los campos de día: sin eso, un
+                         campo `Selection` vacío no ocupa espacio visible y
+                         el texto de al lado ("Días"/"a"/"Y") se ve pegado. -->
+                    <group name="studio_group_horario">
+                        <group name="studio_group_horario_right" string="Horario de Atención">
+                            <div class="o_row" name="studio_div_101641">
+                                <span class="mx-1">Días</span>
+                                <field name="x_dia1" string="Día laboral" class="oe_inline" style="min-width: 110px;"/>
+                                <span class="mx-1">a</span>
+                                <field name="x_dia2" string="Día laboral" class="oe_inline" style="min-width: 110px;"/>
+                                <field name="x_hora1" string="Hora" placeholder="E.j. 9:00am a 10:00pm" class="oe_inline mx-1"/>
+                            </div>
+                            <div class="o_row" name="studio_div_721a2c">
+                                <span class="mx-1">Y</span>
+                                <field name="x_dia3" string="Dia laboral" class="oe_inline" style="min-width: 110px;"/>
+                                <span class="mx-1">a</span>
+                                <field name="x_dia4" string="Dia laboral" class="oe_inline" style="min-width: 110px;"/>
+                                <field name="x_hora2" string="Hora" placeholder="E.j. 9:00am a 10:00pm" class="oe_inline mx-1"/>
+                            </div>
+                        </group>
                     </group>
                 </xpath>
                 <xpath expr="//group[@name='studio_group_Y5OWP_right']" position="inside">

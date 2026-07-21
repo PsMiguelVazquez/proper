@@ -318,12 +318,62 @@ def _fix_broken_studio_report_field_refs(env):
             view.write({'arch_db': new_arch})
 
 
+# MIGRACIÓN V19: causa raíz de "Operación no válida ... no incluye los
+# atributos 'data-oe-model' y 'data-oe-id'" en las facturas de Studio
+# (Factura Proper, Remisión sin costos, Remisión con Costos, etc.) una vez
+# que el CFDI ya está firmado. `account.move._get_name_invoice_report()`
+# (`l10n_mx_edi/models/account_move.py`) devuelve
+# `'l10n_mx_edi.report_invoice_document'` en vez de
+# `'account.report_invoice_document'` cuando la factura ya tiene el CFDI
+# firmado -comportamiento nuevo/distinto de v15-. El reporte "envoltorio"
+# (`account.report_invoice_with_payments...`) sólo llama a la plantilla de
+# contenido si el nombre coincide EXACTO; Odoo lo sabe y por eso
+# `l10n_mx_edi/views/report_invoice.xml` parcha (por xpath,
+# `inherit_id="account.report_invoice"`) el reporte ORIGINAL agregando un
+# `t-elif` para el segundo caso (comentario en el propio código de Odoo:
+# "Workaround for Studio reports, see odoo/odoo#60660"). Pero ese parche
+# sólo alcanza a la plantilla original -no a los duplicados que crea
+# Studio al "copiar" un reporte, que son plantillas 100% independientes,
+# sin relación de herencia con el original-, así que para una factura ya
+# firmada el `t-if` de estas copias nunca se cumple, no se renderiza nada,
+# y Odoo no encuentra ningún `data-oe-id` en el HTML resultante al intentar
+# guardarlo como adjunto. Se corrige el `t-if` de cada copia para que
+# acepte también el nombre de plantilla de `l10n_mx_edi` (se excluyen
+# `account.report_invoice`/`account.report_invoice_with_payments`, los 2
+# reportes originales -no duplicados de Studio-, que ya están bien
+# resueltos por el parche de Odoo).
+_L10N_MX_EDI_INVOICE_REPORT_NAME_RE = re.compile(
+    r"_get_name_invoice_report\(\) == 'account\.report_invoice_document'"
+)
+_CORE_INVOICE_REPORT_KEYS = {'account.report_invoice', 'account.report_invoice_with_payments'}
+
+
+def _fix_broken_studio_invoice_report_wrappers(env):
+    views = env['ir.ui.view'].search([
+        ('type', '=', 'qweb'),
+        ('arch_db', 'like', "_get_name_invoice_report() == 'account.report_invoice_document'"),
+    ])
+    for view in views:
+        if view.key in _CORE_INVOICE_REPORT_KEYS:
+            continue
+        arch = view.arch_db
+        if not arch:
+            continue
+        new_arch = _L10N_MX_EDI_INVOICE_REPORT_NAME_RE.sub(
+            "_get_name_invoice_report() in ('account.report_invoice_document', 'l10n_mx_edi.report_invoice_document')",
+            arch,
+        )
+        if new_arch != arch:
+            view.write({'arch_db': new_arch})
+
+
 def pre_init_hook(env):
     _deactivate_old_studio_report_views(env)
     _fix_accounting_menu_parents(env)
     _cleanup_unused_studio_fields(env)
     _fix_broken_l10n_mx_edi_reports(env)
     _fix_broken_studio_report_field_refs(env)
+    _fix_broken_studio_invoice_report_wrappers(env)
 
 
 def post_init_hook(env):
