@@ -10,7 +10,7 @@ class HrEmployee(models.Model):
     # fuera de alcance de esta tanda-, sólo se formalizan como campos
     # reales para que no se pierdan en el próximo rebuild.
     x_studio_centro_de_costos = fields.Char(string='Centro de costos')
-    x_studio_responder_a = fields.Many2one('hr.employee', string='Reportar a')
+    x_studio_responder_a = fields.Many2one('hr.employee', string='Reportar a (Studio)')
     x_studio_nmero_de_seguro = fields.Char(string='Número de seguro')
     x_studio_curp = fields.Char(string='CURP')
     x_studio_porcentaje = fields.Float(string='Porcentaje')
@@ -32,7 +32,7 @@ class HrEmployee(models.Model):
     # MIGRACIÓN V19: modelos propios de Studio `x_conceptos_de_baja`/
     # `x_conceptos_basicos_de`, formalizados en
     # `sale_purchase_confirm/models/custom_models.py`.
-    x_studio_concepto_de_baja_1 = fields.Many2one('x_conceptos_de_baja', string='Concepto de baja')
+    x_studio_concepto_de_baja_1 = fields.Many2one('x_conceptos_de_baja', string='Concepto de baja (Studio)')
     x_studio_many2one_field_7FEJz = fields.Many2one(
         'x_conceptos_basicos_de', string='Conceptos básicos de operación')
 

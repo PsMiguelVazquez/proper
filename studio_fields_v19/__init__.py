@@ -585,6 +585,53 @@ def _fix_broken_banner_route(env):
             view.write({'arch_db': new_arch})
 
 
+# MIGRACIÓN V19: `x_area`/`x_area_trabajo` (res.partner) ya se formalizaron
+# como código (`_compute_x_area` en `models/res_partner.py`), pero el
+# registro `ir.model.fields` que quedó de Studio todavía guarda
+# `related='self.opportunity_ids.x_area_lead'` -sintaxis propia de Studio
+# ("self." como prefijo del registro actual), nunca válida como `related=`
+# real de Odoo-. `_add_manual_fields` sólo debería re-agregar un campo
+# manual si el modelo de código NO lo define ya, pero en producción esta
+# fila obsoleta sigue disparando el warning "Field 'res.partner.self' ...
+# should be searchable" durante recomputaciones en cron -su `related` viejo
+# sigue haciendo referencia a un campo "self" que no existe-, algo que en
+# las pruebas locales no se reproduce siempre igual, según el orden exacto
+# en que se reconstruye el registro. Se limpia el `related` viejo
+# directamente para no depender de esa condición de carrera: el campo ya
+# vive en código, esta fila no debería seguir describiendo una relación.
+def _fix_stale_manual_field_related(env):
+    env.cr.execute("""
+        UPDATE ir_model_fields
+        SET related = NULL, state = 'base'
+        WHERE model = 'res.partner' AND name IN ('x_area', 'x_area_trabajo')
+        AND related LIKE 'self.%%'
+    """)
+
+
+# MIGRACIÓN V19: estos 4 campos siguen siendo manuales de Studio -no se
+# formalizaron a propósito, están fuera de alcance (ver comentario en
+# `models/stock.py` para `x_studio_otros_documentos_1`: cruza un
+# many2many)-, pero comparten etiqueta entre sí ("Two fields ... have the
+# same label"). Sólo se renombra la etiqueta (`field_description`) para
+# quitar el warning, sin tocar `state` ni ninguna otra propiedad -no se
+# están formalizando aquí, sólo se les pone una etiqueta distinta-.
+_DUPLICATE_LABEL_FIELDS = [
+    ('sale.order', 'x_productos_si', 'Productos (sí)'),
+    ('sale.order', 'x_productos_no', 'Productos (no)'),
+    ('stock.picking', 'x_studio_otros_documentos_1', 'Otros Documentos (2)'),
+]
+
+
+def _fix_duplicate_manual_field_labels(env):
+    IrModelFields = env['ir.model.fields']
+    for model, name, label in _DUPLICATE_LABEL_FIELDS:
+        field = IrModelFields.search([
+            ('model', '=', model), ('name', '=', name), ('state', '=', 'manual'),
+        ], limit=1)
+        if field and field.field_description != label:
+            field.write({'field_description': label})
+
+
 def pre_init_hook(env):
     _deactivate_old_studio_report_views(env)
     _fix_accounting_menu_parents(env)
@@ -597,6 +644,8 @@ def pre_init_hook(env):
     _fix_broken_tax_totals_structure(env)
     _fix_broken_modifiers_attribute(env)
     _fix_broken_banner_route(env)
+    _fix_stale_manual_field_related(env)
+    _fix_duplicate_manual_field_labels(env)
 
 
 def post_init_hook(env):

@@ -188,14 +188,14 @@ class SaleOrder(models.Model):
     x_studio_many2many_field_ghmoC = fields.Many2many(
         'stock.picking', 'sale_order_stock_picking_ghmoC_rel', string='Albarán')
     x_studio_many2many_field_ma4cB = fields.Many2many(
-        'stock.picking', 'sale_order_stock_picking_ma4cB_rel', string='Albarán')
+        'stock.picking', 'sale_order_stock_picking_ma4cB_rel', string='Albarán (2)')
     x_studio_con_tiempo_de_entrega = fields.Boolean(string='Con tiempo de entrega')
     x_mot_canc_comer = fields.Text(string='Motivo de cancelación del comercial')
     x_requiere_factura = fields.Selection([('SI', 'SI'), ('NO', 'NO')], string='Requiere factura')
-    x_studio_remisin_1 = fields.Boolean(string='Remisión')
-    x_studio_remisin_ciega_1 = fields.Boolean(string='Remisión Ciega')
-    x_studio_factura_timbrada_1 = fields.Boolean(string='Factura Timbrada')
-    x_studio_otros = fields.Binary(string='Otros documentos')
+    x_studio_remisin_1 = fields.Boolean(string='Remisión (marcada)')
+    x_studio_remisin_ciega_1 = fields.Boolean(string='Remisión Ciega (marcada)')
+    x_studio_factura_timbrada_1 = fields.Boolean(string='Factura Timbrada (marcada)')
+    x_studio_otros = fields.Binary(string='Otros documentos (archivo)')
     x_fecha_devolucion = fields.Date(string='Fecha Devolución')
     x_es_muestra = fields.Boolean(string='Es Muestra')
     x_moti_cancel_comp = fields.Char(string='Motivo de rechazo de cancelación')
@@ -205,10 +205,10 @@ class SaleOrder(models.Model):
     # `Many2one` (`partner_id`/`albaran`), se mantienen igual.
     x_studio_holding_1 = fields.Char(
         related='partner_id.parent_id.x_holding.display_name', string='Holding')
-    x_studio_empresa = fields.Char(related='partner_id.parent_id.name', string='Empresa')
-    x_studio_holding_2 = fields.Char(related='partner_id.x_holding.name', string='Holding')
-    x_studio_n_de_gua = fields.Char(related='albaran.x_studio_n_de_gua', string='N° de guía')
-    x_studio_n_de_gua_1 = fields.Char(related='albaran.x_studio_n_de_gua', string='N° de guía')
+    x_studio_empresa = fields.Char(related='partner_id.parent_id.name', string='Empresa (relación)')
+    x_studio_holding_2 = fields.Char(related='partner_id.x_holding.name', string='Holding (2)')
+    x_studio_n_de_gua = fields.Char(related='albaran.x_studio_n_de_gua', string='N° de guía (albarán)')
+    x_studio_n_de_gua_1 = fields.Char(related='albaran.x_studio_n_de_gua', string='N° de guía (2)')
     x_studio_grupo = fields.Char(related='partner_id.x_grupo_cliente.x_name', string='Grupo')
     x_studio_plazo_de_pago = fields.Char(
         related='partner_id.property_payment_term_id.display_name', string='Política de pago')
@@ -247,10 +247,10 @@ class SaleOrderLine(models.Model):
     # que se formaliza aquí, ya se puede depender de él normalmente.
     x_sol_atendido = fields.Boolean(string='Solicitud atendida')
     x_studio_cantidad_disponible = fields.Integer(string='Cantidad disponible')
-    x_studio_modelo_1 = fields.Char(string='Modelo')
+    x_studio_modelo_1 = fields.Char(string='Modelo (texto)')
     x_dias_habiles = fields.Text(string='Días hábiles')
     x_pedido = fields.Boolean(string='pedido')
-    x_costo_envio = fields.Monetary(string='Costo de envío')
+    x_costo_envio = fields.Monetary(string='Costo de envío (Studio)')
 
     # MIGRACIÓN V19: en Studio eran `related=` a través de campos
     # `Many2one` (`product_id`/`product_template_id`/`order_id`), se
@@ -284,7 +284,7 @@ class SaleOrderLine(models.Model):
     x_fecha_pedido = fields.Datetime(related='order_id.date_order', store=True, string='Fecha de pedido')
 
     x_comision = fields.Monetary(
-        string='Comisión', compute='_compute_x_comision', store=True)
+        string='Comisión (Studio)', compute='_compute_x_comision', store=True)
     x_invoiced_subtotal = fields.Float(
         string='Subtotal facturado', compute='_compute_x_invoiced_subtotal')
     x_por_surtir = fields.Float(
@@ -294,7 +294,7 @@ class SaleOrderLine(models.Model):
     x_subtotal_iva = fields.Float(
         string='Subtotal + IVA', compute='_compute_x_subtotal_iva', store=True)
     x_utilidad = fields.Float(
-        string='Utilidad %', compute='_compute_x_utilidad', store=True)
+        string='Utilidad % (Studio)', compute='_compute_x_utilidad', store=True)
     # MIGRACIÓN V19: usa ubicaciones de almacén (`location_id`) fijas por id
     # (187 y 80), copiadas tal cual del cálculo original de Studio. Esos ids
     # son específicos de la base de datos de producción de origen; hay que

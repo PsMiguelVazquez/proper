@@ -27,7 +27,7 @@ class DataValidate(models.Model):
     # (ir.model.fields) (3)"). `x_studio_vigencia` es un duplicado de
     # `vigencia` (arriba) con otro nombre técnico.
     x_fecha_pedido = fields.Datetime(related='order_id.create_date', string='Fecha de pedido')
-    x_studio_vigencia = fields.Char(string='Vigencia')
+    x_studio_vigencia = fields.Char(string='Vigencia (Studio)')
 
     def migrate_lines(self):
         lines_to_migrate = self.env['sale.order.line'].search([

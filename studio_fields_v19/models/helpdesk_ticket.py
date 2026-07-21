@@ -17,9 +17,9 @@ class HelpdeskTicket(models.Model):
     # MIGRACIÓN V19: en Studio eran `related=` a través de `sale_order_id`
     # (`Many2one`), se mantienen igual.
     x_studio_fecha_de_surtido_1 = fields.Datetime(
-        related='sale_order_id.x_fecha_surtido', store=True, string='Fecha de surtido')
+        related='sale_order_id.x_fecha_surtido', store=True, string='Fecha de surtido (real)')
     x_studio_fecha_de_surtido = fields.Datetime(
-        related='sale_order_id.commitment_date', store=True, string='Fecha de surtido')
+        related='sale_order_id.commitment_date', store=True, string='Fecha de surtido (compromiso)')
 
     # MIGRACIÓN V19: en Studio era `related='sale_order_id.invoice_ids.name'`
     # -último salto `Many2many`, no soportado por `related=`-; se reescribe

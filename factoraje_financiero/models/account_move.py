@@ -7,8 +7,8 @@ from odoo.exceptions import UserError
 class AccountMove(models.Model):
     _inherit = 'account.move'
     factoring_amount = fields.Float('Monto por factoraje')
-    balance_after_factoring = fields.Float(string='Restante', compute='_compute_balance_after_factoring')
-    balance_after_compensate = fields.Float(string='Restante', compute='_compute_balance_after_compensate')
+    balance_after_factoring = fields.Float(string='Restante (factoraje)', compute='_compute_balance_after_factoring')
+    balance_after_compensate = fields.Float(string='Restante (compensación)', compute='_compute_balance_after_compensate')
     rel_payment = fields.Many2one('account.payment')
 
     def write(self, vals):

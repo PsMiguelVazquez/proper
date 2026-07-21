@@ -13,7 +13,7 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'license': 'LGPL-3',
 
     # MIGRACIÓN V19: `porcent_assign` (account.move) es de `add_invoice_to_paid`

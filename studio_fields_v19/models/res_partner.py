@@ -30,20 +30,24 @@ class ResPartner(models.Model):
         string='Tipo de Empresa')
     x_conductor = fields.Boolean(string='¿Es Conductor?')
     x_tel_oficina = fields.Char(string='Teléfono de oficina')
-    x_ext = fields.Char(string='Ext.')
+    x_ext = fields.Char(string='Ext. (Teléfono de oficina)')
     x_otro_tel = fields.Char(string='Otro teléfono')
-    x_otra_ext = fields.Char(string='Ext.')
+    x_otra_ext = fields.Char(string='Ext. (Otro teléfono)')
 
     _DIAS_SEMANA = [
         ('Lunes', 'Lunes'), ('Martes', 'Martes'), ('Miércoles', 'Miércoles'), ('Jueves', 'Jueves'),
         ('Viernes', 'Viernes'), ('Sábado', 'Sábado'), ('Domingo', 'Domingo'),
     ]
-    x_dia1 = fields.Selection(_DIAS_SEMANA, string='Día')
-    x_dia2 = fields.Selection(_DIAS_SEMANA, string='Día')
-    x_dia3 = fields.Selection(_DIAS_SEMANA, string='Día')
-    x_dia4 = fields.Selection(_DIAS_SEMANA, string='Día')
-    x_hora1 = fields.Char(string='Hora')
-    x_hora2 = fields.Char(string='Hora')
+    # MIGRACIÓN V19: el `string=` de estos 4 es sólo el nombre técnico por
+    # defecto -la vista (`res_partner_form.xml`) ya pone su propio
+    # `string="Día laboral"` por campo-, se numeran para que no colisionen
+    # entre sí a nivel de modelo, sin cambiar lo que se ve en el formulario.
+    x_dia1 = fields.Selection(_DIAS_SEMANA, string='Día 1')
+    x_dia2 = fields.Selection(_DIAS_SEMANA, string='Día 2')
+    x_dia3 = fields.Selection(_DIAS_SEMANA, string='Día 3')
+    x_dia4 = fields.Selection(_DIAS_SEMANA, string='Día 4')
+    x_hora1 = fields.Char(string='Hora 1')
+    x_hora2 = fields.Char(string='Hora 2')
 
     x_studio_por_segmento_de_vendedor = fields.Selection(
         [('cuentas_especiales', 'Cuentas Especiales'), ('jr', 'Jr.'), ('kam', 'KAM'),
@@ -193,22 +197,22 @@ class ResPartner(models.Model):
     x_studio_uid = fields.Char(string='uid')
     x_studio_clasificacin_lista_de_precios = fields.Char(string='Clasificación lista de precios')
     x_studio_clasificacin_lista_de_precios_1 = fields.Many2one(
-        'x_niveles_de_cliente', string='Clasificación lista de precios')
+        'x_niveles_de_cliente', string='Clasificación lista de precios (nivel)')
     x_studio_clasificacin_lista_de_precios_2 = fields.Selection(
         [('COMERCIALIZADORA 1', 'COMERCIALIZADORA 1'), ('COMERCIALIZADORA 2', 'COMERCIALIZADORA 2'),
          ('CATALOGO 1', 'CATALOGO 1'), ('CATALOGO 2', 'CATALOGO 2'), ('VENTA DIRECTA', 'VENTA DIRECTA'),
          ('CORPORATIVO', 'CORPORATIVO')],
-        string='Clasificación lista de precios')
+        string='Clasificación lista de precios (opción A)')
     x_studio_clasificacin_lista_de_precios_3 = fields.Selection(
         [('COMERCIALIZADORA', 'COMERCIALIZADORA'), ('CORPORATIVO', 'CORPORATIVO'), ('CATALOGO', 'CATALOGO'),
          ('VENTA DIRECTA', 'VENTA DIRECTA')],
-        string='Clasificación lista de precios')
+        string='Clasificación lista de precios (opción B)')
     x_studio_many2many_field_myq3e = fields.Many2many(
         'l10n_mx_edi.payment.method', 'res_partner_l10n_mx_edi_payment_method_myq3e_rel',
         string='Método de Pago para México, datos del SAT')
     x_studio_many2many_field_JdErd = fields.Many2many(
         'l10n_mx_edi.payment.method', 'res_partner_l10n_mx_edi_payment_method_jderd_rel',
-        string='Método de Pago para México, datos del SAT')
+        string='Método de Pago para México, datos del SAT (2)')
     x_studio_solicitud_credito = fields.Binary(string='Solicitud Credito')
     x_studio_solicitud_credito_filename = fields.Char(string='Nombre de archivo (solicitud de crédito)')
     x_studio_copia_estado_cuenta = fields.Binary(string='Copia Estado Cuenta')
@@ -233,16 +237,16 @@ class ResPartner(models.Model):
     x_studio_cdula_rfc_con_el_domicilio_fiscal_filename = fields.Char(
         string='Nombre de archivo (cédula RFC con domicilio fiscal)')
     x_credit_valid = fields.Boolean(string='Credito Valido')
-    x_studio_a = fields.Float(string='A')
+    x_studio_a = fields.Float(string='A (Studio)')
     x_studio_es_fabricante = fields.Boolean(string='Es fabricante')
-    x_studio_password = fields.Char(string='Password')
-    x_studio_horario = fields.Float(string='Horario de')
+    x_studio_password = fields.Char(string='Password (portal)')
+    x_studio_horario = fields.Float(string='Horario de (Studio)')
     x_studio_poderes = fields.Boolean(string='Poderes')
     x_a = fields.Float(string='A')
     x_de = fields.Float(string='Horario de')
     x_studio_constancia_sat = fields.Binary(string='Constancia SAT')
     x_studio_constancia_sat_filename = fields.Char(string='Nombre de archivo (constancia SAT)')
-    x_studio_comprobante_de_domicilio = fields.Binary(string='Comprobante de domicilio')
+    x_studio_comprobante_de_domicilio = fields.Binary(string='Comprobante de domicilio (archivo)')
     x_studio_comprobante_de_domicilio_filename = fields.Char(string='Nombre de archivo (comprobante de domicilio)')
     x_studio_cuentas_de_bancos = fields.Binary(string='Cuentas de bancos')
     x_studio_cuentas_de_bancos_filename = fields.Char(string='Nombre de archivo (cuentas de bancos)')
@@ -253,7 +257,7 @@ class ResPartner(models.Model):
 
     # MIGRACIÓN V19: modelos propios de Studio `x_agente_de_venta`/
     # `x_ref_banco`, formalizados en `res_partner_fields/models/models.py`.
-    x_agente_venta_ok = fields.Many2many('x_agente_de_venta', string='Agente de venta')
+    x_agente_venta_ok = fields.Many2many('x_agente_de_venta', string='Agente de venta (múltiple)')
     x_nom_agen_venta = fields.Many2one('x_agente_de_venta', string='Agente de venta')
     x_studio_referencia_bancaria = fields.One2many(
         'x_ref_banco', 'x_ref_cliente', string='Referencias Bancarias')
@@ -279,16 +283,16 @@ class ResPartner(models.Model):
     x_clave_agente_de_venta = fields.Char(
         related='user_id.x_studio_clave_del_vendedor_1', string='Clave agente de venta')
     x_studio_related_field_uJYht = fields.Char(
-        related='x_studio_many2one_field_yzVQY.name', string='New Campo relacionado')
+        related='x_studio_many2one_field_yzVQY.name', string='Contacto (nombre)')
 
     # MIGRACIÓN V19: en Studio eran `related=` cruzando `child_ids`
     # (`Many2one` a `One2many`), algo que `related=` no soporta (mismo
     # problema que `x_estado_compra`/`x_estado_factura` en `sale.order`);
     # se reescriben como compute tomando el primer hijo.
     x_studio_related_field_r96bz = fields.Char(
-        string='New Campo relacionado', compute='_compute_x_studio_contacto_child_name')
+        string='Contacto - hijo (nombre)', compute='_compute_x_studio_contacto_child_name')
     x_studio_related_field_yAI6C = fields.Char(
-        string='New Campo relacionado', compute='_compute_x_studio_contacto_child_name')
+        string='Contacto - hijo (nombre) (2)', compute='_compute_x_studio_contacto_child_name')
     # MIGRACIÓN V19: en Studio era `related='self.opportunity_ids.x_area_lead'`
     # -el prefijo `self.` no es válido en `related=` (probablemente una
     # fórmula de compute copiada por error al crear el campo como

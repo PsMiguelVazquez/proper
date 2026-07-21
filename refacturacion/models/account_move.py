@@ -16,7 +16,7 @@ from odoo.exceptions import UserError
 class AccountMove(models.Model):
     _inherit = 'account.move'
     es_refacturacion = fields.Boolean(default=False, string="¿Es refacturación?")
-    almacen_refacturacion = fields.Char('Almacén')
+    almacen_refacturacion = fields.Char('Almacén (refacturación)')
 
 
     def action_post(self):

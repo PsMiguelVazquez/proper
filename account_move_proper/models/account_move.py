@@ -47,7 +47,7 @@ class AccountMove(models.Model):
     x_studio_numero_proveedor = fields.Char(string='Número de proveedor')
     x_studio_numero_pedido = fields.Char(string='Número de pedido')
     x_studio_numero_entrada_sap = fields.Char(string='Número de entrada a SAP')
-    x_studio_numero_remision_1 = fields.Char(string='Número de remisión')
+    x_studio_numero_remision_1 = fields.Char(string='Número de remisión (Studio)')
     x_studio_orden_de_compra = fields.Char(string='Orden de Compra')
     x_studio_almacn = fields.Char(string='Almacén', compute='_compute_x_studio_almacn', store=True)
     x_fecha_pago_pro = fields.Date(string='Fecha estimada de Pago')
