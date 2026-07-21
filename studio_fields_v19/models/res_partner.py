@@ -20,6 +20,13 @@ class ResPartner(models.Model):
         string='Estatus de la Cuenta')
     x_studio_entre_las_calles = fields.Char(string='Entre las calles')
     x_studio_plano = fields.Char(string='Plano')
+    # MIGRACIÓN V19: `property_account_creditor` era un campo manual de
+    # Studio (Many2one a `account.account`), nunca formalizado como código;
+    # `views/res_partner_form.xml` (formalizada en este mismo módulo) ya lo
+    # referenciaba directamente, causando "Field property_account_creditor
+    # does not exist in model res.partner" en cualquier instalación limpia.
+    property_account_creditor = fields.Many2one(
+        'account.account', string='Cuenta de acreedor')
     x_sector = fields.Selection(
         [('COMERCIALIZADORA', 'COMERCIALIZADORA'), ('CORPORATIVO', 'CORPORATIVO'),
          ('VENTA DIRECTA', 'VENTA DIRECTA'), ('PARTICULAR', 'PARTICULAR')],

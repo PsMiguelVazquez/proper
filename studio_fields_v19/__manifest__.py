@@ -34,7 +34,7 @@
     'website': "http://www.novucentral.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.27',
+    'version': '19.0.1.0.31',
     'license': 'LGPL-3',
 
     'pre_init_hook': 'pre_init_hook',
@@ -57,8 +57,40 @@
         'res_partner_fields',
         'account_payment_proper',
         'website',
+        # MIGRACIÓN V19: `x_studio_cant_prod_pedido` (account.move) usa
+        # `related='sale_id.cart_quantity'`; `cart_quantity` es un campo de
+        # `website_sale` (`addons/website_sale/models/sale_order.py`), no de
+        # `sale` ni `website`. Sin esta dependencia explícita, una
+        # instalación donde el grafo de módulos no arrastre `website_sale`
+        # por otro lado (p. ej. una base de pruebas nueva) falla con
+        # "KeyError: Field cart_quantity referenced in related field
+        # definition account.move.x_studio_cant_prod_pedido does not
+        # exist" al montar el registro.
+        'website_sale',
         'helpdesk',
+        # MIGRACIÓN V19: `x_studio_fecha_de_surtido_1` (helpdesk.ticket) usa
+        # `related='sale_order_id...'`; `sale_order_id` lo agrega
+        # `helpdesk_sale` (`enterprise/helpdesk_sale/models/
+        # helpdesk_ticket.py`), no `helpdesk` por sí solo. Mismo problema
+        # que `website_sale` arriba: sin esta dependencia explícita, una
+        # instalación donde nada más arrastre `helpdesk_sale` falla con
+        # "KeyError: Field sale_order_id ... does not exist" al montar el
+        # registro.
+        'helpdesk_sale',
         'hr',
+        # MIGRACIÓN V19: `account.payment.x_pagos_extracto` depende
+        # (`@api.depends('line_ids.rel_payment')`) de `account.bank.
+        # statement.line.rel_payment`, formalizado en
+        # `account_bank_statement_proper`; y ese mismo `rel_payment`
+        # también existe en `account.move` (formalizado en
+        # `factoraje_financiero`), usado por `account.payment.rel_payment`
+        # (`related='move_id.rel_payment'` en este mismo archivo). Sin
+        # estas dos dependencias explícitas, una instalación donde nada
+        # más las arrastre falla con "Dependency field 'rel_payment' not
+        # found in model account.bank.statement.line" al montar el
+        # registro.
+        'account_bank_statement_proper',
+        'factoraje_financiero',
     ],
 
     'data': [
