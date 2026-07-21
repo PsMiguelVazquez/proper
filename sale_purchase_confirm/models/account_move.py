@@ -22,8 +22,13 @@ class AccountMove(models.Model):
     # `x_nombre_supervisor_credito` (res.partner) se formalizaron como
     # campos reales en `res_partner_fields`. `x_doc_entrega` (sale.order)
     # se formaliza en este mismo módulo, más abajo.
+    # MIGRACIÓN V19: `selection=` se quita a propósito -al ser `related=`,
+    # el campo ya hereda el tipo y la selección de `res.partner.
+    # x_estado_cli_actua` (formalizado en `res_partner_fields`); pasarlo
+    # explícito sólo genera el warning "selection attribute will be
+    # ignored as the field is related".
     x_estado_actuali_cli = fields.Selection(
-        string='Estado de actualizacion del cliente', selection=[('3.3', '3.3'), ('4', '4')],
+        string='Estado de actualizacion del cliente',
         related='partner_id.x_estado_cli_actua')
     supervisor_credito = fields.Many2one(string='Supervisor de crédito', related='partner_id.x_nombre_supervisor_credito', store=True)
     documento_entrega_venta = fields.Selection(string='Documento de entrega', related='sale_id.x_doc_entrega')
