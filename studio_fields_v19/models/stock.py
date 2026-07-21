@@ -70,7 +70,7 @@ class StockPicking(models.Model):
         related='sale_id.x_studio_flotilla', store=True, string='Flotilla')
     x_studio_fecha_de_surtido = fields.Datetime(
         related='sale_id.x_fecha_surtido', store=True, string='Fecha de surtido')
-    x_no_guia_alm = fields.Char(related='sale_id.x_no_guia_ventas', store=True, string='N° de guía')
+    x_no_guia_alm = fields.Char(related='sale_id.x_no_guia_ventas', store=True, string='N° de guía (almacén)')
     x_studio_remisin_ciega = fields.Binary(
         related='sale_id.x_studio_remisin_ciega', store=True, string='Remisión Ciega')
     x_studio_remisin = fields.Binary(related='sale_id.x_studio_remisin', store=True, string='Remisión')
@@ -81,13 +81,13 @@ class StockPicking(models.Model):
         related='sale_id.x_studio_paquetera', store=True, string='Paquetería')
     x_studio_recolecta = fields.Boolean(
         related='sale_id.x_studio_recolecta', store=True, string='Recolecta')
-    x_studio_remisin_1 = fields.Binary(related='sale_id.x_studio_remisin', store=True, string='Remisión')
+    x_studio_remisin_1 = fields.Binary(related='sale_id.x_studio_remisin', store=True, string='Remisión (2)')
     x_studio_factura_timbrada_1 = fields.Boolean(
-        related='sale_id.x_studio_factura_timbrada_1', store=True, string='Factura Timbrada')
+        related='sale_id.x_studio_factura_timbrada_1', store=True, string='Factura Timbrada (marcada)')
     x_studio_remisin_ciega_1 = fields.Boolean(
-        related='sale_id.x_studio_remisin_ciega_1', store=True, string='Remisión Ciega')
+        related='sale_id.x_studio_remisin_ciega_1', store=True, string='Remisión Ciega (marcada)')
     x_studio_remisin_2 = fields.Boolean(
-        related='sale_id.x_studio_remisin_1', store=True, string='Remisión')
+        related='sale_id.x_studio_remisin_1', store=True, string='Remisión (marcada)')
     # MIGRACIÓN V19: en Studio era `related='sale.invoice_status'`, pero
     # `sale` nunca existió como campo de `stock.picking` (siempre fue
     # `sale_id`, mismo error ya documentado en `x_sale__stock_picking_count`

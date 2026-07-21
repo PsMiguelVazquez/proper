@@ -601,7 +601,7 @@ class SaleOrderLine(models.Model):
     existencia = fields.Html('Cantidades', compute='get_stock')
     check_price_reduce = fields.Boolean('Solicitud', default=False, store=True, compute='_compute_check_price_reduce')
     price_reduce_v = fields.Float('Precio solicitado')
-    price_reduce_solicit = fields.Boolean('Solicitud', default=False)
+    price_reduce_solicit = fields.Boolean('Solicitud (enviada)', default=False)
     invoice = fields.Boolean('Facturar', default=False)
     price_unit = fields.Float(copy=True)
     costo_envio = fields.Float('Costo de envío')
@@ -872,7 +872,7 @@ class Alerta_limite_de_credito(models.TransientModel):
     sale_id = fields.Many2one('sale.order', 'Pedido de venta relacionado')
     line_ids = fields.Many2many('sale.order.line', string='Productos a comprar')
     mensaje = fields.Html('Mensaje')
-    mensaje_bottom = fields.Html('Mensaje')
+    mensaje_bottom = fields.Html('Mensaje (detalle)')
 
     def confirmar_sale(self):
         self.sale_id.order_line.filtered(lambda x: x.check_price_reduce).write({'price_reduce_solicit': True})

@@ -18,7 +18,7 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.0.2',
 
     'depends': ['base', 'sale', 'purchase', 'product', 'sale_purchase_confirm'],
 

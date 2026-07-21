@@ -13,7 +13,7 @@
     'website': "",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'license': 'LGPL-3',
 
     # MIGRACIÓN V19: `l10n_mx_edi` pasó a ser un módulo Enterprise (en 15.0

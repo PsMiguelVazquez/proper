@@ -38,7 +38,7 @@ class AccountMove(models.Model):
     # quedó fuera de alcance de esta tanda-, sólo se formalizan como
     # campos reales para que no se pierdan en el próximo rebuild.
     x_studio_fecha_de_revisin = fields.Date(string='Fecha de revisión')
-    x_numero_de_proveedor = fields.Char(string='Número de proveedor')
+    x_numero_de_proveedor = fields.Char(string='Número de proveedor (Studio)')
     x_sucursal = fields.Char(string='Sucursal')
     x_solicito = fields.Char(string='Solicitó')
     x_studio_notas = fields.Text(string='Notas')
@@ -48,7 +48,7 @@ class AccountMove(models.Model):
     # MIGRACIÓN V19: en Studio eran `related=` a través de campos
     # `Many2one` (`reversed_entry_id`/`sale_id`), se mantienen igual.
     x_studio_ref = fields.Char(related='reversed_entry_id.display_name', string='Ref.')
-    x_studio_mkp_1 = fields.Selection(related='sale_id.x_studio_origen_mkp', store=True, string='MKP')
+    x_studio_mkp_1 = fields.Selection(related='sale_id.x_studio_origen_mkp', store=True, string='MKP (origen)')
     x_studio_nombre_del_solicitante = fields.Char(
         related='sale_id.partner_child.name', store=True, string='Nombre del solicitante')
     x_utilidad_venta = fields.Float(related='sale_id.x_utilidad_total', store=True, string='Utilidad venta')

@@ -38,7 +38,7 @@ class CrmLead(models.Model):
     x_area_lead = fields.Char(string='Área')
     # MIGRACIÓN V19: modelo propio de Studio `x_segmento`, formalizado en
     # `sale_purchase_confirm/models/custom_models.py`.
-    x_studio_many2one_field_tVCkm = fields.Many2one('x_segmento', string='Segmento')
+    x_studio_many2one_field_tVCkm = fields.Many2one('x_segmento', string='Segmento (Studio)')
     x_studio_descripcin_de_segmento = fields.Char(
         related='x_studio_many2one_field_tVCkm.x_descripcion', store=True,
         string='Descripción de segmento')

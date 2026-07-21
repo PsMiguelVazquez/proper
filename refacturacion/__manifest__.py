@@ -11,7 +11,7 @@
 
     'author': "Jonathan Alfaro",
     'license': 'LGPL-3',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     # MIGRACIÓN V19: el manifest original solo declaraba 'base'/'account',
     # pero el código usa modelos/campos de 'stock', 'sale', el campo
     # `movimientos_almacen` (definido por account_move_proper) y el campo
