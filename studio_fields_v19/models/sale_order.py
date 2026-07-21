@@ -197,6 +197,11 @@ class SaleOrder(models.Model):
     x_studio_factura_timbrada_1 = fields.Boolean(string='Factura Timbrada (marcada)')
     x_studio_otros = fields.Binary(string='Otros documentos (archivo)')
     x_fecha_devolucion = fields.Date(string='Fecha Devolución')
+    # MIGRACIÓN V19: `x_fecha_factura` (sale.order, no confundir con el
+    # `x_fecha_factura` de `account.move`, ya formalizado) nunca se había
+    # formalizado; `novu_sale_order/views/sale_order_view.xml` ya lo
+    # referenciaba directamente.
+    x_fecha_factura = fields.Datetime(string='Fecha de Facturación')
     x_es_muestra = fields.Boolean(string='Es Muestra')
     x_moti_cancel_comp = fields.Char(string='Motivo de rechazo de cancelación')
     x_acep_cancel_compra = fields.Boolean(string='Aceptar cancelación de venta')
@@ -214,6 +219,11 @@ class SaleOrder(models.Model):
         related='partner_id.property_payment_term_id.display_name', string='Política de pago')
     x_fecha_surtido = fields.Datetime(related='albaran.scheduled_date', string='Fecha de surtido')
     x_studio_rfc = fields.Char(related='partner_id.vat', string='RFC')
+    # MIGRACIÓN V19: `x_num_pro` (sale.order) nunca se había formalizado;
+    # `novu_sale_order/views/sale_order_view.xml` ya lo referenciaba
+    # directamente, causando 'Field "x_num_pro" does not exist in model
+    # "sale.order"'.
+    x_num_pro = fields.Char(related='partner_id.x_num_pro', string='Número de Proveedor')
 
     # MIGRACIÓN V19: en Studio era `related='partner_id.x_area'`, pero
     # `x_area` en `res.partner` es a su vez un compute (toma la primera

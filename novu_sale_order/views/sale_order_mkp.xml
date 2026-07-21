@@ -23,7 +23,7 @@
                         <field name="x_aprovacion_compras" invisible="1"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,sent,sale"/>
                         <button name="conf_credito" string="Aprobación Credito" type="object" class="btn-primary" invisible="state !=  'credito_conf'" groups="account_payment_proper.group_credito_c"/>
-                        <button name="1277" string="Rechazar" type="action" class="btn-primary" invisible="state not in ['sale_conf', 'credito_conf' ]" groups="purchase.group_purchase_manager,account_payment_proper.group_sale_manager,account_payment_proper.group_credito_c,account.group_account_invoice"/>
+                        <button name="%(action_server_rechazar_cotizacion)d" string="Rechazar" type="action" class="btn-primary" invisible="state not in ['sale_conf', 'credito_conf' ]" groups="purchase.group_purchase_manager,account_payment_proper.group_sale_manager,account_payment_proper.group_credito_c,account.group_account_invoice"/>
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
@@ -226,13 +226,19 @@
                                         <!-- V19 -->
                                         <field name="discount" string="Disc.%" groups="sale.group_discount_per_so_line" optional="hide" widget="product_discount" invisible="1" />
                                         <!-- V19 -->
-                                        <field name="price_subtotal" widget="monetary" groups="novu_sale_order.group_show_line_subtotals_tax_excluded"/>
+                                        <!-- MIGRACIÓN V19: `group_show_line_subtotals_tax_excluded`/
+                                             `_included` (antes en `account`) se eliminaron en v19 -el
+                                             toggle de subtotal con/sin impuesto ahora es un campo de
+                                             selección por sitio web, no un grupo de usuario-, así que
+                                             se quita el `groups=` inválido en vez de dejarlo apuntando
+                                             a un grupo que ya no existe. -->
+                                        <field name="price_subtotal" widget="monetary"/>
 
                                         <field name="x_utilidad" optional="show"/>
                                         <field name="valor_utilidad" optional="show"/>
-                                        
-                                        
-                                        <field name="price_total" widget="monetary" groups="novu_sale_order.group_show_line_subtotals_tax_included"/>
+
+
+                                        <field name="price_total" widget="monetary"/>
                                         <field name="state" invisible="1" optional="hide"/>
                                         <field name="invoice_status" invisible="1" optional="hide"/>
                                         <field name="currency_id" invisible="1" optional="hide"/>
@@ -273,8 +279,7 @@
                                                                         <strong t-esc="record.product_id.value"/>
                                                                     </div>
                                                                     <div class="col-auto">
-                                                                        <t t-set="line_price" t-value="record.price_subtotal.value" groups="novu_sale_order.group_show_line_subtotals_tax_excluded"/>
-                                                                        <t t-set="line_price" t-value="record.price_total.value" groups="novu_sale_order.group_show_line_subtotals_tax_included"/>
+                                                                        <t t-set="line_price" t-value="record.price_subtotal.value"/>
                                                                         <strong class="float-right text-right" t-esc="line_price"/>
                                                                     </div>
                                                                 </div>

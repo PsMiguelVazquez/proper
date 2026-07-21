@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- MIGRACIÓN V19: acciones y vista del asistente "Rechazar cotización",
+         creadas originalmente con Odoo Studio y referenciadas por ID numérico
+         crudo (nunca tuvieron xmlid). Se formalizan aquí con un xmlid estable
+         para que sobrevivan a cualquier instalación limpia. -->
+
+    <record id="action_server_rechazar_cotizacion" model="ir.actions.server">
+        <field name="name">Rechazar cotización</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="state">code</field>
+        <field name="code">
+record['state']='draft'
+view = env['ir.ui.view'].search([['name','=','x_wizard_rechcoti_form']])
+wiz = env['x_wizard_rechcoti'].create({'x_rel':record.id})
+action= {
+'name': 'Rechazar cotización',
+'type': 'ir.actions.act_window',
+'view_mode': 'form',
+'res_model': 'x_wizard_rechcoti',
+'views': [(view.id, 'form')],
+'view_id': view.id,
+'target': 'new',
+'res_id': wiz.id,
+'context': env.context}
+        </field>
+    </record>
+
+    <record id="action_server_validacion_precio" model="ir.actions.server">
+        <field name="name">validacion precio</field>
+        <field name="model_id" ref="sale.model_sale_order_line"/>
+        <field name="state">code</field>
+        <field name="code">
+record['x_validacion_precio']=True
+data_validate = env['data.validate'].search([('order_line_id', '=', record.id)])
+if not data_validate:
+  env['data.validate'].create({
+      'order_line_id': record.id,
+      'product_qty_purchases': record.x_cantidad_disponible_compra,
+      'new_cost': record.x_studio_nuevo_costo,
+      'delivery_time': record.x_tiempo_entrega_compra,
+      'note': record.x_obse_comprador,
+      'request_answered': record.x_solicitud_atendida,
+  })
+else:
+  data_validate.write({'request_answered': False})
+  record.write({'x_solicitud_atendida': False})
+        </field>
+    </record>
+
+    <record id="action_server_rechazar_cotizacion_confirm" model="ir.actions.server">
+        <field name="name">Rechazar cotización</field>
+        <field name="model_id" ref="model_x_wizard_rechcoti"/>
+        <field name="state">code</field>
+        <field name="code">
+order_lines = record.x_rel.order_line
+for ol in order_lines:
+  if ol.order_id.x_studio_nivel:
+    margen = ol.product_id.x_fabricante['x_studio_margen_' + str(ol.order_id.x_studio_nivel)] if ol.product_id.x_fabricante else 12
+  else:
+    margen = 12
+  valor = ol.product_id.standard_price / ((100 - margen) / 100)
+  ol.write({'price_unit': round(valor + .5), 'check_price_reduce': False, 'price_reduce_v': 0.0,
+            'price_reduce_solicit': False})
+record.x_rel.write({'x_motivo_rechazo': record.x_descripcion})
+        </field>
+    </record>
+
+    <record id="action_window_alm14" model="ir.actions.act_window">
+        <field name="name">ALM14</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_mode">list,form</field>
+        <field name="target">current</field>
+        <field name="domain">[('sale', '=', active_id)]</field>
+        <field name="context">{'search_default_sale': active_id,'default_sale': active_id}</field>
+    </record>
+
+    <record id="view_x_wizard_rechcoti_form" model="ir.ui.view">
+        <field name="name">x_wizard_rechcoti_form</field>
+        <field name="model">x_wizard_rechcoti</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <span>
+                        Motivo de rechazo:
+                    </span>
+                    <field name="x_descripcion"/>
+                </sheet>
+                <footer>
+                    <button string="Aceptar" name="%(action_server_rechazar_cotizacion_confirm)d" type="action" class="send_and_print btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

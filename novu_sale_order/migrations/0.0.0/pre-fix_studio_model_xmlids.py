@@ -1,20 +1,17 @@
-from . import models
+# -*- coding: utf-8 -*-
+"""
+MIGRACIÓN V19: mismo fix que `pre_init_hook` en `__init__.py`, pero para el
+caso de actualización (`-u`) en vez de instalación limpia. Ver la nota en
+`res_partner_fields/migrations/0.0.0/pre-fix_studio_model_xmlids.py` para el
+detalle de por qué `pre_init_hook` no alcanza.
+"""
+from odoo import api, SUPERUSER_ID
 
-# MIGRACIÓN V19: `x_wizard_rechcoti` era un modelo creado con Odoo Studio
-# (`ir.model` con `state='manual'`), sin módulo dueño. Al formalizarlo aquí
-# como modelo de código, si el modelo ya existía en la base de datos Odoo
-# no crea el xmlid `novu_sale_order.model_x_wizard_rechcoti` que usa
-# `security/ir.model.access.csv`, y la instalación falla con "No matching
-# record found for external id 'model_x_wizard_rechcoti'" (mismo problema
-# encontrado y corregido en `res_partner_fields`/`sale_purchase_confirm`).
-# Además de crear el xmlid, hay que sacar el modelo y sus campos del
-# estado 'manual' a mano: si no, un rebuild posterior del registro puede
-# volver a tratarlo como dinámico y borrar filas de `ir_model_fields` ya
-# declaradas en código.
 CUSTOM_MODELS = ['x_wizard_rechcoti']
 
 
-def pre_init_hook(env):
+def migrate(cr, version):
+    env = api.Environment(cr, SUPERUSER_ID, {})
     IrModel = env['ir.model']
     IrModelData = env['ir.model.data']
     for model_name in CUSTOM_MODELS:
@@ -33,11 +30,11 @@ def pre_init_hook(env):
                 'res_id': model.id,
                 'noupdate': True,
             })
-        env.cr.execute(
+        cr.execute(
             "UPDATE ir_model SET state = 'base' WHERE id = %s AND state = 'manual'",
             (model.id,),
         )
-        env.cr.execute(
+        cr.execute(
             "UPDATE ir_model_fields SET state = 'base' "
             "WHERE model = %s AND state = 'manual'",
             (model_name,),
