@@ -1,3 +1,5 @@
+import re
+
 from . import models
 
 # MIGRACIÓN V19: las vistas/reportes formalizados aquí (ver views/) usan a
@@ -234,10 +236,67 @@ def _cleanup_unused_studio_fields(env):
             field.unlink()
 
 
+# MIGRACIÓN V19: `l10n_mx_edi` reescribió por completo el manejo de CFDI
+# entre v15 y v19 (pasó de métodos/campos sueltos en `account.move` a un
+# modelo dedicado `l10n_mx_edi.document`). Cualquier reporte de Studio
+# (facturas, remisiones, recibos de pago, entregas con carta porte) que use
+# la sintaxis vieja rompe con `AttributeError`/`KeyError` al imprimirse.
+# Encontrado y confirmado en pruebas locales -renderizando una copia
+# corregida contra una factura real- que estos 4 patrones cubren todos los
+# casos presentes en las vistas heredadas de v15:
+#   - `X._l10n_mx_edi_decode_cfdi()` -> ya no existe en `account.move`; el
+#     reemplazo es `env['l10n_mx_edi.document']._decode_cfdi_attachment(...)`
+#     sobre el adjunto firmado.
+#   - `bool(X._get_l10n_mx_edi_signed_edi_document())` -> ya no existe; el
+#     estado de firma ahora se lee directo del campo `l10n_mx_edi_cfdi_state`.
+#   - `X.l10n_mx_edi_cfdi_request in (...)`/`== '...'` -> ese campo
+#     (workflow de "solicitud" de CFDI) ya no existe; se reduce a `True`
+#     para dejar la condición sólo en manos de `is_cfdi_signed`, que ya
+#     acompaña a esta comparación en todos los casos encontrados.
+#   - `X.l10n_mx_edi_origin` -> se renombró a `X.l10n_mx_edi_cfdi_origin`.
+# Los 3 primeros patrones aplican igual para `account.move`, `account.payment`
+# y `stock.picking` (misma API en los 3 módulos de `l10n_mx_edi*`), así que
+# el mismo reemplazo sirve para reportes de factura, pago y entrega/carta
+# porte por igual.
+_L10N_MX_EDI_DECODE_CFDI_RE = re.compile(r'([a-zA-Z_][a-zA-Z0-9_.]*)\._l10n_mx_edi_decode_cfdi\(\)')
+_L10N_MX_EDI_SIGNED_DOC_RE = re.compile(r'bool\(([a-zA-Z_][a-zA-Z0-9_.]*)\._get_l10n_mx_edi_signed_edi_document\(\)\)')
+_L10N_MX_EDI_CFDI_REQUEST_RE = re.compile(r"[a-zA-Z_][a-zA-Z0-9_.]*\.l10n_mx_edi_cfdi_request\s*(?:in\s*\([^)]*\)|==\s*'[^']*')")
+
+
+def _fix_broken_l10n_mx_edi_reports(env):
+    views = env['ir.ui.view'].search([
+        ('type', '=', 'qweb'),
+        '|', '|',
+        ('arch_db', 'like', '_l10n_mx_edi_decode_cfdi'),
+        ('arch_db', 'like', '_get_l10n_mx_edi_signed_edi_document'),
+        ('arch_db', 'like', 'l10n_mx_edi_origin'),
+    ])
+    for view in views:
+        arch = view.arch_db
+        if not arch:
+            continue
+        new_arch = _L10N_MX_EDI_DECODE_CFDI_RE.sub(
+            lambda m: (
+                f"{m.group(1)}.env['l10n_mx_edi.document']._decode_cfdi_attachment("
+                f"{m.group(1)}.l10n_mx_edi_cfdi_attachment_id.raw)"
+            ),
+            arch,
+        )
+        new_arch = _L10N_MX_EDI_SIGNED_DOC_RE.sub(
+            lambda m: f"({m.group(1)}.l10n_mx_edi_cfdi_state in ('sent', 'global_sent'))",
+            new_arch,
+        )
+        new_arch = _L10N_MX_EDI_CFDI_REQUEST_RE.sub('True', new_arch)
+        new_arch = new_arch.replace('l10n_mx_edi_origin', 'l10n_mx_edi_cfdi_origin')
+        if new_arch != arch:
+            view.write({'arch_db': new_arch})
+
+
 def pre_init_hook(env):
     _deactivate_old_studio_report_views(env)
     _fix_accounting_menu_parents(env)
     _cleanup_unused_studio_fields(env)
+    _fix_broken_l10n_mx_edi_reports(env)
 
 
 def post_init_hook(env):

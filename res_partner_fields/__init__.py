@@ -17,7 +17,15 @@ from . import models
 # si el modelo ya existía (viene de Studio) como si es la primera vez que se
 # instala (no existe todavía; en ese caso no hay nada que hacer aquí, Odoo
 # lo crea normalmente).
-CUSTOM_MODELS = ['x_categoria_compania', 'x_niveles_de_cliente', 'x_grupo_cliente']
+# `x_agente_de_venta`, `x_ref_banco`, `x_subcategia_compania`, `x_clave_p`,
+# `x_grupo_proveedor` y `x_ref_comercial` son el mismo caso: también eran
+# modelos de Studio ya existentes en la base antes de formalizarse aquí como
+# código, así que necesitan el mismo arreglo.
+CUSTOM_MODELS = [
+    'x_categoria_compania', 'x_niveles_de_cliente', 'x_grupo_cliente',
+    'x_agente_de_venta', 'x_ref_banco', 'x_subcategia_compania',
+    'x_clave_p', 'x_grupo_proveedor', 'x_ref_comercial',
+]
 
 
 def pre_init_hook(env):
