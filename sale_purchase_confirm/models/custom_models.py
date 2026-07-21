@@ -17,6 +17,7 @@ from odoo import models, fields
 class XFabricante(models.Model):
     _name = 'x_fabricante'
     _description = 'Fabricante'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -33,6 +34,7 @@ class XFabricante(models.Model):
 class XFamilia(models.Model):
     _name = 'x_familia'
     _description = 'Familia'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -42,6 +44,7 @@ class XFamilia(models.Model):
 class XLinea(models.Model):
     _name = 'x_linea'
     _description = 'Línea'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -51,6 +54,7 @@ class XLinea(models.Model):
 class XGrupo(models.Model):
     _name = 'x_grupo'
     _description = 'Grupo'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -60,6 +64,7 @@ class XGrupo(models.Model):
 class XCaracteristica1(models.Model):
     _name = 'x_caracteristica_1'
     _description = 'Característica 1'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -69,6 +74,7 @@ class XCaracteristica1(models.Model):
 class XColor(models.Model):
     _name = 'x_color'
     _description = 'Color'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -78,6 +84,7 @@ class XColor(models.Model):
 class XSublinea(models.Model):
     _name = 'x_sublinea'
     _description = 'Sublínea'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -87,6 +94,7 @@ class XSublinea(models.Model):
 class XMarca(models.Model):
     _name = 'x_marca'
     _description = 'Marca'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -96,6 +104,7 @@ class XMarca(models.Model):
 class XLargo(models.Model):
     _name = 'x_largo'
     _description = 'Largo'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -105,6 +114,7 @@ class XLargo(models.Model):
 class XMarcaDelProducto(models.Model):
     _name = 'x_marca_del_producto'
     _description = 'Marca del producto'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -115,6 +125,7 @@ class XMarcaDelProducto(models.Model):
 class XModeloDelProducto(models.Model):
     _name = 'x_modelo_del_producto'
     _description = 'Modelo del producto'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -128,6 +139,7 @@ class XModeloDelProducto(models.Model):
 class XEstadoDelProducto(models.Model):
     _name = 'x_estado_del_producto'
     _description = 'Estado del producto'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -137,6 +149,7 @@ class XEstadoDelProducto(models.Model):
 class XConceptosDeBaja(models.Model):
     _name = 'x_conceptos_de_baja'
     _description = 'Conceptos de baja'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -146,6 +159,7 @@ class XConceptosDeBaja(models.Model):
 class XConceptosBasicosDe(models.Model):
     _name = 'x_conceptos_basicos_de'
     _description = 'Conceptos básicos de operación'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -174,6 +188,7 @@ class XWizardPartner(models.Model):
 class XTemporadas(models.Model):
     _name = 'x_temporadas'
     _description = 'Temporadas'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -186,6 +201,7 @@ class XTemporadas(models.Model):
 class XSegmento(models.Model):
     _name = 'x_segmento'
     _description = 'Segmento'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Segmento')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -196,6 +212,7 @@ class XSegmento(models.Model):
 class XNumeroDeSerieArti(models.Model):
     _name = 'x_numero_de_serie_arti'
     _description = 'Numero de serie articulo'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -205,6 +222,7 @@ class XNumeroDeSerieArti(models.Model):
 class XNumeroDeSerieMoto(models.Model):
     _name = 'x_numero_de_serie_moto'
     _description = 'Número de serie Motor'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)

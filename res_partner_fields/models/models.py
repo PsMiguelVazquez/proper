@@ -65,6 +65,7 @@ regimenes = [('601', '601- General de Ley Personas Morales')
 class XSubcategiaCompania(models.Model):
     _name = 'x_subcategia_compania'
     _description = 'Subcategoría de compañía'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -75,6 +76,7 @@ class XSubcategiaCompania(models.Model):
 class XCategoriaCompania(models.Model):
     _name = 'x_categoria_compania'
     _description = 'Categoría de compañía'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Nombre')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -88,6 +90,7 @@ class XCategoriaCompania(models.Model):
 class XNivelesDeCliente(models.Model):
     _name = 'x_niveles_de_cliente'
     _description = 'Niveles de cliente'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Nivel de cliente')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -105,6 +108,7 @@ class XNivelesDeCliente(models.Model):
 class XGrupoCliente(models.Model):
     _name = 'x_grupo_cliente'
     _description = 'Grupo de cliente'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Nombre')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -115,6 +119,7 @@ class XGrupoCliente(models.Model):
 class XAgenteDeVenta(models.Model):
     _name = 'x_agente_de_venta'
     _description = 'Agente de venta'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Name')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -137,6 +142,7 @@ class XRefBanco(models.Model):
 class XClaveP(models.Model):
     _name = 'x_clave_p'
     _description = 'Clave proveedor'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Clave')
     x_active = fields.Boolean(string='Activo', default=True)
@@ -147,6 +153,7 @@ class XClaveP(models.Model):
 class XGrupoProveedor(models.Model):
     _name = 'x_grupo_proveedor'
     _description = 'Grupo proveedor'
+    _rec_name = 'x_name'
 
     x_name = fields.Char(string='Nombre')
     x_active = fields.Boolean(string='Activo', default=True)
