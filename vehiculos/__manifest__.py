@@ -14,11 +14,12 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.2',
     'license': 'LGPL-3',
     # MIGRACIÓN V19: se agrega 'stock_delivery', de donde viene
     # `carrier_tracking_ref` en stock.picking, usado por este módulo.
     'depends': ['base', 'stock', 'fleet', 'hr', 'sale', 'product', 'mrp', 'stock_delivery'],
+    'pre_init_hook': 'pre_init_hook',
     'data': [
         'security/ir.model.access.csv',
         'views/views.xml',
