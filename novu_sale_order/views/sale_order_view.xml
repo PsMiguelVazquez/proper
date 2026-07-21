@@ -91,7 +91,7 @@
                     <field name="fecha_factura"/>
                 </xpath>
                 <xpath expr="//button[@name='action_view_mrp_production']" position="after">
-                    <button class="oe_stat_button" icon="fa-retweet" type="action" name="1084">
+                    <button class="oe_stat_button" icon="fa-retweet" type="action" name="%(action_window_alm14)d">
                       <field widget="statinfo" name="x_sale_id_stock_picking_count" string="ALM14"/>
                     </button>
                 </xpath>
@@ -109,7 +109,7 @@
                     <button name="conf_credito" string="Aprobación Credito" type="object" class="btn-primary" invisible=" state != 'credito_conf'" groups="account_payment_proper.group_credito_c"/>
                     <button name="conf_ventas" string="Aprobación Venta" type="object" class="btn-primary" invisible=" state != 'sale_conf'" groups="account_payment_proper.group_sale_manager"/>
                     <button name="conf_purchase" string="Aprobación Compras" type="object" class="btn-primary" invisible=" state != 'purchase_conf'" groups="purchase.group_purchase_manager"/>
-                    <button name="1277" string="Rechazar" type="action" class="btn-primary" invisible="state not in ['purchase_conf', 'sale_conf', 'credito_conf']" groups="purchase.group_purchase_manager,account_payment_proper.group_sale_manager,account_payment_proper.group_credito_c,account.group_account_invoice"/>
+                    <button name="%(action_server_rechazar_cotizacion)d" string="Rechazar" type="action" class="btn-primary" invisible="state not in ['purchase_conf', 'sale_conf', 'credito_conf']" groups="purchase.group_purchase_manager,account_payment_proper.group_sale_manager,account_payment_proper.group_credito_c,account.group_account_invoice"/>
                    
                 </xpath>
                 <!-- <xpath expr="//div[contains(@class, 'oe_chatter')]" position="replace">
@@ -141,7 +141,7 @@
                 </xpath> -->
 
                 <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='order_lines']/field[@name='order_line']/list[1]/field[@name='qty_invoiced']" position="after">
-                    <button name="871" string="validar datos" type="action" class="btn-primary" optional="show"/>
+                    <button name="%(action_server_validacion_precio)d" string="validar datos" type="action" class="btn-primary" optional="show"/>
                     <field name="x_studio_nuevo_costo" optional="show" readonly="1" attrs="{'invisible':[('x_studio_nuevo_costo', '=', 0)]}"/>
                     <field name="x_cantidad_disponible_compra" optional="show" readonly="1" attrs="{'invisible':[('x_cantidad_disponible_compra', '=', 0)]}"/>
                     <field name="x_tiempo_entrega_compra" attrs="{'invisible':[('x_tiempo_entrega_compra', '=', 0)]}"/>

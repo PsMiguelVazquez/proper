@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_x_wizard_rechcoti,novu_sale_order.x_wizard_rechcoti,model_x_wizard_rechcoti,base.group_user,1,1,1,1

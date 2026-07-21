@@ -34,7 +34,7 @@
     'website': "http://www.novucentral.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.31',
+    'version': '19.0.1.0.33',
     'license': 'LGPL-3',
 
     'pre_init_hook': 'pre_init_hook',
