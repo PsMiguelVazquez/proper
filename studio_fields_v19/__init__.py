@@ -367,6 +367,224 @@ def _fix_broken_studio_invoice_report_wrappers(env):
             view.write({'arch_db': new_arch})
 
 
+# MIGRACIÓN V19: `account.move.line.display_type` cambió de significado.
+# Antes (v15) una línea de producto normal tenía ese campo vacío/`False`
+# -sólo las líneas de sección/nota tenían un valor-, así que Studio (y el
+# propio Odoo en ese entonces) usaba `not line.display_type` para decir "es
+# una línea contable normal". En v19 TODAS las líneas tienen un valor
+# explícito, incluidas las de producto (`'product'`); `not line.display_type`
+# ya no es cierto para ninguna línea, así que ese bloque -con toda la fila
+# de la tabla: cantidad, producto, precio, etc.- nunca se renderiza y el
+# reporte sale con la tabla de líneas vacía. El propio core de Odoo ya
+# migró a comparar contra el valor explícito
+# (`addons/account/views/report_invoice.xml`: `line.display_type == 'product'`);
+# se aplica el mismo cambio a las copias de Studio.
+# OJO: esto es específico de `account.move.line` -las líneas de
+# `sale.order`/`purchase.order` NO tienen `'product'` como opción de
+# `display_type` (sigue siendo `False` para líneas normales, ver
+# `addons/sale/models/sale_order_line.py`), así que ahí `not line.display_type`
+# sigue siendo la comprobación correcta y no se debe tocar-. Se filtra por
+# `invoice_line_ids` (sólo aparece en reportes de factura) para no rozar los
+# reportes de cotización/orden de compra que comparten el mismo `.copy_N` de
+# Studio pero con `order_line` en vez de `line`.
+def _fix_broken_invoice_report_display_type(env):
+    views = env['ir.ui.view'].search([
+        ('type', '=', 'qweb'),
+        ('arch_db', 'like', 'not line.display_type'),
+        ('arch_db', 'like', 'invoice_line_ids'),
+    ])
+    for view in views:
+        if view.key == 'account.report_invoice_document':
+            continue
+        arch = view.arch_db
+        if not arch:
+            continue
+        new_arch = arch.replace('not line.display_type', "line.display_type == 'product'")
+        if new_arch != arch:
+            view.write({'arch_db': new_arch})
+
+
+# MIGRACIÓN V19: `tax_totals_json` (v15, un string JSON que había que
+# parsear con `json.loads()`) se renombró a `tax_totals` y ahora es
+# directamente el diccionario de Python (`addons/account/models/account_move.py`,
+# campo `tax_totals`, `compute='_compute_tax_totals'`); ya no hace falta
+# `json.loads()`. Afecta tanto a las plantillas QWeb de reportes (factura,
+# cotización, orden de compra) como a la vista de formulario Studio
+# `sale.order.form.mkp`, que todavía declara `<field name="tax_totals_json">`.
+def _fix_broken_tax_totals_json(env):
+    IrUiView = env['ir.ui.view']
+    views = IrUiView.search([('arch_db', 'like', 'tax_totals_json')])
+    external_ids = views.get_external_id()
+    for view in views:
+        # sólo se toca lo que es de Studio (sin módulo dueño, o dueño
+        # `studio_customization`); lo que pertenece a un módulo real
+        # (`account`, `sale`, `purchase`, `sale_management`,
+        # `account_invoice_extract`, ...) ya trae el campo correcto en su
+        # propio código y no debe tocarse aquí.
+        xmlid = external_ids.get(view.id) or ''
+        owner_module = xmlid.split('.')[0] if '.' in xmlid else ''
+        if owner_module and owner_module != 'studio_customization':
+            continue
+        arch = view.arch_db
+        if not arch:
+            continue
+        new_arch = re.sub(r'json\.loads\(([a-zA-Z_][a-zA-Z0-9_.]*)\.tax_totals_json\)', r'\1.tax_totals', arch)
+        new_arch = new_arch.replace('tax_totals_json', 'tax_totals')
+        if new_arch != arch:
+            view.write({'arch_db': new_arch})
+
+
+# MIGRACIÓN V19: además del rename `tax_totals_json` -> `tax_totals`
+# (`_fix_broken_tax_totals_json`), el propio DICCIONARIO que arma
+# `_get_tax_totals_summary()` cambió de forma por completo entre v15 y v19,
+# no sólo de nombre:
+#   - v15: cada `subtotal`/`amount_by_group` ya traía el importe como texto
+#     formateado listo para imprimir (`formatted_amount`,
+#     `formatted_tax_group_amount`, etc.), y los grupos de impuestos se
+#     buscaban aparte con `tax_totals['groups_by_subtotal'][subtotal_to_show]`.
+#   - v19: los importes son números crudos (`base_amount_currency`,
+#     `tax_amount_currency`, ...) que hay que formatear en la vista con
+#     `t-options="{'widget': 'monetary', ...}"`, y cada `subtotal` ya trae
+#     sus propios `tax_groups` anidados (`subtotal['tax_groups']`), sin
+#     necesidad de buscarlos aparte.
+# Encontrado al probar "Factura Moto" con una línea con impuesto real (con
+# una factura sin impuestos el `t-foreach` de grupos queda vacío y el
+# `KeyError` no se dispara -así pasó inadvertido en pruebas anteriores con
+# facturas de prueba sin impuestos configurados-. Los 4 pares
+# `account.document_tax_totals_copy_N`/`account.tax_groups_totals_copy_N`
+# de Studio son bit-a-bit idénticos entre sí (sólo cambia el nombre propio y
+# la referencia al que llaman), así que se reescriben con la misma lógica
+# que usa el core actual (`addons/account/views/report_invoice.xml`,
+# `document_tax_totals_template`/`tax_groups_totals_template`) manteniendo
+# el estilo visual original de Studio (bordes, `font-size:12px`, etc.).
+_TAX_TOTALS_DOCUMENT_TEMPLATE = """<t t-name="account.document_tax_totals_copy_{n}">
+            <t t-set="same_tax_base" t-value="tax_totals['same_tax_base']"/>
+            <t t-set="currency" t-value="o.currency_id"/>
+            <t t-foreach="tax_totals['subtotals']" t-as="subtotal">
+                <tr class="border-black o_subtotal">
+                    <td style="border-right: black 1px solid;" class="small"><strong t-esc="subtotal['name']"/></td>
+
+                    <td class="text-right small bg-white">
+                        <span t-att-class="oe_subtotal_footer_separator" t-out="subtotal['base_amount_currency']" t-options='{{"widget": "monetary", "display_currency": currency}}'/>
+                    </td>
+                </tr>
+
+                <t t-call="account.tax_groups_totals_copy_{n}"/>
+            </t>
+
+            <!--Total amount with all taxes-->
+            <tr class="border-black o_total">
+                <td style="font-size:12px; color: black; border-right: black 1px solid;" class="bg-white"><strong style="font-size:12px; color: black;">Total</strong></td>
+                <td style="font-size:12px;" class="text-right bg-white">
+                    <span style="font-size:12px; color: black;" t-out="tax_totals['total_amount_currency']" t-options='{{"widget": "monetary", "display_currency": currency}}'/>
+                </td>
+            </tr>
+        </t>"""
+
+_TAX_GROUPS_TEMPLATE = """<t t-name="account.tax_groups_totals_copy_{n}">
+            <t t-foreach="subtotal['tax_groups']" t-as="tax_group">
+                <tr>
+                    <t t-if="same_tax_base or tax_group['display_base_amount_currency'] is False">
+                        <td class="small"><span class="text-nowrap" t-esc="tax_group['group_name']"/></td>
+                        <td class="text-right o_price_total small bg-white">
+                            <span class="text-nowrap" t-out="tax_group['tax_amount_currency']" t-options='{{"widget": "monetary", "display_currency": currency}}'/>
+                        </td>
+                    </t>
+                    <t t-else="">
+                        <td>
+                            <span t-esc="tax_group['group_name']"/>
+                            <span class="text-nowrap"> on
+                                <span t-out="tax_group['display_base_amount_currency']" t-options='{{"widget": "monetary", "display_currency": currency}}'/>
+                            </span>
+                        </td>
+                        <td class="text-right o_price_total">
+                            <span class="text-nowrap" t-out="tax_group['tax_amount_currency']" t-options='{{"widget": "monetary", "display_currency": currency}}'/>
+                        </td>
+                    </t>
+                </tr>
+            </t>
+        </t>"""
+
+# MIGRACIÓN V19: `_copy_1` y `_copy_1_copy_1` NO van aquí -ya están
+# formalizados correctamente en `views/document_tax_totals_copy_1.xml` y
+# `views/document_tax_totals_copy_1_copy_1.xml`, con la lógica de grupos de
+# impuestos ya en línea (sin sub-plantilla separada) para los reportes de
+# cotización ("Remisión MKP"/"Productos de Muestra"); sobrescribirlos aquí
+# perdería esa versión ya validada-. Sólo `_copy_2` y `_copy_3` (usados por
+# reportes de FACTURA) seguían con la estructura vieja de Studio.
+_TAX_TOTALS_COPY_SUFFIXES = ['2', '3']
+
+
+def _fix_broken_tax_totals_structure(env):
+    IrUiView = env['ir.ui.view']
+    for suffix in _TAX_TOTALS_COPY_SUFFIXES:
+        doc_view = IrUiView.search([('key', '=', f'account.document_tax_totals_copy_{suffix}')], limit=1)
+        if doc_view and doc_view.arch_db != _TAX_TOTALS_DOCUMENT_TEMPLATE.format(n=suffix):
+            doc_view.write({'arch_db': _TAX_TOTALS_DOCUMENT_TEMPLATE.format(n=suffix)})
+        groups_view = IrUiView.search([('key', '=', f'account.tax_groups_totals_copy_{suffix}')], limit=1)
+        if groups_view and groups_view.arch_db != _TAX_GROUPS_TEMPLATE.format(n=suffix):
+            groups_view.write({'arch_db': _TAX_GROUPS_TEMPLATE.format(n=suffix)})
+
+
+# MIGRACIÓN V19: `modifiers="..."` en un `<field>` de vista tree/form es un
+# atributo que Odoo SIEMPRE calculó en tiempo de ejecución a partir de
+# `invisible=`/`readonly=`/`required=` (o del viejo `attrs=`); nunca debía
+# guardarse tal cual en el arch, pero algunas exportaciones de Studio lo
+# dejaron grabado literalmente. El validador RelaxNG de v19 es más estricto
+# que el de v15 y lo rechaza directo ("Invalid attribute modifiers for
+# element field"), lo que además hace que Odoo descarte la vista completa
+# como inválida (mensajes en cascada como "Element list has extra content:
+# field"/"Expecting an element data, got nothing" para la misma vista).
+# Se encontraron sólo 4 variantes de contenido en las 20 vistas afectadas
+# (confirmado por inspección directa de cada una): se reemplaza cada una
+# por sus atributos reales equivalentes -o se elimina sin más si estaba
+# vacío (`{}`, no aportaba nada)-.
+_MODIFIERS_REPLACEMENTS = [
+    (' modifiers="{}"', ''),
+    (' modifiers="{&quot;readonly&quot;: true, &quot;required&quot;: true}"', ' readonly="1" required="1"'),
+    (' modifiers="{&quot;readonly&quot;: true}"', ' readonly="1"'),
+    (' modifiers="{&quot;required&quot;: true}"', ' required="1"'),
+]
+
+
+def _fix_broken_modifiers_attribute(env):
+    views = env['ir.ui.view'].search([('arch_db', 'like', 'modifiers=')])
+    for view in views:
+        arch = view.arch_db
+        if not arch:
+            continue
+        new_arch = arch
+        for old, new in _MODIFIERS_REPLACEMENTS:
+            new_arch = new_arch.replace(old, new)
+        if new_arch != arch:
+            view.write({'arch_db': new_arch})
+
+
+# MIGRACIÓN V19: `banner_route` (el atributo que mostraba el banner de
+# onboarding en la vista lista de facturas) ya no existe en v19; Studio lo
+# había agregado por xpath sobre la vista base de facturas
+# (`account.out.invoice.tree.invoke_custumers`, sin xmlid, 100% en base de
+# datos). El validador lo rechaza directo ("Invalid attribute banner_route
+# for element list") e invalida toda la vista. Se quita ese bloque de
+# xpath -no hacía falta, era sólo un banner informativo-.
+_BANNER_ROUTE_XPATH_RE = re.compile(
+    r'<xpath expr="//tree" position="attributes">\s*'
+    r'<attribute name="banner_route">[^<]*</attribute>\s*'
+    r'</xpath>'
+)
+
+
+def _fix_broken_banner_route(env):
+    views = env['ir.ui.view'].search([('arch_db', 'like', 'banner_route')])
+    for view in views:
+        arch = view.arch_db
+        if not arch:
+            continue
+        new_arch = _BANNER_ROUTE_XPATH_RE.sub('', arch)
+        if new_arch != arch:
+            view.write({'arch_db': new_arch})
+
+
 def pre_init_hook(env):
     _deactivate_old_studio_report_views(env)
     _fix_accounting_menu_parents(env)
@@ -374,6 +592,11 @@ def pre_init_hook(env):
     _fix_broken_l10n_mx_edi_reports(env)
     _fix_broken_studio_report_field_refs(env)
     _fix_broken_studio_invoice_report_wrappers(env)
+    _fix_broken_invoice_report_display_type(env)
+    _fix_broken_tax_totals_json(env)
+    _fix_broken_tax_totals_structure(env)
+    _fix_broken_modifiers_attribute(env)
+    _fix_broken_banner_route(env)
 
 
 def post_init_hook(env):
