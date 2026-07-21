@@ -5,15 +5,14 @@ from odoo import models, fields, api, _
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
     edit_blocked = fields.Boolean('Bloqueado', default=False, compute='_compute_edit_blocked')
-    # MIGRACIÓN V19: el compute del core se renombró de `_get_invoice_status`
-    # a `_compute_invoice_status` (mismo fix que en `block_edit_sale_order`).
-    invoice_status = fields.Selection([
-        ('upselling', 'Upselling Opportunity'),
-        ('invoiced', 'Fully Invoiced'),
-        ('to invoice', 'To Invoice'),
-        ('reverted', 'Nota de crédito aplicada'),
-        ('no', 'Nothing to Invoice')
-    ], string='Invoice Status', compute='_compute_invoice_status', store=True)
+    # MIGRACIÓN V19: mismo fix que en `block_edit_sale_order/models/sale_order.py`
+    # (ver ese archivo para el detalle): `selection_add` en vez de
+    # sobreescribir la selección completa a mano.
+    invoice_status = fields.Selection(
+        selection_add=[('reverted', 'Nota de crédito aplicada'), ('no',)],
+        ondelete={'reverted': 'set null'},
+        compute='_compute_invoice_status', store=True,
+    )
     credit_notes = fields.Many2many('account.move', string='Notas de crédito relacionadas', compute='get_credit_notes')
     block_invoicing = fields.Boolean(compute='_compute_block_invoicing')
     invoice_approved = fields.Boolean(default=False)
@@ -92,20 +91,12 @@ class SaleOrderLine(models.Model):
                                                   sum(kit.bom_line_ids.filtered(lambda y: y.product_id == record.product_id).mapped('product_qty')))
 
 
-class ProductTemplate(models.Model):
-    _inherit = 'product.template'
-    # MIGRACIÓN V19: `x_studio_rama` (Studio, "Plantilla de producto") es un
-    # campo Selección usado por `data.validate.branch`. Sin valores de
-    # opción confirmados por el usuario para este campo específico, pero se
-    # reutiliza el mismo conjunto que `wizard.proposal.x_rama`
-    # (`sale_purchase_confirm`), claramente el mismo concepto de negocio.
-    x_studio_rama = fields.Selection([
-        ("SOBREPEDIDO", "SOBREPEDIDO"),
-        ("LINEA", "LINEA"),
-        ("OBSOLETO", "OBSOLETO"),
-        ("DESCONTINUADO", "DESCONTINUADO"),
-        ("CATALOGO", "CATALOGO"),
-        ("ACTIVO FIJO", "ACTIVO FIJO"),
-        ("ADMON", "ADMON"),
-        ("PROMOCION", "PROMOCION"),
-    ], string='Rama')
+# MIGRACIÓN V19: `x_studio_rama` (Studio, "Plantilla de producto") se había
+# declarado aquí como "mejor esfuerzo" (sin el listado real confirmado en
+# ese momento, reutilizando el conjunto de `wizard.proposal.x_rama`). Ya se
+# formalizó con el listado completo y confirmado (12 valores, del export
+# real de Studio) en `studio_fields_v19/models/product_template.py`; tener
+# el campo declarado en dos módulos sin relación de dependencia entre sí
+# hace que el orden de carga (no garantizado) decida cuál selección "gana"
+# -de ahí el warning "overrides existing selection"-, así que se quita esta
+# versión incompleta.

@@ -6,18 +6,20 @@ from datetime import datetime
 
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
-    # MIGRACIÓN V19: el core quitó el estado 'done' (Locked) de
-    # purchase.order.state -ahora "Locked" es el booleano `locked`-, por lo
-    # que se elimina de esta lista para que coincida con el set real de
-    # 19.0; se conserva el estado propio 'consolidate'.
-    state = fields.Selection([
-        ('draft', 'RFQ'),
-        ('sent', 'RFQ Sent'),
-        ('to approve', 'To Approve'),
-        ('purchase', 'Purchase Order'),
-        ('cancel', 'Cancelled'),
-        ('consolidate', 'Consolidada'),
-    ], string='Status', readonly=True, index=True, copy=False, default='draft', tracking=True)
+    # MIGRACIÓN V19: antes se sobreescribía `state` con la lista completa
+    # -incluyendo a mano los valores del core-, lo que dispara el warning
+    # "overrides existing selection; use selection_add instead" (y es
+    # frágil: si el core cambia sus opciones, como pasó con 'done'/Locked
+    # -ahora es el booleano `locked`-, hay que actualizar esta copia a
+    # mano). Se usa `selection_add` para sólo agregar el valor propio
+    # 'consolidate' sobre la selección real del core, sin listarla de
+    # nuevo. `ondelete` indica qué hacer con órdenes en ese estado si este
+    # módulo se desinstala; `'set default'` las regresa a 'draft' en vez de
+    # borrarlas.
+    state = fields.Selection(
+        selection_add=[('consolidate', 'Consolidada')],
+        ondelete={'consolidate': 'set default'},
+    )
 
     def view_consolidate_purchase_wizard(self):
         purchase_orders = self.env['purchase.order'].browse(self.env.context.get('active_ids'))
