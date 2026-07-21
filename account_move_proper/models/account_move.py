@@ -52,9 +52,13 @@ class AccountMove(models.Model):
     x_studio_almacn = fields.Char(string='Almacén', compute='_compute_x_studio_almacn', store=True)
     x_fecha_pago_pro = fields.Date(string='Fecha estimada de Pago')
     x_tipo_de_relacion = fields.Char(string='Tipo de relación')
-    x_estado_actuali_cli = fields.Selection(
-        [('3.3', '3.3'), ('4', '4')], string='Estado de actualizacion del cliente',
-        related='partner_id.x_estado_cli_actua')
+    # MIGRACIÓN V19: `x_estado_actuali_cli` se quita de aquí por duplicado:
+    # ya se declara en `sale_purchase_confirm/models/account_move.py`
+    # (dependencia de este módulo), tener el mismo campo `related=` en dos
+    # módulos sin relación de dependencia entre sí hacía que el orden de
+    # carga decidiera cuál definición "ganaba", generando el warning
+    # "selection attribute will be ignored as the field is related" por
+    # duplicado (una vez por cada declaración).
     # MIGRACIÓN V19: `x_plazo_pago` (related a
     # `invoice_payment_term_id.x_nombre_corto` según el export de Studio) se
     # había omitido en la formalización inicial; se agrega aquí. Se declara
