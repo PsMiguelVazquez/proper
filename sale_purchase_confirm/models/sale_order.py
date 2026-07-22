@@ -67,7 +67,7 @@ class SaleOrder(models.Model):
     # MIGRACIÓN V19: campos de Odoo Studio en `sale.order` formalizados como
     # código real (ver nota en `custom_models.py`).
     x_doc_entrega = fields.Selection(
-        string='Documento de entrega',
+        string='Documento de entrega', tracking=True,
         selection=[('factura', 'Factura'), ('remision_sin_costo', 'Remisión sin costo'), ('remision_con_costo', 'Remisión con costo')])
     x_metodo_entrega = fields.Selection(
         string='Método de entrega',
@@ -76,11 +76,11 @@ class SaleOrder(models.Model):
     x_bloqueo = fields.Boolean(string='Bloqueo')
     x_aprovar = fields.Boolean(string='Aprovar')
     x_studio_cliente_de_marketplace = fields.Char(string='Cliente de marketplace')
-    x_otros_documentos = fields.Many2many('ir.attachment', string='Otros documentos')
+    x_otros_documentos = fields.Many2many('ir.attachment', string='Otros documentos', tracking=True)
     x_estado_surtido = fields.Selection(string='Estado de surtido', selection=[('pendiente', 'Pendiente'), ('surtir', 'Surtir')])
-    x_studio_n_orden_de_compra = fields.Char(string='N° Orden de compra')
+    x_studio_n_orden_de_compra = fields.Char(string='N° Orden de compra', tracking=True)
     x_observaciones = fields.Text(string='Observaciones')
-    x_studio_nivel = fields.Char(string='Nivel', related='partner_id.x_nivel_cliente.x_name')
+    x_studio_nivel = fields.Char(string='Nivel', related='partner_id.x_nivel_cliente.x_name', tracking=True)
 
     def _compute_fechas_facturas(self):
         for record in self:
