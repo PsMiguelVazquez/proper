@@ -6,13 +6,14 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='payment_reference']" position="before">
                 <!-- MIGRACIÓN V19: `attrs`/`states` reemplazados por
-                     expresiones lógicas inline. `edi_state` y
-                     `edi_show_abandon_cancel_button` viven en `account_edi`,
-                     módulo del que este módulo no depende (`l10n_mx_edi` ya
-                     no depende de `account_edi` en 19.0); se simplifica la
-                     condición a solo el estado de la factura. -->
+                     expresiones lógicas inline. `edi_state` vive en
+                     `account_edi`, ahora declarado como dependencia
+                     explícita (antes se simplificaba esta condición a solo
+                     el estado de la factura porque el módulo no lo tenía
+                     disponible); se restaura el `required=` real de
+                     Studio. -->
                 <field name="motivo_cancelacion"
-                       invisible="state != 'cancel'"/>
+                       required="edi_state == 'to_cancel'"/>
                 <field name="fecha_confirmacion_cancelacion"
                        invisible="state != 'cancel'"/>
             </xpath>

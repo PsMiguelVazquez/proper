@@ -13,7 +13,7 @@
     'website': "",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.3',
+    'version': '19.0.1.0.4',
     'license': 'LGPL-3',
 
     # MIGRACIÓN V19: `l10n_mx_edi` pasó a ser un módulo Enterprise (en 15.0
@@ -31,6 +31,11 @@
         'base', 'account', 'product', 'l10n_mx_edi', 'stock',
         'account_move_update_field_label', 'costo_promedio_proper',
         'upload_invoice_wizard', 'res_partner_fields', 'sale_purchase_confirm',
+        # MIGRACIÓN V19: se agrega para poder usar `edi_state` en el
+        # `required=` real de `motivo_cancelacion` (ver comentario en
+        # `views/views.xml`); antes no era dependencia de ningún módulo
+        # `proper`, así que se simplificaba esa condición.
+        'account_edi',
     ],
 
     'data': [

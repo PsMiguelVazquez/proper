@@ -44,10 +44,14 @@ class AccountMove(models.Model):
     x_studio_notas = fields.Text(string='Notas')
     x_color = fields.Integer(string='Color')
     x_studio_mkp = fields.Char(string='MKP')
+    # MIGRACIÓN V19: campo manual de Studio, nunca formalizado -distinto
+    # del `reason` del wizard `account.move.reversal`-.
+    reason = fields.Char(string='Motivo')
 
     # MIGRACIÓN V19: en Studio eran `related=` a través de campos
     # `Many2one` (`reversed_entry_id`/`sale_id`), se mantienen igual.
     x_studio_ref = fields.Char(related='reversed_entry_id.display_name', string='Ref.')
+    x_num_pro = fields.Char(related='partner_id.x_num_pro', string='Número de Proveedor', tracking=True)
     x_studio_mkp_1 = fields.Selection(related='sale_id.x_studio_origen_mkp', store=True, string='MKP (origen)')
     x_studio_nombre_del_solicitante = fields.Char(
         related='sale_id.partner_child.name', store=True, string='Nombre del solicitante')
