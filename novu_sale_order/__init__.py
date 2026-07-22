@@ -42,3 +42,28 @@ def pre_init_hook(env):
             "WHERE model = %s AND state = 'manual'",
             (model_name,),
         )
+    _deactivate_old_pedido_mkp_menu(env)
+
+
+# MIGRACIÓN V19: "Pedido de MKP" era un menú/acción creado con Odoo Studio
+# (módulo fantasma `studio_customization`, sin dueño real), ya reemplazado
+# por el menú "Pedidos MKP V18" (`menu_pedidos_mkp`/`action_pedidos_mkp`,
+# formalizados en `views/sale_order_action_mkp.xml`, ahora renombrado a
+# "Pedido de MKP" también). Se desactiva el menú viejo para no tener dos
+# entradas duplicadas; se identifica por el dominio de su acción -no por el
+# nombre, porque después de este cambio ambos comparten el mismo nombre- y
+# excluyendo explícitamente nuestra propia acción formalizada.
+def _deactivate_old_pedido_mkp_menu(env):
+    our_action = env.ref('novu_sale_order.action_pedidos_mkp', raise_if_not_found=False)
+    old_actions = env['ir.actions.act_window'].search([
+        ('res_model', '=', 'sale.order'),
+        ('domain', 'like', 'x_studio_venta_mostrador'),
+    ])
+    if our_action:
+        old_actions -= our_action
+    if not old_actions:
+        return
+    menus = env['ir.ui.menu'].search([
+        ('action', 'in', ['ir.actions.act_window,%d' % a.id for a in old_actions]),
+    ])
+    menus.write({'active': False})

@@ -11,6 +11,9 @@
                                   (0, 0, {'view_mode': 'form', 'view_id': ref('sale_order_mkp_view_form')})]"/>
     </record>
       
-    <menuitem id="menu_pedidos_mkp" parent="sale.sale_order_menu" name="Pedidos MKP V18" sequence="2" action="action_pedidos_mkp"/>
+    <!-- MIGRACIÓN V19: renombrado de "Pedidos MKP V18" a "Pedido de MKP"
+         -reemplaza al menú viejo de Odoo Studio con ese mismo nombre,
+         desactivado en `__init__.py` (`_deactivate_old_pedido_mkp_menu`). -->
+    <menuitem id="menu_pedidos_mkp" parent="sale.sale_order_menu" name="Pedido de MKP" sequence="2" action="action_pedidos_mkp"/>
   </data>
 </odoo>
