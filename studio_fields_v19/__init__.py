@@ -318,6 +318,29 @@ def _fix_broken_studio_report_field_refs(env):
             view.write({'arch_db': new_arch})
 
 
+# MIGRACIÓN V19: `purchase.order.line.product_uom` se renombró a
+# `product_uom_id` (mismo patrón que otros renames del core). La vista de
+# Studio "report_purchasequotation_document copy(1) customization" (sin
+# xmlid) todavía usa el nombre viejo en dos `t-field`, causando
+# `AttributeError: 'purchase.order.line' object has no attribute
+# 'product_uom'` al generar el PDF de la cotización de compra.
+def _fix_broken_purchase_order_uom_ref(env):
+    views = env['ir.ui.view'].search([
+        ('type', '=', 'qweb'),
+        ('arch_db', 'like', 'order_line.product_uom.display_name'),
+    ])
+    for view in views:
+        arch = view.arch_db
+        if not arch:
+            continue
+        new_arch = arch.replace(
+            'order_line.product_uom.display_name',
+            'order_line.product_uom_id.display_name',
+        )
+        if new_arch != arch:
+            view.write({'arch_db': new_arch})
+
+
 # MIGRACIÓN V19: causa raíz de "Operación no válida ... no incluye los
 # atributos 'data-oe-model' y 'data-oe-id'" en las facturas de Studio
 # (Factura Proper, Remisión sin costos, Remisión con Costos, etc.) una vez
@@ -638,6 +661,7 @@ def pre_init_hook(env):
     _cleanup_unused_studio_fields(env)
     _fix_broken_l10n_mx_edi_reports(env)
     _fix_broken_studio_report_field_refs(env)
+    _fix_broken_purchase_order_uom_ref(env)
     _fix_broken_studio_invoice_report_wrappers(env)
     _fix_broken_invoice_report_display_type(env)
     _fix_broken_tax_totals_json(env)
