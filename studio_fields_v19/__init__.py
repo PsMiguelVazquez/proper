@@ -341,6 +341,29 @@ def _fix_broken_purchase_order_uom_ref(env):
             view.write({'arch_db': new_arch})
 
 
+# MIGRACIÓN V19: `purchase.order.notes` se renombró a `note` (sin "s").
+# Varias vistas de Studio (reportes de cotización/orden de compra y sus
+# copias, todas sin xmlid propio -módulo fantasma `studio_customization`,
+# `noupdate=True`, nunca se auto-corrigen-) todavía usan el nombre viejo,
+# con distintas variables de plantilla (`o.notes`, `doc.notes`,
+# `o.related_purchase_id.notes`), causando `KeyError: 'notes'` al generar
+# el PDF. Se reemplaza el sufijo `.notes"` por `.note"` sin importar el
+# prefijo, ya que el patrón sólo calza cuando "notes" es el último tramo
+# del camino de campo (justo antes de la comilla de cierre).
+def _fix_broken_purchase_order_notes_ref(env):
+    views = env['ir.ui.view'].search([
+        ('type', '=', 'qweb'),
+        ('arch_db', 'like', '.notes"'),
+    ])
+    for view in views:
+        arch = view.arch_db
+        if not arch:
+            continue
+        new_arch = arch.replace('.notes"', '.note"')
+        if new_arch != arch:
+            view.write({'arch_db': new_arch})
+
+
 # MIGRACIÓN V19: causa raíz de "Operación no válida ... no incluye los
 # atributos 'data-oe-model' y 'data-oe-id'" en las facturas de Studio
 # (Factura Proper, Remisión sin costos, Remisión con Costos, etc.) una vez
@@ -662,6 +685,7 @@ def pre_init_hook(env):
     _fix_broken_l10n_mx_edi_reports(env)
     _fix_broken_studio_report_field_refs(env)
     _fix_broken_purchase_order_uom_ref(env)
+    _fix_broken_purchase_order_notes_ref(env)
     _fix_broken_studio_invoice_report_wrappers(env)
     _fix_broken_invoice_report_display_type(env)
     _fix_broken_tax_totals_json(env)
