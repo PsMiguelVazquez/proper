@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- MIGRACIÓN V19: en v15 este grupo existía sólo como dato de
+             Studio, con un ID externo generado automáticamente por Odoo
+             (módulo `__export__`, sin sentido fuera de esa base de datos
+             concreta) -se pierde en cada rebuild de Odoo.sh-. Se formaliza
+             aquí con un ID externo real. Controla quién puede aceptar o
+             rechazar una solicitud de cancelación de pedido de venta (ver
+             `views/views.xml`, botones "Aceptar Cancelación"/"Rechazar
+             Cancelación"). -->
+        <record id="group_aprobacion_compras" model="res.groups">
+            <field name="name">aprovacion compras</field>
+        </record>
+    </data>
+</odoo>

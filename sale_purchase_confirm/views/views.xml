@@ -228,6 +228,33 @@
         </record>
 
 
+        <record id="action_solicitar_cancelacion_pedido" model="ir.actions.server">
+            <field name="name">Solicitar cancelación de pedido</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code">record['state'] = 'purchase_conf'</field>
+        </record>
+
+        <record id="action_aceptar_cancelacion_compra" model="ir.actions.server">
+            <field name="name">Aceptar cancelación compra</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code">
+record.action_cancel()
+record['x_acep_cancel_compra'] = True
+            </field>
+        </record>
+
+        <record id="action_rechazar_cancelacion_pedido" model="ir.actions.server">
+            <field name="name">Rechazar cancelación de pedido</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code">
+record.action_confirm()
+record['x_acep_cancel_compra'] = False
+            </field>
+        </record>
+
         <record id="sale_order_form_inherited" model="ir.ui.view">
             <field name="name">sale.order.form.inherited</field>
             <field name="model">sale.order</field>
@@ -238,6 +265,36 @@
                 </header>
                 <xpath expr="//field[@name='partner_invoice_id']" position="before">
                     <field name="sales_agent" string="Vendedor asocialdo al cliente"/>
+                </xpath>
+                <!-- MIGRACIÓN V19: estos 3 botones eran de Odoo Studio,
+                     referenciando por ID numérico crudo (`name="1320"`,
+                     etc.) a 3 `ir.actions.server` que tampoco tenían xmlid
+                     propio -en una instalación limpia ese ID no existe y el
+                     botón falla con "Action N does not exist for button of
+                     type action"-. Se formalizan arriba las 3 acciones y se
+                     referencian aquí con xmlid estable. El xpath original
+                     de Studio usaba `position="replace"` sobre
+                     `//button[@name='action_quotation_send']`, pero ese
+                     `name` ya no es único en 19.0 (el core tiene 4 botones
+                     distintos con ese mismo `name`, uno por cada
+                     combinación de estado/grupo) y borrar cualquiera de
+                     ellos del árbol rompe la fusión del `<header>` con
+                     otros módulos que también lo extienden (p. ej.
+                     `block_edit_sale_order`, que agrega botones propios al
+                     `<header>` y espera que ninguno de los botones
+                     originales del core haya desaparecido). Se logra el
+                     mismo resultado visual sin borrar nada: se agregan los
+                     3 botones nuevos después del botón "Send" que aplica a
+                     'sent'/'sale' (`id="quotation_send"`), y se oculta ese
+                     botón original en los mismos casos en que estos 3
+                     aplicarían. -->
+                <xpath expr="//button[@id='quotation_send']" position="attributes">
+                    <attribute name="invisible">(state not in ('sent', 'sale')) or numero_ordenes_compra_activas != 0</attribute>
+                </xpath>
+                <xpath expr="//button[@id='quotation_send']" position="after">
+                    <button name="%(action_solicitar_cancelacion_pedido)d" string="Solicitar Cancelación" class="btn-primary" type="action" invisible="numero_ordenes_compra_activas == 0 or state not in ['sale']" groups="sales_team.group_sale_manager,sales_team.group_sale_salesman"/>
+                    <button name="%(action_aceptar_cancelacion_compra)d" string="Aceptar Cancelación" class="btn-primary" type="action" invisible="numero_ordenes_compra_activas == 0 or state not in ['purchase_conf']" groups="sale_purchase_confirm.group_aprobacion_compras"/>
+                    <button name="%(action_rechazar_cancelacion_pedido)d" string="Rechazar Cancelación" class="btn-primary" type="action" invisible="numero_ordenes_compra_activas == 0 or state not in ['purchase_conf']" groups="sale_purchase_confirm.group_aprobacion_compras"/>
                 </xpath>
             </field>
         </record>
