@@ -22,9 +22,14 @@
                                 <field name="x_marca"/>
                                 <field name="x_modelo"/>
                                 <field name="x_order_id" can_create="true" can_write="true"/>
-                                <field name="x_proveedor" string="Proveedor" options="{'no_create': True}"
-                                       widget="res_partner_many2one"
-                                       context="{'res_partner_search_mode': 'supplier', 'show_vat': True}"/>
+                                <!-- MIGRACIÓN V19: `x_proveedor` en `requiriment.client` es
+                                     `Char` (confirmado en la base de producción v15), no
+                                     `Many2one` -a diferencia del `x_proveedor` de
+                                     `proposal.purchases`/`wizard.proposal` en este mismo
+                                     archivo-; el widget `res_partner_many2one` esperaba un
+                                     Many2one y causaba "Cannot read properties of undefined
+                                     (reading 'includes')" al abrir el menú Requerimientos. -->
+                                <field name="x_proveedor" string="Proveedor"/>
                                 <field name="x_count" readonly="1"/>
                             </group>
                             <group>
@@ -57,9 +62,7 @@
                     <field name="x_modelo"/>
                     <field name="x_presupuesto"/>
                     <field name="x_studio_related_field_1eaGE" string="Cliente"/>
-                    <field name="x_proveedor" string="Proveedor" options="{'no_create': True}"
-                           widget="res_partner_many2one"
-                           context="{'res_partner_search_mode': 'supplier', 'show_vat': True}"/>
+                    <field name="x_proveedor" string="Proveedor"/>
                     <field name="x_cantidad" column_invisible="True"/>
                     <field name="cantidad"/>
                     <field name="x_studio_related_field_ap2ah" string="Vendedor"/>
