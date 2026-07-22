@@ -296,6 +296,24 @@ record['x_acep_cancel_compra'] = False
                     <button name="%(action_aceptar_cancelacion_compra)d" string="Aceptar Cancelación" class="btn-primary" type="action" invisible="numero_ordenes_compra_activas == 0 or state not in ['purchase_conf']" groups="sale_purchase_confirm.group_aprobacion_compras"/>
                     <button name="%(action_rechazar_cancelacion_pedido)d" string="Rechazar Cancelación" class="btn-primary" type="action" invisible="numero_ordenes_compra_activas == 0 or state not in ['purchase_conf']" groups="sale_purchase_confirm.group_aprobacion_compras"/>
                 </xpath>
+                <!-- MIGRACIÓN V19: en el ambiente STG real, el botón
+                     "Confirmar" del formulario estándar estaba personalizado
+                     con Odoo Studio para llamar a `action_confirm_sale` (que
+                     manda a un wizard de aprobación parcial cuando falta
+                     stock/validación de compras) en vez del `action_confirm`
+                     por defecto del core (que sólo lanza un error duro). Esa
+                     personalización nunca se formalizó como código -sólo
+                     vivía en esa base de datos-, así que en 19.0 el botón
+                     seguía llamando al `action_confirm` de siempre, dando el
+                     error "no hay stock/costo" en vez de abrir el wizard. Se
+                     formaliza aquí, en los 2 botones "Confirm" del core (uno
+                     por cada estado 'sent'/'draft' en que aparece). -->
+                <xpath expr="//button[@id='action_confirm']" position="attributes">
+                    <attribute name="name">action_confirm_sale</attribute>
+                </xpath>
+                <xpath expr="//button[@name='action_confirm'][not(@id)]" position="attributes">
+                    <attribute name="name">action_confirm_sale</attribute>
+                </xpath>
             </field>
         </record>
 
