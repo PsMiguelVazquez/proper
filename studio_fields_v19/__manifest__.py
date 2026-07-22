@@ -34,7 +34,7 @@
     'website': "http://www.novucentral.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.38',
+    'version': '19.0.1.0.39',
     'license': 'LGPL-3',
 
     'pre_init_hook': 'pre_init_hook',
@@ -91,6 +91,17 @@
         # registro.
         'account_bank_statement_proper',
         'factoraje_financiero',
+        # MIGRACIÓN V19: la vista formalizada de `account.move.form` (ver
+        # `views/account_move_form.xml`) usa el botón `button_cancel_posted_
+        # moves` y el campo `l10n_mx_edi_cancel_invoice_id`, ambos de
+        # `account_edi`, y el botón `action_view_landed_costs` de
+        # `stock_landed_costs`. Ninguno de los dos era dependencia de
+        # ningún módulo `proper` -aunque sí estaban instalados en la base
+        # real de producción, de donde viene la personalización original de
+        # Studio-, así que sin declararlos aquí una instalación limpia
+        # fallaría con "Element ... cannot be located in parent view".
+        'account_edi',
+        'stock_landed_costs',
     ],
 
     'data': [
@@ -109,5 +120,6 @@
         'views/sale_order_list_pedidos.xml',
         'views/sale_order_list_marketplace.xml',
         'views/res_partner_form.xml',
+        'views/account_move_form.xml',
     ],
 }

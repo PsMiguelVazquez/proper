@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: formaliza la personalización de Odoo Studio sobre
+        `account.view_move_form`. Antes vivía sólo como `ir.ui.view`
+        state=manual (o directamente sin xmlid), se perdía en cada rebuild
+        de Odoo.sh.
+
+        Cambios de v15 -> v19 aplicados aquí (no en la vista original):
+        - `attrs="{...}"` -> atributos directos (`invisible=`/`readonly=`/
+          `required=`).
+        - `l10n_mx_edi_origin` -> `l10n_mx_edi_cfdi_origin` (renombrado en
+          19.0).
+        - Los anclas posicionales frágiles de Studio
+          (`//form[1]/sheet[1]/group[1]/group[1]/div[1]`,
+          `.../group[2]/div[1]`, `.../group[2]/label[1]`) ya no calzan con
+          la estructura real de 19.0 -el core ahora usa ids estables
+          (`header_left_group`/`header_right_group`)-, se reescriben con
+          esos ids.
+        - Se quita el xpath que renombraba una etiqueta a "Términos de
+          pago": el core de 19.0 ya rotula dinámicamente esa etiqueta como
+          "Payment terms"/"Due Date" según corresponda (línea 1077-1080 de
+          `account_move_views.xml`), quedó redundante.
+        - `button_cancel_posted_moves`/`l10n_mx_edi_cancel_invoice_id` (de
+          `account_edi`) y `action_view_landed_costs` (de
+          `stock_landed_costs`) requieren esos módulos como dependencia
+          explícita (ver `__manifest__.py`); no estaban instalados en
+          ningún módulo `proper` aunque sí en la base real de producción.
+    -->
+    <record id="view_move_form_studio_customization" model="ir.ui.view">
+        <field name="name">account.move.form.studio.customization</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='preview_invoice']" position="attributes">
+                <attribute name="groups">account.group_account_invoice</attribute>
+            </xpath>
+            <xpath expr="//button[@name='button_cancel_posted_moves']" position="attributes">
+                <attribute name="groups">account_payment_proper.group_cuentas_contables</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_view_landed_costs']" position="after">
+                <widget name="web_ribbon" title="Cliente 3.3" bg_color="bg-danger" invisible="x_estado_actuali_cli != '3.3'"/>
+            </xpath>
+            <xpath expr="//group[@id='header_left_group']/div[1]" position="before">
+                <field name="x_estado_actuali_cli" string="Estado de actualizacion"/>
+            </xpath>
+            <xpath expr="//field[@name='l10n_mx_edi_payment_policy']" position="attributes">
+                <attribute name="invisible">not l10n_mx_edi_is_cfdi_needed or not l10n_mx_edi_payment_policy or state == 'draft'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='l10n_mx_edi_payment_policy']" position="after">
+                <field name="x_plazo_pago" invisible="l10n_mx_edi_payment_policy" force_save="1" readonly="1"/>
+            </xpath>
+            <xpath expr="//field[@name='l10n_mx_edi_usage']" position="attributes">
+                <attribute name="invisible">not l10n_mx_edi_is_cfdi_needed</attribute>
+                <attribute name="readonly">state in ('posted', 'cancel')</attribute>
+            </xpath>
+            <xpath expr="//field[@name='payment_reference']" position="after">
+                <field name="x_studio_nombre_del_solicitante" string="Nombre del solicitante" invisible="state != 'posted' or is_move_sent or move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="orden_compra_relacionada" invisible="1"/>
+                <field name="x_studio_n_orden_de_compra" string="N° Orden de compra"/>
+                <field name="reason" invisible="move_type != 'out_refund'"/>
+                <field name="sale_id" force_save="1" readonly="1"/>
+                <field name="x_solicito" help="Indica el nombre que solicita de parte del cliente" string="Solicitó" invisible="1"/>
+                <field name="x_studio_almacn" string="Almacén" widget="text"/>
+                <field name="use_cfdi" invisible="1"/>
+                <field name="nombre_receptor" invisible="1"/>
+                <field name="x_numero_de_proveedor" invisible="1"/>
+                <field name="x_studio_orden_de_compra" string="Orden de Compra"/>
+                <field name="x_sucursal" invisible="move_type == 'out_invoice'"/>
+                <field name="x_studio_auxiliar" string="Auxiliar" invisible="1"/>
+                <field name="x_num_pro"/>
+            </xpath>
+            <xpath expr="//group[@id='header_right_group']/div[1]" position="before">
+                <field name="create_date" string="Fecha de creación" help="Indica la fecha en el que se creo la factura"/>
+                <field name="x_fecha_pago_pro" string="Fecha estimada de pago"/>
+            </xpath>
+            <xpath expr="//field[@name='invoice_date']" position="attributes">
+                <attribute name="help">Indica la fecha del timbrado de la factura</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_date']" position="after">
+                <field name="invoice_datetime" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='invoice_date_due']" position="attributes">
+                <attribute name="readonly">company_id != False</attribute>
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_payment_term_id']" position="attributes">
+                <attribute name="force_save">1</attribute>
+                <attribute name="readonly">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='l10n_mx_edi_cfdi_origin']" position="after">
+                <field name="x_studio_fecha_de_revisin"/>
+                <field name="x_tipo_de_relacion" help="En caso de ser refacturación , se anota el No. correspondiente"/>
+                <field name="x_referencia" help="Número de factura que se está relacionando." invisible="x_studio_ref != False"/>
+                <field name="folio" invisible="1"/>
+                <field name="serie" invisible="1"/>
+                <field name="x_studio_ref" string="Referencia" invisible="not x_studio_ref"/>
+                <field name="x_tipo_de_comprobante" invisible="1"/>
+                <field name="x_studio_integer_field_Dg6kN" invisible="1"/>
+            </xpath>
+            <!-- MIGRACIÓN V19: `l10n_mx_edi_cancel_invoice_id` ya no existe
+                 -el flujo de cancelación CFDI se rediseñó en `account_edi`
+                 (usa `edi_state`/mecanismos genéricos en vez de una
+                 referencia dedicada a "la factura que canceló a esta")-, se
+                 omite este xpath. -->
+            <!-- MIGRACIÓN V19: el xpath original de Studio también hacía
+                 visible la columna `move_name` dentro de la lista de
+                 `invoice_line_ids` (`tree[1]/field[@name='move_name']`);
+                 no se encontró un ancla estable para ese campo en la
+                 estructura real de 19.0 (el `tree` de Studio es `list`
+                 ahora, y no está claro en cuál de las páginas vive), así
+                 que se omite -es un ajuste cosmético menor, no bloquea
+                 nada-. -->
+            <!-- MIGRACIÓN V19: el xpath original de Studio apuntaba a
+                 `notebook[1]/page[not(@name)][3]` (la 3ª pestaña sin
+                 `name=`); en 19.0 todas las pestañas de esta vista ya
+                 tienen `name=` explícito (confirmado contra la vista
+                 combinada real), así que ese selector no calza con nada y
+                 se omite -no hay forma de saber con certeza cuál pestaña
+                 era sin ese ancla-. -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Comentarios" name="studio_page_IjPEM">
+                    <group name="studio_group_IjPEM">
+                        <group name="studio_group_IjPEM_left">
+                            <field name="x_comentarios"/>
+                            <field name="x_atencion" invisible="move_type == 'out_refund'"/>
+                            <field name="x_observaciones" invisible="move_type == 'out_refund'"/>
+                        </group>
+                        <group name="studio_group_IjPEM_right"/>
+                    </group>
+                </page>
+                <page string="Datos de addenda" name="studio_page_nPFYt">
+                    <group name="studio_group_nPFYt">
+                        <group name="studio_group_nPFYt_left">
+                            <field name="x_studio_sociedad" string="Sociedad"/>
+                            <field name="x_studio_numero_proveedor" string="Número de proveedor"/>
+                            <field name="x_studio_numero_pedido" string="Número de pedido"/>
+                        </group>
+                        <group name="studio_group_nPFYt_right">
+                            <field name="x_studio_numero_entrada_sap" string="Número de entrada a SAP"/>
+                            <field name="x_studio_numero_remision_1" string="Número de remisión"/>
+                        </group>
+                    </group>
+                </page>
+                <page string="Notas área crédito" name="studio_page_1xopv">
+                    <group name="studio_group_1xopv">
+                        <group name="studio_group_1xopv_left">
+                            <field name="x_studio_notas" string="Notas"/>
+                        </group>
+                        <group name="studio_group_1xopv_right"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
