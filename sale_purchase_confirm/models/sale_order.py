@@ -418,10 +418,15 @@ class SaleOrder(models.Model):
         else:
             self.write({'state': 'credito_conf'})
 
-    def action_view_invoice(self):
+    # MIGRACIÓN V19: el core agregó el parámetro `invoices=False` a
+    # `action_view_invoice()` (`sale_make_invoice_advance.py` lo llama con
+    # `invoices=` al crear una factura desde el wizard "Crear factura"); este
+    # override no lo aceptaba, causando "TypeError: got an unexpected
+    # keyword argument 'invoices'" al confirmar el wizard.
+    def action_view_invoice(self, invoices=False):
         if len(self) == 1:
             self.invoice_ids.write({'sale_id': self.id})
-        return super(SaleOrder, self).action_view_invoice()
+        return super(SaleOrder, self).action_view_invoice(invoices=invoices)
 
     @api.depends('partner_id', 'partner_child')
     def get_partner(self):
