@@ -184,17 +184,17 @@
                         <group name="studio_group_horario_right" string="Horario de Atención">
                             <div class="o_row" name="studio_div_101641">
                                 <span class="mx-1">Días</span>
-                                <field name="x_dia1" string="Día laboral" class="oe_inline" style="min-width: 110px;"/>
+                                <field name="x_dia1" string="Día laboral" class="oe_inline" style="min-width: 60px;"/>
                                 <span class="mx-1">a</span>
-                                <field name="x_dia2" string="Día laboral" class="oe_inline" style="min-width: 110px;"/>
-                                <field name="x_hora1" string="Hora" placeholder="E.j. 9:00am a 10:00pm" class="oe_inline mx-1"/>
+                                <field name="x_dia2" string="Día laboral" class="oe_inline" style="min-width: 60px;"/>
+                                <field name="x_hora1" string="Hora" placeholder="E.j. 9:00am a 10:00pm" style="min-width: 60px;"/>
                             </div>
                             <div class="o_row" name="studio_div_721a2c">
                                 <span class="mx-1">Y</span>
-                                <field name="x_dia3" string="Dia laboral" class="oe_inline" style="min-width: 110px;"/>
+                                <field name="x_dia3" string="Dia laboral" class="oe_inline" style="min-width: 60px;"/>
                                 <span class="mx-1">a</span>
-                                <field name="x_dia4" string="Dia laboral" class="oe_inline" style="min-width: 110px;"/>
-                                <field name="x_hora2" string="Hora" placeholder="E.j. 9:00am a 10:00pm" class="oe_inline mx-1"/>
+                                <field name="x_dia4" string="Dia laboral" class="oe_inline" style="min-width: 60px;"/>
+                                <field name="x_hora2" string="Hora" placeholder="E.j. 9:00am a 10:00pm" style="min-width: 60px;"/>
                             </div>
                         </group>
                     </group>
