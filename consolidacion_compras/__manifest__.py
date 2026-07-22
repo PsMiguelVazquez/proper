@@ -15,7 +15,7 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.0.2',
     'license': 'LGPL-3',
 
     # MIGRACIÓN V19: el manifest original solo declaraba 'base'/'purchase',

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from markupsafe import Markup
 
 from odoo import models, fields, _, api
 
@@ -72,5 +73,8 @@ class SalePurchaseOrderAlerta(models.TransientModel):
                     order_line.product_uom_qty + order_line.x_cantidad_disponible_compra - order_line.product_id.stock_quant_warehouse_zero) + '</td></tr>'
             mensaje += '</tbody></table>'
 
-        # MIGRACIÓN V19: `type` -> `message_type` en `message_post`.
-        sale_id.message_post(body=mensaje, message_type="notification")
+        # MIGRACIÓN V19: `type` -> `message_type` en `message_post`. Y
+        # `body` debe envolverse en `Markup` para que se renderice como
+        # HTML en vez de aparecer como texto crudo (cambio de seguridad
+        # anti-XSS del core).
+        sale_id.message_post(body=Markup(mensaje), message_type="notification")

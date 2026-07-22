@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from markupsafe import Markup
+
 from odoo import models, fields, api, _
 from .. import extensions
 from odoo.exceptions import UserError
@@ -959,15 +961,16 @@ class Alerta_limite_de_credito(models.TransientModel):
                     order_line.product_uom_qty + order_line.x_cantidad_disponible_compra - order_line.product_id.stock_quant_warehouse_zero) + '</td></tr>'
             mensaje += '</tbody></table>'
 
-        # MIGRACIÓN V19: `type` -> `message_type` en `message_post`.
-        self.sale_id.message_post(body=mensaje, message_type="notification")
+        # MIGRACIÓN V19: `type` -> `message_type` en `message_post`; y
+        # `body` -> `Markup(...)`, ver la nota en `confirmar_parcial`.
+        self.sale_id.message_post(body=Markup(mensaje), message_type="notification")
 
     def confirmar_validacion(self):
         o_lines = self.sale_id.order_line.filtered(lambda x: (x.product_id.stock_quant_warehouse_zero + x.x_cantidad_disponible_compra - x.product_uom_qty) < 0)
         o_lines.write({'x_validacion_precio': True})
         self.sale_id.write({'solicito_validacion': True})
         msg = self.mensaje.replace('Se solicitará validar datos de los siguientes productos', 'Se solicitó validar datos masivamente')
-        self.sale_id.message_post(body=msg, message_type="notification")
+        self.sale_id.message_post(body=Markup(msg), message_type="notification")
         activity_user = self.env['res.users'].search([('login', 'like', '%compras1%')])
         self.sale_id.activity_schedule(
             activity_type_id=4,
@@ -1024,7 +1027,13 @@ class Alerta_limite_de_credito(models.TransientModel):
                         order_line.x_studio_nuevo_costo / order_line.price_unit)) * 100) if order_line.x_studio_nuevo_costo > 0 else order_line.x_utilidad_por) \
                            + '</td></tr>'
             mensaje += '</tbody></table>'
-        self.sale_id.message_post(body=mensaje, message_type="notification")
+        # MIGRACIÓN V19: `message_post` en 19.0 escapa por defecto el
+        # `body` si es un `str` normal -sólo lo renderiza como HTML si
+        # viene envuelto en `Markup`, cambio de seguridad anti-XSS del
+        # core-; sin esto el mensaje aparecía como HTML crudo (las
+        # etiquetas `<table>`, `<tr>`, etc. visibles como texto) en vez de
+        # la tabla renderizada.
+        self.sale_id.message_post(body=Markup(mensaje), message_type="notification")
 
 
 class SaleInvoice(models.TransientModel):

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 
+from markupsafe import Markup
+
 from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
 
@@ -49,11 +51,14 @@ class ConsolidacionWizardPurchase(models.TransientModel):
                                         for x in self.purchase_orders]))
             # MIGRACIÓN V19: `message_post(..., type=...)` -> `message_type`
             # (además, todos los parámetros de message_post son keyword-only).
-            purchase_order.message_post(body=msg, message_type="notification")
+            # Y `body` debe envolverse en `Markup` para que se renderice
+            # como HTML en vez de aparecer como texto crudo (cambio de
+            # seguridad anti-XSS del core).
+            purchase_order.message_post(body=Markup(msg), message_type="notification")
             msg2 = ("Esta orden forma parte de la consolidación: <a href=# data-oe-model=purchase.order data-oe-id=%d>%s</a>") % (
                                 purchase_order.id, purchase_order.name)
             for order in self.purchase_orders:
-                order.message_post(body=msg2, message_type="notification")
+                order.message_post(body=Markup(msg2), message_type="notification")
 
 
     def _compute_lines(self):

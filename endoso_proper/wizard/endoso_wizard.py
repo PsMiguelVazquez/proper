@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 
+from markupsafe import Markup
+
 from odoo import models, fields, _
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
@@ -80,9 +82,12 @@ class EndosoWizard(models.TransientModel):
                                  "Este endoso fue creado desde: <a href=# data-oe-model=account.move data-oe-id=%d>%s</a>") % (
                                  invoice.id, invoice.name)
                 # MIGRACIÓN V19: `message_post(..., type=...)` ya no es
-                # válido; el kwarg correcto es `message_type`.
-                invoice.message_post(body=invoice_msg, message_type="notification")
-                endoso.message_post(body=endoso_msg, message_type="notification")
+                # válido; el kwarg correcto es `message_type`. Y `body` debe
+                # envolverse en `Markup` para que se renderice como HTML en
+                # vez de aparecer como texto crudo (cambio de seguridad
+                # anti-XSS del core: un `str` normal ahora se escapa).
+                invoice.message_post(body=Markup(invoice_msg), message_type="notification")
+                endoso.message_post(body=Markup(endoso_msg), message_type="notification")
                 return {
                     'name': _('Endoso'),
                     'view_mode': 'form',
