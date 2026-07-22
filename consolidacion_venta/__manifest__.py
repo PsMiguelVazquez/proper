@@ -14,7 +14,7 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'license': 'LGPL-3',
 
     # MIGRACIÓN V19: `res_partner_fields` (x_studio_uso_de_cfdi,

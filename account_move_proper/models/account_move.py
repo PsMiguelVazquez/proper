@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from markupsafe import Markup
 
 from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
@@ -267,11 +268,15 @@ class AccountMove(models.Model):
         new_invoice_msg = (
                               "This invoice has been created from: <a href=# data-oe-model=sale.order data-oe-id=%d>%s</a>") % (
                               invoice.sale_id.id, invoice.sale_id.name)
-        invoice_id.message_post(body=new_invoice_msg, message_type="notification")
+        # MIGRACIÓN V19: `message_post` escapa el `body` por defecto si es un
+        # `str` normal -sólo lo renderiza como HTML si viene envuelto en
+        # `Markup`, cambio de seguridad anti-XSS del core-; sin esto el link
+        # aparecía como HTML crudo en vez de un enlace clickeable.
+        invoice_id.message_post(body=Markup(new_invoice_msg), message_type="notification")
         invoice_msg = (
                           "This invoice has been duplicated from: <a href=# data-oe-model=account.move data-oe-id=%d>%s</a>") % (
                           invoice.id, invoice.name)
-        invoice_id.message_post(body=invoice_msg, message_type="notification")
+        invoice_id.message_post(body=Markup(invoice_msg), message_type="notification")
 
         if invoice_id:
             if not self.env['stock.picking'].search([('origin', '=', invoice.name)

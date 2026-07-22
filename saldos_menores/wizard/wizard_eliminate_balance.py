@@ -2,6 +2,8 @@
 from collections import defaultdict
 from datetime import datetime
 
+from markupsafe import Markup
+
 from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
 
@@ -156,14 +158,17 @@ class WizardEliminateBalance(models.TransientModel):
         for inv in invoices_to_reconcile:
             # MIGRACIÓN V19: `message_post(..., type=...)` -> el parámetro se
             # llama `message_type` (además, todos los parámetros de
-            # `message_post` son ahora solo por keyword).
-            inv.message_post(body=invoice_msg, message_type="notification")
+            # `message_post` son ahora solo por keyword). Y `body` debe
+            # envolverse en `Markup` para que se renderice como HTML en vez
+            # de aparecer como texto crudo (cambio de seguridad anti-XSS
+            # del core).
+            inv.message_post(body=Markup(invoice_msg), message_type="notification")
 
         msg = (
                 "Se realizó eliminación de saldos: " +
                 ", ".join([("<a href=# data-oe-model=account.move data-oe-id=%d>%s</a>") % (x.id, x.name)
                            for x in invoices_to_reconcile]))
-        move.message_post(body=msg, message_type="notification")
+        move.message_post(body=Markup(msg), message_type="notification")
         result = {
             "type": "ir.actions.act_window",
             "res_model": "account.move",

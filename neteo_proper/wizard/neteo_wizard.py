@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 
+from markupsafe import Markup
+
 from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
@@ -66,10 +68,13 @@ class NeteoWizard(models.TransientModel):
                                  self.factura_cliente.id, self.factura_cliente.name)
                 # MIGRACIÓN V19: `message_post(..., type=...)` ya no es un
                 # kwarg válido; el parámetro correcto es `message_type`
-                # ('notification' ya es su valor por defecto).
-                self.factura_cliente.message_post(body=invoice_msg, message_type="notification")
-                self.facturas_proveedor.message_post(body=invoice_msg, message_type="notification")
-                neteo.message_post(body=neteo_msg, message_type="notification")
+                # ('notification' ya es su valor por defecto). Y `body` debe
+                # envolverse en `Markup` para que se renderice como HTML en
+                # vez de aparecer como texto crudo (cambio de seguridad
+                # anti-XSS del core: un `str` normal ahora se escapa).
+                self.factura_cliente.message_post(body=Markup(invoice_msg), message_type="notification")
+                self.facturas_proveedor.message_post(body=Markup(invoice_msg), message_type="notification")
+                neteo.message_post(body=Markup(neteo_msg), message_type="notification")
                 return {
                     'name': _('Neteo'),
                     'view_mode': 'form',

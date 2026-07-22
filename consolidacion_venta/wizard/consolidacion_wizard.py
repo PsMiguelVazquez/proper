@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 
+from markupsafe import Markup
+
 from odoo import models, fields, _, api
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
@@ -141,7 +143,10 @@ class ConsolidacionWizard(models.Model):
                 invoice_msg = (
                                   "This invoice has been created from: <a href=# data-oe-model=sale.order data-oe-id=%d>%s</a>") % (
                                   sale_order_id.id, sale_order_id.name)
-                invoice_id.message_post(body=invoice_msg, message_type="notification")
+                # MIGRACIÓN V19: `body` debe envolverse en `Markup` para que
+                # se renderice como HTML en vez de aparecer como texto crudo
+                # (cambio de seguridad anti-XSS del core).
+                invoice_id.message_post(body=Markup(invoice_msg), message_type="notification")
             return {
                 'name': _('Factura'),
                 'view_mode': 'form',

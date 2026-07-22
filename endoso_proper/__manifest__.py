@@ -14,7 +14,7 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
 
     # MIGRACIÓN V19: `account_move_proper` (campos `x_studio_almacn`,
     # `x_studio_n_orden_de_compra`, `x_referencia`, ahora formalizados como
