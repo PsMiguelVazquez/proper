@@ -694,6 +694,35 @@ def pre_init_hook(env):
     _fix_broken_banner_route(env)
     _fix_stale_manual_field_related(env)
     _fix_duplicate_manual_field_labels(env)
+    _reactivate_studio_automations(env)
+
+
+# MIGRACIÓN V19: estas automatizaciones (`base.automation`, todas sobre
+# `sale.order`) son de Odoo Studio (módulos fantasma `studio_customization`/
+# `__export__`, sin dueño real). Se observó que en rebuilds de bases de
+# prueba de Odoo.sh (bases "neutralizadas") terminan archivadas
+# (`active=False`) -no está claro si es un paso adicional de neutralización
+# propio de la plataforma, ya que el `neutralize.sql` del core sólo
+# desactiva crons/servidores de correo/webhooks, no `base.automation`
+# directamente-. Se reactivan por nombre exacto en cada actualización del
+# módulo como red de seguridad, para no depender de hacerlo a mano cada vez.
+STUDIO_AUTOMATION_NAMES = [
+    'Send mail ventas',
+    '*Notificar de aprobaciones pendientes al gerente de ventas Sandra',
+    '*Notificar de aprobaciones pendientes al gerente de ventas Raúl',
+    'validaciones',
+    'Notificación a compras',
+    'Quitar cliente de los seguidores',
+]
+
+
+def _reactivate_studio_automations(env):
+    automations = env['base.automation'].with_context(active_test=False).search([
+        ('name', 'in', STUDIO_AUTOMATION_NAMES),
+        ('active', '=', False),
+    ])
+    if automations:
+        automations.write({'active': True})
 
 
 def post_init_hook(env):

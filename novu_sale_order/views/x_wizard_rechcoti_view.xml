@@ -3,7 +3,19 @@
     <!-- MIGRACIÓN V19: acciones y vista del asistente "Rechazar cotización",
          creadas originalmente con Odoo Studio y referenciadas por ID numérico
          crudo (nunca tuvieron xmlid). Se formalizan aquí con un xmlid estable
-         para que sobrevivan a cualquier instalación limpia. -->
+         para que sobrevivan a cualquier instalación limpia.
+
+         `action_server_rechazar_cotizacion`: el código original de Studio
+         buscaba la vista del wizard por `name` (`search([['name','=',
+         'x_wizard_rechcoti_form']])`), pero al formalizar la vista aquí
+         abajo con ese mismo `name` (Studio identifica vistas por `name`,
+         no por xmlid), la base real terminó con DOS vistas con el mismo
+         nombre -la vieja de Studio, huérfana, y esta nueva-, y esa búsqueda
+         empezó a devolver 2 registros en vez de 1, causando "ValueError:
+         Expected singleton" al hacer clic en "Rechazar" en la aprobación de
+         una cotización. Se cambia a `env.ref(...)` por xmlid, que no sufre
+         esta ambigüedad sin importar cuántas vistas compartan el mismo
+         `name`. -->
 
     <record id="action_server_rechazar_cotizacion" model="ir.actions.server">
         <field name="name">Rechazar cotización</field>
@@ -11,7 +23,7 @@
         <field name="state">code</field>
         <field name="code">
 record['state']='draft'
-view = env['ir.ui.view'].search([['name','=','x_wizard_rechcoti_form']])
+view = env.ref('novu_sale_order.view_x_wizard_rechcoti_form')
 wiz = env['x_wizard_rechcoti'].create({'x_rel':record.id})
 action= {
 'name': 'Rechazar cotización',
