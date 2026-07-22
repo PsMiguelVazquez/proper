@@ -46,7 +46,7 @@ class SaleOrder(models.Model):
         [('factura', 'Factura'),
          ('remision_sin_costo', 'Remisión sin costo'),
          ('remision_con_costo', 'Remisión con costo')],
-        string='Documentos de entrega')
+        string='Documentos de entrega', tracking=True)
     x_estado_surtido = fields.Selection(
         [('pendiente', 'Pendiente'), ('surtir', 'Surtir')],
         string='Estado de surtido')
@@ -54,7 +54,7 @@ class SaleOrder(models.Model):
         [('flotilla', 'Flotilla'), ('paqueteria', 'Paqueteria'),
          ('recolecta', 'Recolecta'), ('Foráneo', 'Foráneo')],
         string='Método de entrega')
-    x_otros_documentos = fields.Many2many('ir.attachment', string='Otros documentos')
+    x_otros_documentos = fields.Many2many('ir.attachment', string='Otros documentos', tracking=True)
     x_studio_comentarios = fields.Text(string='Comentarios')
     x_studio_etiquetas = fields.Binary(string='Etiquetas')
     x_studio_orden_de_compra = fields.Binary(string='Orden de Compra')
@@ -64,7 +64,7 @@ class SaleOrder(models.Model):
     # ventas"/"Marketplace" (ver `views/sale_order_list_*.xml`).
     x_aprovacion_compras = fields.Boolean(string='Aprovacion Compras')
     x_studio_almacn = fields.Char(related='warehouse_id.name', string='Almacén')
-    x_studio_n_orden_de_compra = fields.Char(string='N° Orden de compra')
+    x_studio_n_orden_de_compra = fields.Char(string='N° Orden de compra', tracking=True)
     x_studio_origen_mkp = fields.Selection(
         [('AMAZON', 'AMAZON'), ('MERCADO LIBRE', 'MERCADO LIBRE'), ('LIVERPOOL', 'LIVERPOOL'),
          ('LINIO', 'LINIO'), ('CLARO SHOP', 'CLARO SHOP'), ('ELENAS', 'ELENAS'),
@@ -86,10 +86,22 @@ class SaleOrder(models.Model):
     x_estado_compra = fields.Selection(
         [('draft', 'RFQ'), ('sent', 'RFQ Sent'), ('to approve', 'To Approve'),
          ('purchase', 'Purchase Order'), ('cancel', 'Cancelled'), ('consolidate', 'Consolidada')],
-        string='Estado de compras', compute='_compute_x_estado_compra', store=True)
+        string='Estado de compras', compute='_compute_x_estado_compra', store=True, tracking=True)
     x_estado_factura = fields.Selection(
         [('draft', 'Draft'), ('posted', 'Posted'), ('cancel', 'Cancelled')],
         string='Estado de Facturación', compute='_compute_x_estado_factura', store=True)
+    # MIGRACIÓN V19: en Studio era `related='purchase_ids.picking_ids.state'`
+    # (estado del traslado de entrada asociado a las órdenes de compra
+    # generadas para este pedido); `purchase_ids` y `picking_ids` son ambos
+    # x2many, y `related=` no soporta atravesar dos saltos x2many seguidos
+    # (mismo caso que `x_estado_compra`/`x_status_surtido` en esta misma
+    # clase), así que nunca se había formalizado. Se reescribe como compute
+    # tomando el estado del primer traslado, mismas opciones que
+    # `stock.picking.state` (igual que `x_status_surtido`).
+    x_state = fields.Selection(
+        [('draft', 'Draft'), ('waiting', 'Waiting Another Move'), ('confirmed', 'Waiting Availability'),
+         ('assigned', 'Ready'), ('done', 'Done'), ('cancel', 'Cancelled')],
+        string='Estado Almacén', compute='_compute_x_state', tracking=True)
 
     @api.depends('purchase_ids.state')
     def _compute_x_estado_compra(self):
@@ -100,6 +112,11 @@ class SaleOrder(models.Model):
     def _compute_x_estado_factura(self):
         for record in self:
             record.x_estado_factura = record.invoice_ids[:1].state
+
+    @api.depends('purchase_ids.picking_ids.state')
+    def _compute_x_state(self):
+        for record in self:
+            record.x_state = record.purchase_ids.picking_ids[:1].state
 
     @api.depends('order_line.cantidad_asignada')
     def _compute_x_studio_cant_asignada(self):
@@ -165,7 +182,7 @@ class SaleOrder(models.Model):
     x_folio = fields.Char(string='Folio')
     x_tipo_de_articulos = fields.Char(string='Tipo de artículos')
     x_Empresa = fields.Char(string='Empresa')
-    x_motivo_rechazo = fields.Text(string='Motivo de rechazo')
+    x_motivo_rechazo = fields.Text(string='Motivo de rechazo', tracking=True)
     x_orden_compra = fields.Many2one('purchase.order', string='Orden de compra')
     x_studio_flotilla = fields.Boolean(string='Flotilla')
     x_studio_recolecta = fields.Boolean(string='Recolecta')
@@ -173,7 +190,7 @@ class SaleOrder(models.Model):
     x_studio_estado_de_validacin = fields.Selection(
         [('1', 'Contado'), ('2', 'Excede credito'), ('3', 'Falta información'), ('4', 'Facturas vencidas')],
         string='Estado de validación')
-    x_no_guia_ventas = fields.Char(string='N° de guía')
+    x_no_guia_ventas = fields.Char(string='N° de guía', tracking=True)
     x_studio_paquetera = fields.Boolean(string='Paquetería')
     x_studio_many2many_field_yXYzo = fields.Many2many('stock.picking.type', string='Tipo de albarán')
     x_studio_factura_timbrada = fields.Binary(string='Factura Timbrada')
@@ -190,21 +207,21 @@ class SaleOrder(models.Model):
     x_studio_many2many_field_ma4cB = fields.Many2many(
         'stock.picking', 'sale_order_stock_picking_ma4cB_rel', string='Albarán (2)')
     x_studio_con_tiempo_de_entrega = fields.Boolean(string='Con tiempo de entrega')
-    x_mot_canc_comer = fields.Text(string='Motivo de cancelación del comercial')
-    x_requiere_factura = fields.Selection([('SI', 'SI'), ('NO', 'NO')], string='Requiere factura')
+    x_mot_canc_comer = fields.Text(string='Motivo de cancelación del comercial', tracking=True)
+    x_requiere_factura = fields.Selection([('SI', 'SI'), ('NO', 'NO')], string='Requiere factura', tracking=True)
     x_studio_remisin_1 = fields.Boolean(string='Remisión (marcada)')
     x_studio_remisin_ciega_1 = fields.Boolean(string='Remisión Ciega (marcada)')
     x_studio_factura_timbrada_1 = fields.Boolean(string='Factura Timbrada (marcada)')
     x_studio_otros = fields.Binary(string='Otros documentos (archivo)')
-    x_fecha_devolucion = fields.Date(string='Fecha Devolución')
+    x_fecha_devolucion = fields.Date(string='Fecha Devolución', tracking=True)
     # MIGRACIÓN V19: `x_fecha_factura` (sale.order, no confundir con el
     # `x_fecha_factura` de `account.move`, ya formalizado) nunca se había
     # formalizado; `novu_sale_order/views/sale_order_view.xml` ya lo
     # referenciaba directamente.
-    x_fecha_factura = fields.Datetime(string='Fecha de Facturación')
-    x_es_muestra = fields.Boolean(string='Es Muestra')
-    x_moti_cancel_comp = fields.Char(string='Motivo de rechazo de cancelación')
-    x_acep_cancel_compra = fields.Boolean(string='Aceptar cancelación de venta')
+    x_fecha_factura = fields.Datetime(string='Fecha de Facturación', tracking=True)
+    x_es_muestra = fields.Boolean(string='Es Muestra', tracking=True)
+    x_moti_cancel_comp = fields.Char(string='Motivo de rechazo de cancelación', tracking=True)
+    x_acep_cancel_compra = fields.Boolean(string='Aceptar cancelación de venta', tracking=True)
 
     # MIGRACIÓN V19: en Studio eran `related=` a través de campos
     # `Many2one` (`partner_id`/`albaran`), se mantienen igual.
@@ -223,14 +240,14 @@ class SaleOrder(models.Model):
     # `novu_sale_order/views/sale_order_view.xml` ya lo referenciaba
     # directamente, causando 'Field "x_num_pro" does not exist in model
     # "sale.order"'.
-    x_num_pro = fields.Char(related='partner_id.x_num_pro', string='Número de Proveedor')
+    x_num_pro = fields.Char(related='partner_id.x_num_pro', string='Número de Proveedor', tracking=True)
 
     # MIGRACIÓN V19: en Studio era `related='partner_id.x_area'`, pero
     # `x_area` en `res.partner` es a su vez un compute (toma la primera
     # oportunidad vinculada, ver `res_partner.py`); un `related=` normal
     # funciona igual aquí porque el salto sigue siendo `Many2one`
     # (`partner_id`).
-    x_area = fields.Char(related='partner_id.x_area', string='Área')
+    x_area = fields.Char(related='partner_id.x_area', string='Área', tracking=True)
 
     # MIGRACIÓN V19: en Studio era `related='picking_ids.state'`, pero
     # `picking_ids` es `One2many`/`Many2many` (puede haber más de un
@@ -240,7 +257,7 @@ class SaleOrder(models.Model):
     x_status_surtido = fields.Selection(
         [('draft', 'Draft'), ('waiting', 'Waiting Another Move'), ('confirmed', 'Waiting Availability'),
          ('assigned', 'Ready'), ('done', 'Done'), ('cancel', 'Cancelled')],
-        string='*Estado de surtido', compute='_compute_x_status_surtido')
+        string='*Estado de surtido', compute='_compute_x_status_surtido', tracking=True)
 
     @api.depends('picking_ids.state')
     def _compute_x_status_surtido(self):
