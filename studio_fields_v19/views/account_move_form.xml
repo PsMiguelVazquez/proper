@@ -41,7 +41,7 @@
             <xpath expr="//button[@name='action_view_landed_costs']" position="after">
                 <widget name="web_ribbon" title="Cliente 3.3" bg_color="bg-danger" invisible="x_estado_actuali_cli != '3.3'"/>
             </xpath>
-            <xpath expr="//group[@id='header_left_group']/div[1]" position="before">
+            <xpath expr="//group[@id='header_left_group']/label[1]" position="before">
                 <field name="x_estado_actuali_cli" string="Estado de actualizacion"/>
             </xpath>
             <xpath expr="//field[@name='l10n_mx_edi_payment_policy']" position="attributes">
