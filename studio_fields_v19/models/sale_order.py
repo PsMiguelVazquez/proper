@@ -134,9 +134,18 @@ class SaleOrder(models.Model):
             record.x_studio_cant_x_entregar = sum(record.order_line.mapped('qty_to_deliver'))
 
     def _compute_x_sale_id_stock_picking_count(self):
+        # MIGRACIÓN V19: el botón inteligente "ALM14" (ver
+        # `novu_sale_order/views/sale_order_view.xml`) debe contar sólo los
+        # traslados de la venta que pertenecen específicamente al almacén
+        # ALM14 (código de `stock.warehouse`, nombre real "MARKETPLACE"),
+        # no todos los traslados de la venta -contaba sin filtrar por
+        # almacén, dando de alta un número que no coincidía con lo que
+        # mostraba V15 para el mismo pedido-.
         for record in self:
-            record.x_sale_id_stock_picking_count = self.env['stock.picking'].search_count(
-                [('sale_id', '=', record.id)])
+            record.x_sale_id_stock_picking_count = self.env['stock.picking'].search_count([
+                ('sale_id', '=', record.id),
+                ('warehouse_id.code', '=', 'ALM14'),
+            ])
 
     def _compute_x_sale__stock_picking_count(self):
         # MIGRACIÓN V19: el original agrupaba con `read_group` sobre un
