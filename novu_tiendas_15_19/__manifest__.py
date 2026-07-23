@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 {
     'name': 'Comunicación Tienda en linea V19, con datos 15',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'license': 'LGPL-3',
     # MIGRACIÓN V19: `product_unspsc` pasó a ser un módulo Enterprise (en
     # 15.0 era Community); `ws_tienda.py` lee `product.unspsc_code_id`.

@@ -6,6 +6,20 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_only_form_view" />
         <field name="mode">extension</field>
+        <!-- MIGRACIÓN V19: `studio_fields_v19` tiene su propia vista sobre
+             esta misma vista base que hace
+             `<xpath expr="//field[@name='barcode']" position="move"/>`
+             -reubica `barcode` para reconstruir la columna de
+             "Información general"-. Sin una prioridad explícita, ambas
+             vistas quedan con la prioridad default (16) y el desempate por
+             id decide un orden no garantizado: si esta vista se aplica
+             ANTES que la de `studio_fields_v19`, estos 3 campos se
+             insertan en la posición original de `barcode`, que queda
+             abandonada/oculta una vez que ese campo se mueve. Prioridad
+             más alta que el default fuerza que esta vista se aplique
+             DESPUÉS, cuando `barcode` ya está en su posición final
+             visible. -->
+        <field name="priority">20</field>
         <field name="arch" type="xml">
             <!-- MIGRACIÓN V19: `uom_po_id` fue eliminado (ya no hay UoM de
                  compra separada); se usa `barcode` como referencia
