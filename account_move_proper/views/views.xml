@@ -33,6 +33,19 @@
              `account.view_move_form` ahora es
              `l10n_mx_edi.account_move_form_inherit_l10n_mx_edi`. -->
         <field name="inherit_id" ref="l10n_mx_edi.account_move_form_inherit_l10n_mx_edi"/>
+        <!-- MIGRACIÓN V19: `active` explícito a propósito. Esta vista
+             aparece archivada (`active=False`) en la base real sin causa
+             rastreable en el código (ver `_reactivate_studio_views`,
+             ahora eliminado). Reactivarla por separado vía SQL crudo ANTES
+             de este `write()` (como hacía ese hook) abre una ventana
+             donde queda activa con su `arch_db` viejo todavía sin corregir
+             -rompe la validación de CUALQUIER vista hermana de
+             `account.view_move_form` que se procese en esa ventana, con
+             "Element ... cannot be located in parent view" apuntando al
+             xpath viejo (`l10n_mx_edi_origin`)-. Declararlo aquí hace que
+             reactivación y corrección de contenido sean el mismo `write()`
+             atómico, sin ventana intermedia. -->
+        <field name="active" eval="True"/>
         <field name="arch" type="xml">
             <!-- MIGRACIÓN V19: `l10n_mx_edi_origin` -> `l10n_mx_edi_cfdi_origin`. -->
             <xpath expr="//field[@name='l10n_mx_edi_cfdi_origin']" position="after">
