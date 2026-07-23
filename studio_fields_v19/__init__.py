@@ -695,6 +695,7 @@ def pre_init_hook(env):
     _fix_stale_manual_field_related(env)
     _fix_duplicate_manual_field_labels(env)
     _reactivate_studio_automations(env)
+    _delete_old_studio_account_move_form_view(env)
 
 
 # MIGRACIÓN V19: estas automatizaciones (`base.automation`, todas sobre
@@ -723,6 +724,30 @@ def _reactivate_studio_automations(env):
     ])
     if automations:
         automations.write({'active': True})
+
+
+# MIGRACIÓN V19: esta es la vista que Odoo Studio generó automáticamente
+# para las personalizaciones de `account.view_move_form` (state='manual',
+# módulo fantasma `studio_customization`) -es el origen exacto del bloque
+# XML que se formalizó campo por campo en `views/account_move_form.xml`,
+# confirmado contra su `arch_db` real-. Está inactiva, pero `active=False`
+# NO la excluye de la validación del árbol de vistas heredadas de
+# `account.view_move_form`: cualquier actualización de una vista hermana
+# (ej. `account_move_proper.view_account_move_form_inherited_dates`) la
+# arrastra igual, y su xpath a `l10n_mx_edi_origin` -campo eliminado en
+# 19.0- rompe la actualización con "El elemento ... no puede ser
+# localizado en la vista padre". Como su contenido ya está 100% cubierto
+# por la vista formalizada, se elimina en vez de solo desactivarla o
+# parchear su texto (que dejaría otros anclas rotas sin resolver, ej.
+# `l10n_mx_edi_cancel_invoice_id`, también removido).
+OLD_STUDIO_ACCOUNT_MOVE_FORM_VIEW_XMLID = 'studio_customization.odoo_studio_account__ac74cbfb-da24-46b5-aca5-f72183fdfc26'
+
+
+def _delete_old_studio_account_move_form_view(env):
+    view = env.ref(OLD_STUDIO_ACCOUNT_MOVE_FORM_VIEW_XMLID, raise_if_not_found=False)
+    if view:
+        env.cr.execute("DELETE FROM ir_model_data WHERE model = 'ir.ui.view' AND res_id = %s", (view.id,))
+        env.cr.execute("DELETE FROM ir_ui_view WHERE id = %s", (view.id,))
 
 
 def post_init_hook(env):
