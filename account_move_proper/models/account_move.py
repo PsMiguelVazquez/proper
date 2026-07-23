@@ -113,17 +113,44 @@ class AccountMove(models.Model):
                 record.cantidad_facturada_total = 0
 
     def _compute_movimientos_almacen(self):
+        # MIGRACIÓN V19 (no es un cambio de versión, es un bug heredado de
+        # v15): el dominio original comparaba `origin` del traslado contra
+        # el `name`/número de la venta de la factura con `OR` -pensado para
+        # cubrir traslados sin `x_studio_facturas` seteado-. Pero para una
+        # factura en borrador `record.name` es `False`/"/", y muchos
+        # traslados sin relación alguna también tienen `origin` vacío, así
+        # que ese `OR` terminaba trayendo traslados de cualquier venta.
+        #
+        # Usar `sale_id.picking_ids` tampoco alcanza: trae TODOS los
+        # traslados de la venta completa, no sólo los que corresponden a lo
+        # que factura ESTA factura -una venta puede entregarse/facturarse en
+        # varias partes, y cada factura debe mostrar sólo su(s) traslado(s)
+        # correspondiente(s)-. Se baja un nivel: de las líneas de la
+        # factura, a las líneas de venta que facturan (`sale_line_ids`), a
+        # los movimientos de stock generados específicamente por esas
+        # líneas (`move_ids`, de `sale_stock`), y de ahí a sus traslados.
+        #
+        # Caso aparte: las facturas de refacturación (módulo `refacturacion`,
+        # almacén ALM-9) generan su propio traslado manual
+        # (`create_in`/`create_out`) sin pasar por líneas de venta -no tienen
+        # `sale_line_id`, así que el filtro de arriba no los encuentra-, y
+        # tanto `action_post` como `refactura_credito` en ese módulo
+        # dependen de que `movimientos_almacen` SÍ los incluya. Se
+        # complementan con los traslados de esa venta hacia/desde el
+        # almacén 9 -mismo id hardcodeado que usa `refacturacion`, ver su
+        # comentario sobre por qué no es portable entre bases de datos-,
+        # verificando primero si el campo existe por si ese módulo no está
+        # instalado.
         for record in self:
-            if record.sale_id:
-                salename = record.sale_id.name
-            else:
-                salename = ''
-            domain = [
-                '|', ('x_studio_facturas', '=', record.id),
-                '|', ('origin', '=', record.name), ('origin', '=', salename),
-                ('picking_type_code', 'in', ['outgoing', 'incoming']),
-            ]
-            record.movimientos_almacen = self.env['stock.picking'].search(domain)
+            sale_lines = record.invoice_line_ids.sale_line_ids
+            pickings = sale_lines.move_ids.picking_id
+            if 'es_refacturacion' in record._fields and record.es_refacturacion:
+                pickings |= record.sale_id.picking_ids.filtered(
+                    lambda p: p.location_id.id == 69 or p.location_dest_id.id == 69
+                )
+            record.movimientos_almacen = pickings.filtered(
+                lambda p: p.picking_type_code in ('outgoing', 'incoming')
+            )
 
     def _compute_fecha_entrega_mercancia(self):
         for record in self:
