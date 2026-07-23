@@ -4,14 +4,18 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='payment_reference']" position="before">
-                <!-- MIGRACIÓN V19: `attrs`/`states` reemplazados por
-                     expresiones lógicas inline. `edi_state` vive en
-                     `account_edi`, ahora declarado como dependencia
-                     explícita (antes se simplificaba esta condición a solo
-                     el estado de la factura porque el módulo no lo tenía
-                     disponible); se restaura el `required=` real de
-                     Studio. -->
+            <!-- MIGRACIÓN V19: `attrs`/`states` reemplazados por
+                 expresiones lógicas inline. `edi_state` vive en
+                 `account_edi`, ahora declarado como dependencia explícita
+                 (antes se simplificaba esta condición a solo el estado de
+                 la factura porque el módulo no lo tenía disponible); se
+                 restaura el `required=` real de Studio. También se ancla
+                 dentro de `header_left_group` en vez de
+                 antes/después de `payment_reference`: en 19.0 el core
+                 reubicó ese campo a la columna derecha del header (en
+                 15.0 vivía en la izquierda), así que este bloque
+                 terminaba en la columna equivocada. -->
+            <xpath expr="//group[@id='header_left_group']" position="inside">
                 <field name="motivo_cancelacion"
                        required="edi_state == 'to_cancel'"/>
                 <field name="fecha_confirmacion_cancelacion"

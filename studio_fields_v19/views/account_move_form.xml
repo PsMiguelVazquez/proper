@@ -54,7 +54,15 @@
                 <attribute name="invisible">not l10n_mx_edi_is_cfdi_needed</attribute>
                 <attribute name="readonly">state in ('posted', 'cancel')</attribute>
             </xpath>
-            <xpath expr="//field[@name='payment_reference']" position="after">
+            <!-- MIGRACIÓN V19: en Studio este bloque se insertaba después de
+                 `payment_reference`, pero en 19.0 el core reubicó ese campo
+                 a `header_right_group` (columna derecha) -en 15.0 vivía en
+                 la izquierda, junto a Cliente/Dirección-, así que todo este
+                 bloque terminaba en la columna equivocada. Se ancla
+                 directamente dentro de `header_left_group` (al final, tras
+                 sus campos existentes) para que quede en la misma columna
+                 que en 15.0. -->
+            <xpath expr="//group[@id='header_left_group']" position="inside">
                 <field name="x_studio_nombre_del_solicitante" string="Nombre del solicitante" invisible="state != 'posted' or is_move_sent or move_type not in ('out_invoice', 'out_refund')"/>
                 <field name="orden_compra_relacionada" invisible="1"/>
                 <field name="x_studio_n_orden_de_compra" string="N° Orden de compra"/>

@@ -14,7 +14,12 @@
             <xpath expr="//field[@name='l10n_mx_edi_usage']" position="before">
                     <field name="codigo_uso_cfdi"/>
             </xpath>
-            <xpath expr="//field[@name='partner_bank_id']" position="after">
+            <!-- MIGRACIÓN V19: se ancla dentro de `header_left_group` en
+                 vez de después de `partner_bank_id`: en 19.0 ese campo
+                 vive en la columna derecha del header (`header_right_
+                 group`), pero en 15.0 "Timbrado por"/"Versión CFDI"
+                 aparecían en la columna izquierda junto a Cliente. -->
+            <xpath expr="//group[@id='header_left_group']" position="inside">
                 <field name="usuario_timbrado" readonly="1"/>
                 <field name="version_cfdi" invisible="move_type != 'out_invoice'" readonly="1"/>
             </xpath>
