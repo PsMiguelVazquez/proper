@@ -1,6 +1,6 @@
 {
     'name': 'Novu Purchase Order',
-    'version': '19.0.0.1',
+    'version': '19.0.0.2',
     'category': '',
     'license': 'OPL-1',
     'summary': 'Agrega campos y cambios necesarios al modulo de compras',
@@ -15,7 +15,7 @@
     ],
     'assets': {},
     'installable': True,
-    'auto_install': False,
+    'auto_install': True,
     'application': False,
     'active': False,
 

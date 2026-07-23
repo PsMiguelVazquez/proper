@@ -1,6 +1,6 @@
 {
     'name': 'Novu sale_order',
-    'version': '19.0.0.7',
+    'version': '19.0.0.8',
     'category': '',
     'license': 'OPL-1',
     'summary': 'Agrega campos necesarios en la venta',
@@ -30,7 +30,7 @@
     ],
     'assets': {},
     'installable': True,
-    'auto_install': False,
+    'auto_install': True,
     'application': False,
     'active': False,
 
