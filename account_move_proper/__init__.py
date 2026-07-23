@@ -4,6 +4,7 @@ from . import models
 
 
 def pre_init_hook(env):
+    _delete_old_studio_account_move_form_view(env)
     _reactivate_studio_views(env)
 
 
@@ -19,6 +20,30 @@ def pre_init_hook(env):
 STUDIO_VIEW_XMLIDS = [
     'account_move_proper.view_account_move_form_inherited_dates',
 ]
+
+
+# MIGRACIÓN V19: vista original generada por Odoo Studio para
+# `account.view_move_form` (state='manual', módulo fantasma
+# `studio_customization`) - es el origen del bloque formalizado en
+# `studio_fields_v19/views/account_move_form.xml` (confirmado campo por
+# campo contra su `arch_db` real). Está inactiva, pero `active=False` NO
+# la excluye de la validación del árbol de vistas heredadas de
+# `account.view_move_form`: al actualizar `view_account_move_form_
+# inherited_dates` (abajo) Odoo la revalida igual, y su xpath a
+# `l10n_mx_edi_origin` -campo eliminado en 19.0- rompe la actualización
+# con "El elemento ... no puede ser localizado en la vista padre". Se
+# elimina aquí (no solo en `studio_fields_v19`) porque nada garantiza que
+# ese módulo se procese antes que este durante el deploy -ninguno depende
+# del otro-, y esta es la vista que de hecho dispara el fallo al cargar
+# `views/views.xml` de este módulo.
+OLD_STUDIO_ACCOUNT_MOVE_FORM_VIEW_XMLID = 'studio_customization.odoo_studio_account__ac74cbfb-da24-46b5-aca5-f72183fdfc26'
+
+
+def _delete_old_studio_account_move_form_view(env):
+    view = env.ref(OLD_STUDIO_ACCOUNT_MOVE_FORM_VIEW_XMLID, raise_if_not_found=False)
+    if view:
+        env.cr.execute("DELETE FROM ir_model_data WHERE model = 'ir.ui.view' AND res_id = %s", (view.id,))
+        env.cr.execute("DELETE FROM ir_ui_view WHERE id = %s", (view.id,))
 
 
 def _reactivate_studio_views(env):

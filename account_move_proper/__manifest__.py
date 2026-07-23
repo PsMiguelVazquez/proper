@@ -13,7 +13,7 @@
     'website': "",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.7',
+    'version': '19.0.1.0.8',
     'license': 'LGPL-3',
 
     'pre_init_hook': 'pre_init_hook',
