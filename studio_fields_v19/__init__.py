@@ -342,6 +342,27 @@ def _fix_broken_l10n_mx_edi_reports(env):
 #     stock_move_line.py`); es el campo real que muestra la descripción
 #     del producto en los reportes de traslado, `description_bom_line` no
 #     existe en ningún módulo instalado.
+#   - `stock.move.reserved_availability` -> `quantity` (el core ya no
+#     mantiene ese campo aparte; internamente calcula lo mismo como
+#     `{move: move.quantity for move in self}`, ver `addons/stock/models/
+#     stock_move.py`).
+#   - `fleet.vehicle.transport_insurance_policy` ->
+#     `l10n_mx_transport_insurance_policy` (mismo caso que
+#     `transport_perm_sct`/`transport_insurer` de arriba).
+#   - Vista huérfana de Studio (`studio_customization.odoo_studio_report_
+#     p_cb1a4aec-...`, heredando por xpath de `report_picking_copy_2_
+#     copy_1`/"remisión con costo"): ya hacía
+#     `t-set="tax_totals" t-value="o.sale_id.tax_totals"` antes de llamar
+#     a `account.document_tax_totals` -el patrón nativo correcto, calcular
+#     los totales reales desde la venta ligada, en vez de intentar
+#     reconstruirlos a mano-, pero sin guarda para cuando la entrega no
+#     tiene venta ligada: con `o.sale_id` vacío, `tax_totals` da `False`
+#     (recordset vacío -> valor "vacío" del campo Binary) y
+#     `account.document_tax_totals` truena con "'bool' object is not
+#     subscriptable" al intentar `tax_totals['subtotals']`. Se agrega
+#     `t-if="o.sale_id"` al `<div class="row">` que envuelve esa tabla,
+#     para que sólo se muestre cuando sí hay una venta de la que sacar los
+#     totales.
 _STOCK_PICKING_MOVE_LINES_RE = re.compile(r'\bmove_lines\b')
 _STOCK_PICKING_MOVE_WITHOUT_PACKAGE_RE = re.compile(r'\bmove_ids_without_package\b')
 _STOCK_PICKING_QTY_DONE_RE = re.compile(r'\b(?:qty_done|quantity_done)\b')
@@ -351,12 +372,18 @@ _STOCK_PICKING_TRANSPORT_PERM_SCT_RE = re.compile(r'\btransport_perm_sct\b')
 _STOCK_PICKING_TRANSPORT_INSURER_RE = re.compile(r'\btransport_insurer\b')
 _STOCK_PICKING_PACKAGE_LEVEL_IDS_RE = re.compile(r'[a-zA-Z_][a-zA-Z0-9_.()]*\.package_level_ids')
 _STOCK_PICKING_DESCRIPTION_BOM_LINE_RE = re.compile(r'\bdescription_bom_line\b')
+_STOCK_PICKING_RESERVED_AVAILABILITY_RE = re.compile(r'\breserved_availability\b')
+_STOCK_PICKING_TRANSPORT_INSURANCE_POLICY_RE = re.compile(r'\btransport_insurance_policy\b')
+_STOCK_PICKING_TAX_TOTALS_ROW_RE = re.compile(
+    r'(<div class="row">)(\s*<div class="col-5"/>\s*<div class="col-5 offset-2">'
+    r'\s*<table[^>]*>\s*<t t-set="tax_totals" t-value="o\.sale_id\.tax_totals"/>)'
+)
 
 
 def _fix_broken_stock_picking_reports(env):
     views = env['ir.ui.view'].search([
         ('type', '=', 'qweb'),
-        '|', '|', '|', '|', '|', '|', '|', '|',
+        '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
         ('arch_db', 'like', 'move_lines'),
         ('arch_db', 'like', 'move_ids_without_package'),
         ('arch_db', 'like', 'qty_done'),
@@ -366,6 +393,9 @@ def _fix_broken_stock_picking_reports(env):
         ('arch_db', 'like', 'transport_insurer'),
         ('arch_db', 'like', 'package_level_ids'),
         ('arch_db', 'like', 'description_bom_line'),
+        ('arch_db', 'like', 'reserved_availability'),
+        ('arch_db', 'like', 'transport_insurance_policy'),
+        ('arch_db', 'like', 'o.sale_id.tax_totals'),
     ])
     for view in views:
         arch = view.arch_db
@@ -380,6 +410,9 @@ def _fix_broken_stock_picking_reports(env):
         new_arch = _STOCK_PICKING_TRANSPORT_INSURER_RE.sub('l10n_mx_transport_insurer', new_arch)
         new_arch = _STOCK_PICKING_PACKAGE_LEVEL_IDS_RE.sub('False', new_arch)
         new_arch = _STOCK_PICKING_DESCRIPTION_BOM_LINE_RE.sub('description_picking', new_arch)
+        new_arch = _STOCK_PICKING_RESERVED_AVAILABILITY_RE.sub('quantity', new_arch)
+        new_arch = _STOCK_PICKING_TRANSPORT_INSURANCE_POLICY_RE.sub('l10n_mx_transport_insurance_policy', new_arch)
+        new_arch = _STOCK_PICKING_TAX_TOTALS_ROW_RE.sub(r'<div class="row" t-if="o.sale_id">\2', new_arch)
         if new_arch != arch:
             view.write({'arch_db': new_arch})
 
