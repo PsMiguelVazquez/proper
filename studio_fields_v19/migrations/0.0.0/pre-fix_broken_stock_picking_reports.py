@@ -17,13 +17,19 @@ _STOCK_PICKING_TRANSPORT_PERM_SCT_RE = re.compile(r'\btransport_perm_sct\b')
 _STOCK_PICKING_TRANSPORT_INSURER_RE = re.compile(r'\btransport_insurer\b')
 _STOCK_PICKING_PACKAGE_LEVEL_IDS_RE = re.compile(r'[a-zA-Z_][a-zA-Z0-9_.()]*\.package_level_ids')
 _STOCK_PICKING_DESCRIPTION_BOM_LINE_RE = re.compile(r'\bdescription_bom_line\b')
+_STOCK_PICKING_RESERVED_AVAILABILITY_RE = re.compile(r'\breserved_availability\b')
+_STOCK_PICKING_TRANSPORT_INSURANCE_POLICY_RE = re.compile(r'\btransport_insurance_policy\b')
+_STOCK_PICKING_TAX_TOTALS_ROW_RE = re.compile(
+    r'(<div class="row">)(\s*<div class="col-5"/>\s*<div class="col-5 offset-2">'
+    r'\s*<table[^>]*>\s*<t t-set="tax_totals" t-value="o\.sale_id\.tax_totals"/>)'
+)
 
 
 def migrate(cr, version):
     env = api.Environment(cr, SUPERUSER_ID, {})
     views = env['ir.ui.view'].search([
         ('type', '=', 'qweb'),
-        '|', '|', '|', '|', '|', '|', '|', '|',
+        '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
         ('arch_db', 'like', 'move_lines'),
         ('arch_db', 'like', 'move_ids_without_package'),
         ('arch_db', 'like', 'qty_done'),
@@ -33,6 +39,9 @@ def migrate(cr, version):
         ('arch_db', 'like', 'transport_insurer'),
         ('arch_db', 'like', 'package_level_ids'),
         ('arch_db', 'like', 'description_bom_line'),
+        ('arch_db', 'like', 'reserved_availability'),
+        ('arch_db', 'like', 'transport_insurance_policy'),
+        ('arch_db', 'like', 'o.sale_id.tax_totals'),
     ])
     for view in views:
         arch = view.arch_db
@@ -47,5 +56,8 @@ def migrate(cr, version):
         new_arch = _STOCK_PICKING_TRANSPORT_INSURER_RE.sub('l10n_mx_transport_insurer', new_arch)
         new_arch = _STOCK_PICKING_PACKAGE_LEVEL_IDS_RE.sub('False', new_arch)
         new_arch = _STOCK_PICKING_DESCRIPTION_BOM_LINE_RE.sub('description_picking', new_arch)
+        new_arch = _STOCK_PICKING_RESERVED_AVAILABILITY_RE.sub('quantity', new_arch)
+        new_arch = _STOCK_PICKING_TRANSPORT_INSURANCE_POLICY_RE.sub('l10n_mx_transport_insurance_policy', new_arch)
+        new_arch = _STOCK_PICKING_TAX_TOTALS_ROW_RE.sub(r'<div class="row" t-if="o.sale_id">\2', new_arch)
         if new_arch != arch:
             view.write({'arch_db': new_arch})
