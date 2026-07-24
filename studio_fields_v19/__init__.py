@@ -292,6 +292,40 @@ def _fix_broken_l10n_mx_edi_reports(env):
             view.write({'arch_db': new_arch})
 
 
+# MIGRACIÓN V19: mismo patrón que `_fix_broken_l10n_mx_edi_reports` de
+# arriba, para otro par de renombres del core -esta vez en `stock.picking`,
+# no relacionados con `l10n_mx_edi`-. `move_lines` se renombró a `move_ids`
+# hace varias versiones; `move_ids_without_package` se eliminó por completo
+# (el core ya no distingue "movimientos sin paquete" con un campo aparte,
+# ver `addons/stock/report/report_deliveryslip.xml`, que hoy filtra sobre
+# `move_ids` directo). Los reportes de Studio duplicados (remisión,
+# document de entrega, carta porte, etc.) copiaron el contenido de v15 tal
+# cual y quedaron con los nombres viejos, rompiendo con "'stock.picking'
+# object has no attribute 'move_lines'"/"...'move_ids_without_package'" al
+# imprimir. Se usa límite de palabra (`\b`) para no tocar por accidente
+# variables QWeb que sólo contienen "move_lines" como substring (ej.
+# `package_move_lines`, `aggregated_move_lines`, ambas reales en el core).
+_STOCK_PICKING_MOVE_LINES_RE = re.compile(r'\bmove_lines\b')
+_STOCK_PICKING_MOVE_WITHOUT_PACKAGE_RE = re.compile(r'\bmove_ids_without_package\b')
+
+
+def _fix_broken_stock_picking_reports(env):
+    views = env['ir.ui.view'].search([
+        ('type', '=', 'qweb'),
+        '|',
+        ('arch_db', 'like', 'move_lines'),
+        ('arch_db', 'like', 'move_ids_without_package'),
+    ])
+    for view in views:
+        arch = view.arch_db
+        if not arch:
+            continue
+        new_arch = _STOCK_PICKING_MOVE_LINES_RE.sub('move_ids', arch)
+        new_arch = _STOCK_PICKING_MOVE_WITHOUT_PACKAGE_RE.sub('move_ids', new_arch)
+        if new_arch != arch:
+            view.write({'arch_db': new_arch})
+
+
 # MIGRACIÓN V19: bug preexistente en las plantillas de Studio (ya estaba
 # roto en v15, no es algo que haya cambiado en la migración): usan
 # `o.x_num_pro` -"Num Pro"- directo sobre la factura (`account.move`), pero
@@ -683,6 +717,7 @@ def pre_init_hook(env):
     _fix_accounting_menu_parents(env)
     _cleanup_unused_studio_fields(env)
     _fix_broken_l10n_mx_edi_reports(env)
+    _fix_broken_stock_picking_reports(env)
     _fix_broken_studio_report_field_refs(env)
     _fix_broken_purchase_order_uom_ref(env)
     _fix_broken_purchase_order_notes_ref(env)
