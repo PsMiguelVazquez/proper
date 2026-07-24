@@ -317,28 +317,55 @@ def _fix_broken_l10n_mx_edi_reports(env):
 #     líneas de movimiento en vez de los movimientos).
 #   - `stock.picking.l10n_mx_edi_status` -> `l10n_mx_edi_cfdi_state` (ver
 #     `enterprise/l10n_mx_edi_stock/models/stock_picking.py`).
-#   - `fleet.vehicle.transport_perm_sct` -> `l10n_mx_transport_perm_sct`
-#     (ver `enterprise/l10n_mx_edi_stock/models/fleet_vehicle.py`; todos
-#     los campos de carta porte en ese modelo llevan el prefijo `l10n_mx_`
-#     que Studio no copió).
+#   - `fleet.vehicle.transport_perm_sct` -> `l10n_mx_transport_perm_sct`,
+#     `fleet.vehicle.transport_insurer` -> `l10n_mx_transport_insurer` (ver
+#     `enterprise/l10n_mx_edi_stock/models/fleet_vehicle.py`; todos los
+#     campos de carta porte en ese modelo llevan el prefijo `l10n_mx_` que
+#     Studio no copió).
+#   - `stock.picking.package_level_ids` -> sin reemplazo posible: el
+#     modelo `stock.package_level` se eliminó por completo del core (ya no
+#     existe ninguna relación equivalente desde `stock.picking`). Sólo se
+#     usaba para mostrar una tabla opcional de "paquetes completos"
+#     (`t-if="o.package_level_ids and o.picking_type_entire_packs and ..."`
+#     seguido de `t-foreach="o.package_level_ids...."` dentro de esa misma
+#     tabla); se reemplaza la expresión completa (`<algo>.package_level_
+#     ids`, no sólo el nombre del campo) por el literal `False`, para que
+#     la tabla simplemente no se muestre -no hay forma de reconstruir la
+#     funcionalidad original sin ese modelo-. Reemplazar sólo el nombre
+#     del campo dejaría `o.False` (`o.` seguido de la palabra reservada
+#     `False`), que es sintaxis Python inválida; hay que consumir también
+#     el `<objeto>.` que lo precede. Como QWeb no evalúa el contenido de
+#     un elemento cuyo `t-if` da `False`, el `t-foreach` interno nunca
+#     llega a ejecutarse contra ese `False`.
+#   - `stock.move.line.description_bom_line` -> `description_picking`
+#     (related a `move_id.description_picking`, ver `addons/stock/models/
+#     stock_move_line.py`); es el campo real que muestra la descripción
+#     del producto en los reportes de traslado, `description_bom_line` no
+#     existe en ningún módulo instalado.
 _STOCK_PICKING_MOVE_LINES_RE = re.compile(r'\bmove_lines\b')
 _STOCK_PICKING_MOVE_WITHOUT_PACKAGE_RE = re.compile(r'\bmove_ids_without_package\b')
 _STOCK_PICKING_QTY_DONE_RE = re.compile(r'\b(?:qty_done|quantity_done)\b')
 _STOCK_PICKING_MOVE_LINE_WITHOUT_PACKAGE_RE = re.compile(r'\bmove_line_ids_without_package\b')
 _STOCK_PICKING_L10N_MX_EDI_STATUS_RE = re.compile(r'\bl10n_mx_edi_status\b')
 _STOCK_PICKING_TRANSPORT_PERM_SCT_RE = re.compile(r'\btransport_perm_sct\b')
+_STOCK_PICKING_TRANSPORT_INSURER_RE = re.compile(r'\btransport_insurer\b')
+_STOCK_PICKING_PACKAGE_LEVEL_IDS_RE = re.compile(r'[a-zA-Z_][a-zA-Z0-9_.()]*\.package_level_ids')
+_STOCK_PICKING_DESCRIPTION_BOM_LINE_RE = re.compile(r'\bdescription_bom_line\b')
 
 
 def _fix_broken_stock_picking_reports(env):
     views = env['ir.ui.view'].search([
         ('type', '=', 'qweb'),
-        '|', '|', '|', '|', '|',
+        '|', '|', '|', '|', '|', '|', '|', '|',
         ('arch_db', 'like', 'move_lines'),
         ('arch_db', 'like', 'move_ids_without_package'),
         ('arch_db', 'like', 'qty_done'),
         ('arch_db', 'like', 'quantity_done'),
         ('arch_db', 'like', 'l10n_mx_edi_status'),
         ('arch_db', 'like', 'transport_perm_sct'),
+        ('arch_db', 'like', 'transport_insurer'),
+        ('arch_db', 'like', 'package_level_ids'),
+        ('arch_db', 'like', 'description_bom_line'),
     ])
     for view in views:
         arch = view.arch_db
@@ -350,6 +377,9 @@ def _fix_broken_stock_picking_reports(env):
         new_arch = _STOCK_PICKING_QTY_DONE_RE.sub('quantity', new_arch)
         new_arch = _STOCK_PICKING_L10N_MX_EDI_STATUS_RE.sub('l10n_mx_edi_cfdi_state', new_arch)
         new_arch = _STOCK_PICKING_TRANSPORT_PERM_SCT_RE.sub('l10n_mx_transport_perm_sct', new_arch)
+        new_arch = _STOCK_PICKING_TRANSPORT_INSURER_RE.sub('l10n_mx_transport_insurer', new_arch)
+        new_arch = _STOCK_PICKING_PACKAGE_LEVEL_IDS_RE.sub('False', new_arch)
+        new_arch = _STOCK_PICKING_DESCRIPTION_BOM_LINE_RE.sub('description_picking', new_arch)
         if new_arch != arch:
             view.write({'arch_db': new_arch})
 
