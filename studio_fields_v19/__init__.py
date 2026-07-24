@@ -363,6 +363,10 @@ def _fix_broken_l10n_mx_edi_reports(env):
 #     `t-if="o.sale_id"` al `<div class="row">` que envuelve esa tabla,
 #     para que sólo se muestre cuando sí hay una venta de la que sacar los
 #     totales.
+#   - `fleet.vehicle.vehicle_licence` -> `license_plate` (campo estándar
+#     de `fleet.vehicle`, no lleva prefijo `l10n_mx_` -no es un campo
+#     propio de carta porte, es la placa del vehículo en general-, ver
+#     `addons/fleet/models/fleet_vehicle.py`).
 _STOCK_PICKING_MOVE_LINES_RE = re.compile(r'\bmove_lines\b')
 _STOCK_PICKING_MOVE_WITHOUT_PACKAGE_RE = re.compile(r'\bmove_ids_without_package\b')
 _STOCK_PICKING_QTY_DONE_RE = re.compile(r'\b(?:qty_done|quantity_done)\b')
@@ -378,12 +382,13 @@ _STOCK_PICKING_TAX_TOTALS_ROW_RE = re.compile(
     r'(<div class="row">)(\s*<div class="col-5"/>\s*<div class="col-5 offset-2">'
     r'\s*<table[^>]*>\s*<t t-set="tax_totals" t-value="o\.sale_id\.tax_totals"/>)'
 )
+_STOCK_PICKING_VEHICLE_LICENCE_RE = re.compile(r'\bvehicle_licence\b')
 
 
 def _fix_broken_stock_picking_reports(env):
     views = env['ir.ui.view'].search([
         ('type', '=', 'qweb'),
-        '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
+        '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
         ('arch_db', 'like', 'move_lines'),
         ('arch_db', 'like', 'move_ids_without_package'),
         ('arch_db', 'like', 'qty_done'),
@@ -396,6 +401,7 @@ def _fix_broken_stock_picking_reports(env):
         ('arch_db', 'like', 'reserved_availability'),
         ('arch_db', 'like', 'transport_insurance_policy'),
         ('arch_db', 'like', 'o.sale_id.tax_totals'),
+        ('arch_db', 'like', 'vehicle_licence'),
     ])
     for view in views:
         arch = view.arch_db
@@ -413,6 +419,7 @@ def _fix_broken_stock_picking_reports(env):
         new_arch = _STOCK_PICKING_RESERVED_AVAILABILITY_RE.sub('quantity', new_arch)
         new_arch = _STOCK_PICKING_TRANSPORT_INSURANCE_POLICY_RE.sub('l10n_mx_transport_insurance_policy', new_arch)
         new_arch = _STOCK_PICKING_TAX_TOTALS_ROW_RE.sub(r'<div class="row" t-if="o.sale_id">\2', new_arch)
+        new_arch = _STOCK_PICKING_VEHICLE_LICENCE_RE.sub('license_plate', new_arch)
         if new_arch != arch:
             view.write({'arch_db': new_arch})
 
