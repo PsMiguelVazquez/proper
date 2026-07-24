@@ -305,23 +305,51 @@ def _fix_broken_l10n_mx_edi_reports(env):
 # imprimir. Se usa límite de palabra (`\b`) para no tocar por accidente
 # variables QWeb que sólo contienen "move_lines" como substring (ej.
 # `package_move_lines`, `aggregated_move_lines`, ambas reales en el core).
+#
+# Los mismos reportes también arrastran otros 4 renombres de campo del
+# core, descubiertos al corregir los de arriba (quedaban "debajo" del
+# primer error, sin alcanzar a ejecutarse):
+#   - `stock.move.line.qty_done`/`quantity_done` -> `quantity` (la cantidad
+#     "hecha" ya no es un campo aparte, ver `addons/stock/models/
+#     stock_move_line.py`).
+#   - `stock.picking.move_line_ids_without_package` -> `move_line_ids`
+#     (mismo caso que `move_ids_without_package` de arriba, pero para las
+#     líneas de movimiento en vez de los movimientos).
+#   - `stock.picking.l10n_mx_edi_status` -> `l10n_mx_edi_cfdi_state` (ver
+#     `enterprise/l10n_mx_edi_stock/models/stock_picking.py`).
+#   - `fleet.vehicle.transport_perm_sct` -> `l10n_mx_transport_perm_sct`
+#     (ver `enterprise/l10n_mx_edi_stock/models/fleet_vehicle.py`; todos
+#     los campos de carta porte en ese modelo llevan el prefijo `l10n_mx_`
+#     que Studio no copió).
 _STOCK_PICKING_MOVE_LINES_RE = re.compile(r'\bmove_lines\b')
 _STOCK_PICKING_MOVE_WITHOUT_PACKAGE_RE = re.compile(r'\bmove_ids_without_package\b')
+_STOCK_PICKING_QTY_DONE_RE = re.compile(r'\b(?:qty_done|quantity_done)\b')
+_STOCK_PICKING_MOVE_LINE_WITHOUT_PACKAGE_RE = re.compile(r'\bmove_line_ids_without_package\b')
+_STOCK_PICKING_L10N_MX_EDI_STATUS_RE = re.compile(r'\bl10n_mx_edi_status\b')
+_STOCK_PICKING_TRANSPORT_PERM_SCT_RE = re.compile(r'\btransport_perm_sct\b')
 
 
 def _fix_broken_stock_picking_reports(env):
     views = env['ir.ui.view'].search([
         ('type', '=', 'qweb'),
-        '|',
+        '|', '|', '|', '|', '|',
         ('arch_db', 'like', 'move_lines'),
         ('arch_db', 'like', 'move_ids_without_package'),
+        ('arch_db', 'like', 'qty_done'),
+        ('arch_db', 'like', 'quantity_done'),
+        ('arch_db', 'like', 'l10n_mx_edi_status'),
+        ('arch_db', 'like', 'transport_perm_sct'),
     ])
     for view in views:
         arch = view.arch_db
         if not arch:
             continue
-        new_arch = _STOCK_PICKING_MOVE_LINES_RE.sub('move_ids', arch)
+        new_arch = _STOCK_PICKING_MOVE_LINE_WITHOUT_PACKAGE_RE.sub('move_line_ids', arch)
+        new_arch = _STOCK_PICKING_MOVE_LINES_RE.sub('move_ids', new_arch)
         new_arch = _STOCK_PICKING_MOVE_WITHOUT_PACKAGE_RE.sub('move_ids', new_arch)
+        new_arch = _STOCK_PICKING_QTY_DONE_RE.sub('quantity', new_arch)
+        new_arch = _STOCK_PICKING_L10N_MX_EDI_STATUS_RE.sub('l10n_mx_edi_cfdi_state', new_arch)
+        new_arch = _STOCK_PICKING_TRANSPORT_PERM_SCT_RE.sub('l10n_mx_transport_perm_sct', new_arch)
         if new_arch != arch:
             view.write({'arch_db': new_arch})
 
