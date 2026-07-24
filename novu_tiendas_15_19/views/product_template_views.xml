@@ -20,6 +20,18 @@
              DESPUÉS, cuando `barcode` ya está en su posición final
              visible. -->
         <field name="priority">20</field>
+        <!-- MIGRACIÓN V19: esta vista aparece desactivada (`active=False`)
+             en la base real sin causa rastreable en el código -mismo
+             fenómeno observado repetidas veces en este proyecto con otras
+             vistas/automatizaciones de Studio-. Se declara `active=True`
+             directo aquí (no por SQL separado en un hook) para que
+             reactivación y contenido se apliquen en el mismo `write()`
+             atómico -reactivar por separado ANTES de que el resto del
+             `<data>` corrija el contenido abre una ventana donde la vista
+             queda activa con contenido viejo, lo que en otro módulo de
+             este mismo proyecto rompió la validación de vistas hermanas
+             (ver `account_move_proper/__init__.py`)-. -->
+        <field name="active" eval="True"/>
         <field name="arch" type="xml">
             <!-- MIGRACIÓN V19: `uom_po_id` fue eliminado (ya no hay UoM de
                  compra separada); se usa `barcode` como referencia

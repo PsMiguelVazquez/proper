@@ -696,6 +696,7 @@ def pre_init_hook(env):
     _fix_duplicate_manual_field_labels(env)
     _reactivate_studio_automations(env)
     _delete_old_studio_account_move_form_view(env)
+    _force_install_novu_modules(env)
 
 
 # MIGRACIÓN V19: estas automatizaciones (`base.automation`, todas sobre
@@ -748,6 +749,32 @@ def _delete_old_studio_account_move_form_view(env):
     if view:
         env.cr.execute("DELETE FROM ir_model_data WHERE model = 'ir.ui.view' AND res_id = %s", (view.id,))
         env.cr.execute("DELETE FROM ir_ui_view WHERE id = %s", (view.id,))
+
+
+# MIGRACIÓN V19: `novu_sale_order` y `novu_purchase_order` no existen en
+# producción (`PROPER SERVICES`) -se crearon en un intento de migración
+# anterior, en una rama de staging-, así que en esta base (restaurada desde
+# un backup de producción en cada build) nunca aparecen "instalados" de
+# entrada. `auto_install` (ver sus manifests) nunca se dispara para ellos
+# por esa misma razón: sólo se activa cuando alguna dependencia pasa a
+# instalarse en esa misma operación, y aquí sus dependencias (sale,
+# purchase, web_studio, etc.) siempre están instaladas de antes. Se fuerza
+# su instalación por código en cada actualización de este módulo -Odoo
+# recoge módulos marcados "to install" durante la misma carga del registro
+# (ver `odoo/modules/loading.py`, `load_modules`, "STEP 3"), así que
+# `button_install()` aquí basta para que terminen instalados al final de
+# este mismo build, sin depender de un clic manual que se perdería en el
+# siguiente rebuild-.
+NOVU_MODULES_TO_FORCE_INSTALL = ['novu_sale_order', 'novu_purchase_order']
+
+
+def _force_install_novu_modules(env):
+    modules = env['ir.module.module'].search([
+        ('name', 'in', NOVU_MODULES_TO_FORCE_INSTALL),
+        ('state', '=', 'uninstalled'),
+    ])
+    if modules:
+        modules.button_install()
 
 
 def post_init_hook(env):
