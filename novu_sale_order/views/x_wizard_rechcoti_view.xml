@@ -85,13 +85,16 @@ record.x_rel.write({'x_motivo_rechazo': record.x_descripcion})
          relación con que el traslado fuera realmente de ALM14. Se
          reescribe con `sale_id` (poblado automáticamente por el flujo de
          `sale_stock`) y se agrega el filtro real por almacén, igual que
-         `x_sale_id_stock_picking_count` en `studio_fields_v19`. -->
+         `x_sale_id_stock_picking_count` en `studio_fields_v19`.
+         `stock.picking` no tiene `warehouse_id` directo -vive en
+         `stock.picking.type`-, el camino real es
+         `picking_type_id.warehouse_id`. -->
     <record id="action_window_alm14" model="ir.actions.act_window">
         <field name="name">ALM14</field>
         <field name="res_model">stock.picking</field>
         <field name="view_mode">list,form</field>
         <field name="target">current</field>
-        <field name="domain">[('sale_id', '=', active_id), ('warehouse_id.code', '=', 'ALM14')]</field>
+        <field name="domain">[('sale_id', '=', active_id), ('picking_type_id.warehouse_id.code', '=', 'ALM14')]</field>
         <field name="context">{'search_default_sale_id': active_id,'default_sale_id': active_id}</field>
     </record>
 
