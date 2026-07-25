@@ -25,13 +25,14 @@ _STOCK_PICKING_TAX_TOTALS_ROW_RE = re.compile(
 )
 _STOCK_PICKING_VEHICLE_LICENCE_RE = re.compile(r'\bvehicle_licence\b')
 _STOCK_PICKING_VEHICLE_MODEL_RE = re.compile(r'\bvehicle_model\b')
+_STOCK_PICKING_FIGURE_IDS_RE = re.compile(r'\bfigure_ids\b')
 
 
 def migrate(cr, version):
     env = api.Environment(cr, SUPERUSER_ID, {})
     views = env['ir.ui.view'].search([
         ('type', '=', 'qweb'),
-        '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
+        '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
         ('arch_db', 'like', 'move_lines'),
         ('arch_db', 'like', 'move_ids_without_package'),
         ('arch_db', 'like', 'qty_done'),
@@ -46,6 +47,7 @@ def migrate(cr, version):
         ('arch_db', 'like', 'o.sale_id.tax_totals'),
         ('arch_db', 'like', 'vehicle_licence'),
         ('arch_db', 'like', 'vehicle_model'),
+        ('arch_db', 'like', 'figure_ids'),
     ])
     for view in views:
         arch = view.arch_db
@@ -65,5 +67,6 @@ def migrate(cr, version):
         new_arch = _STOCK_PICKING_TAX_TOTALS_ROW_RE.sub(r'<div class="row" t-if="o.sale_id">\2', new_arch)
         new_arch = _STOCK_PICKING_VEHICLE_LICENCE_RE.sub('license_plate', new_arch)
         new_arch = _STOCK_PICKING_VEHICLE_MODEL_RE.sub('model_id', new_arch)
+        new_arch = _STOCK_PICKING_FIGURE_IDS_RE.sub('l10n_mx_figure_ids', new_arch)
         if new_arch != arch:
             view.write({'arch_db': new_arch})
