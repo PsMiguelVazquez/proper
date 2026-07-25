@@ -137,5 +137,18 @@ class Endoso(models.Model):
         for endoso in self:
             endoso.display_name = endoso.move_id.name != '/' and endoso.move_id.name or _('Borrador de endoso')
 
+    # MIGRACIÓN V19: el botón inteligente nunca tuvo una implementación real
+    # -en todo el historial del módulo solo hacía `print(self)`, sin
+    # devolver ninguna acción, así que el clic no navegaba a ningún lado-.
+    # Se implementa para abrir la factura endosada (`origin_invoice`), que
+    # es el documento relacionado que el ícono/posición del botón sugieren.
     def button_open_invoices(self):
-        print(self)
+        self.ensure_one()
+        return {
+            'name': _('Factura endosada'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'view_mode': 'form',
+            'res_id': self.origin_invoice.id,
+            'target': 'current',
+        }
