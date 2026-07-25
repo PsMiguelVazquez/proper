@@ -141,10 +141,16 @@ class SaleOrder(models.Model):
         # no todos los traslados de la venta -contaba sin filtrar por
         # almacén, dando de alta un número que no coincidía con lo que
         # mostraba V15 para el mismo pedido-.
+        # `stock.picking` no tiene `warehouse_id` directo -ese campo vive en
+        # `stock.picking.type` (la clase equivocada donde lo encontré la
+        # primera vez, en el mismo archivo fuente); el camino real es
+        # `picking_type_id.warehouse_id`. El primer intento (`warehouse_id.
+        # code` directo) rompía CADA VEZ que se leía/guardaba un pedido de
+        # venta con "Invalid field stock.picking.warehouse_id".
         for record in self:
             record.x_sale_id_stock_picking_count = self.env['stock.picking'].search_count([
                 ('sale_id', '=', record.id),
-                ('warehouse_id.code', '=', 'ALM14'),
+                ('picking_type_id.warehouse_id.code', '=', 'ALM14'),
             ])
 
     def _compute_x_sale__stock_picking_count(self):

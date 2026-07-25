@@ -1,6 +1,6 @@
 {
     'name': 'Novu sale_order',
-    'version': '19.0.0.8',
+    'version': '19.0.0.9',
     'category': '',
     'license': 'OPL-1',
     'summary': 'Agrega campos necesarios en la venta',
