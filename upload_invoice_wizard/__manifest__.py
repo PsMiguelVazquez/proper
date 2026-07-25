@@ -14,7 +14,7 @@
     'website': "",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
 
     # MIGRACIÓN V19: se agrega `sale_purchase_confirm` porque la vista del
     # asistente usa `x_descripcion_corta` (sale.order.line, formalizado ahí).
