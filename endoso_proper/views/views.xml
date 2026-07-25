@@ -105,12 +105,15 @@
                     </notebook>
 
                 </sheet>
-                <div class="o_attachment_preview"/>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids" groups="base.group_user"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <!-- MIGRACIÓN V19: el chatter se rediseñó por completo; los
+                     campos sueltos (`message_follower_ids`/`activity_ids`/
+                     `message_ids`) dentro de un `<div class="oe_chatter">`
+                     ya no se renderizan como el chatter con hilo de
+                     mensajes -se muestran como listas genéricas de sus
+                     modelos relacionados (seguidores, actividades,
+                     mensajes cada uno con sus propias columnas en crudo)-.
+                     El reemplazo es el elemento `<chatter/>`. -->
+                <chatter/>
             </form>
         </field>
     </record>
