@@ -13,8 +13,9 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.0.2',
     'license': 'LGPL-3',
+    'pre_init_hook': 'pre_init_hook',
 
     # MIGRACIÓN V19: la vista del wizard usa `account.move.porcent_assign`,
     # campo real definido por `add_invoice_to_paid` (Lote 3). Instalación y
