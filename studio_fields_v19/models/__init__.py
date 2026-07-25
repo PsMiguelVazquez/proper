@@ -8,3 +8,4 @@ from . import crm_lead
 from . import res_partner
 from . import hr_employee
 from . import helpdesk_ticket
+from . import self_heal

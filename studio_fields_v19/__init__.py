@@ -833,7 +833,18 @@ def _fix_duplicate_manual_field_labels(env):
             field.write({'field_description': label})
 
 
-def pre_init_hook(env):
+# MIGRACIÓN V19: subconjunto de las funciones de más abajo que es seguro
+# repetir en CUALQUIER momento, no sólo durante instalación/upgrade -todas
+# comprueban el estado actual antes de escribir-. Se excluye a propósito
+# `_force_install_novu_modules`: marcar un módulo "to install" sólo tiene
+# efecto real si ocurre dentro del mismo `load_modules()` que hace STEP 3
+# (`odoo/modules/loading.py`), que recoge módulos "to install" y los carga
+# en esa misma pasada; llamarlo fuera de ahí (p.ej. desde `_register_hook`,
+# que corre en STEP 9, después) sólo dejaría el módulo a medio marcar sin
+# instalarlo de verdad. Ver `models/self_heal.py` para el otro llamador de
+# esta lista, pensado para correr en cada arranque del registro y no sólo
+# cuando la versión del módulo "sube".
+def _self_heal_idempotent_fixes(env):
     _deactivate_old_studio_report_views(env)
     _fix_accounting_menu_parents(env)
     _cleanup_unused_studio_fields(env)
@@ -852,6 +863,11 @@ def pre_init_hook(env):
     _fix_duplicate_manual_field_labels(env)
     _reactivate_studio_automations(env)
     _delete_old_studio_account_move_form_view(env)
+    _fix_sale_order_menu_actions(env)
+
+
+def pre_init_hook(env):
+    _self_heal_idempotent_fixes(env)
     _force_install_novu_modules(env)
 
 
