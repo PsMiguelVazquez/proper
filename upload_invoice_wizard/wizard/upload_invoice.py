@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api, _
+from odoo import models, fields, api, _, Command
 from odoo.exceptions import UserError, ValidationError
 from lxml.objectify import fromstring
 import base64
@@ -176,8 +176,9 @@ class UploadInvoice(models.TransientModel):
                         # MIGRACIÓN V19: ver nota arriba sobre
                         # `account.edi.document`/`edi_format_id`; se
                         # conserva solo el adjuntar los archivos.
+                        xml_attachment = self.env['ir.attachment']
                         for adjunto in self.adjuntos:
-                            self.env['ir.attachment'].create({
+                            new_attachment = self.env['ir.attachment'].create({
                                 'name': adjunto.name,
                                 'type': 'binary',
                                 'datas': adjunto.datas,
@@ -185,6 +186,32 @@ class UploadInvoice(models.TransientModel):
                                 'res_id': invoice_id.id,
                                 'mimetype': adjunto.mimetype,
                                 'description': f'CFDI de factura mexicana generado para el documento {invoice_id.name}'
+                            })
+                            if adjunto.mimetype == 'application/xml':
+                                xml_attachment = new_attachment
+                        # MIGRACIÓN V19: `l10n_mx_edi_cfdi_uuid` (y el resto
+                        # de campos de estado CFDI en la factura) ahora se
+                        # calculan a partir de `l10n_mx_edi_cfdi_attachment_
+                        # id`, que a su vez se deriva de un registro real
+                        # `l10n_mx_edi.document` -sólo adjuntar el XML como
+                        # `ir.attachment` suelto (arriba) no alcanza, el
+                        # cálculo nunca lo encuentra-. Se crea el documento
+                        # que el propio core arma al importar un CFDI ya
+                        # timbrado externamente (ver `AccountMove.
+                        # _l10n_mx_edi_import_cfdi_invoice`, mismo `state`
+                        # usado ahí para el caso de venta), para que la
+                        # factura quede correctamente marcada como timbrada
+                        # -entre otras cosas, de esto depende
+                        # `ocultar_endoso` en `endoso_proper`, que exige
+                        # `l10n_mx_edi_cfdi_uuid` para permitir endosar-.
+                        if xml_attachment and 'l10n_mx_edi_document_ids' in invoice_id._fields:
+                            self.env['l10n_mx_edi.document'].create({
+                                'move_id': invoice_id.id,
+                                'invoice_ids': [Command.set(invoice_id.ids)],
+                                'state': 'invoice_sent',
+                                'sat_state': 'not_defined',
+                                'attachment_id': xml_attachment.id,
+                                'datetime': fields.Datetime.now(),
                             })
                     return {
                         'name': _('Factura'),
