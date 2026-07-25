@@ -268,12 +268,37 @@ class res_partner_fields(models.Model):
             except Exception:
                 record.l10n_mx_edi_fiscal_regime = ''
 
-    @api.onchange('x_nivel_cliente')
-    def _on_change_level(self):
-        for record in self:
+    # MIGRACIÓN V19: este aviso ("se configuró el nivel de cliente...") vivía
+    # en un `@api.onchange`, que se dispara mientras el formulario todavía
+    # no se guarda -el registro puede ser un `NewId` sin persistir-. En
+    # v19 `message_post()` ahora rechaza explícitamente publicarse sobre un
+    # registro que no sea "un documento de negocio" ya guardado
+    # (`ValueError: Posting a message should be done on a business
+    # document`), rompiendo el formulario del contacto en cuanto se tocaba
+    # el campo. Se mueve la notificación de "cuándo cambia en el
+    # formulario" a "cuándo se guarda de verdad" (`write`/`create`), que
+    # es además más correcto: antes se registraba un mensaje en el chatter
+    # por cada selección en el combo, incluso si el usuario cancelaba sin
+    # guardar.
+    def _notify_nivel_cliente_change(self, records):
+        for record in records:
             if not record.x_nivel_cliente:
                 continue
-            partner = record.commercial_partner_id
-            for par in partner:
-                message = "Se configuró el nivel de cliente " + record.x_nivel_cliente.x_name + ' para el usuario ' + record.name
+            message = "Se configuró el nivel de cliente " + record.x_nivel_cliente.x_name + ' para el usuario ' + record.name
+            for par in record.commercial_partner_id:
                 par.message_post(body=message, message_type="notification", partner_ids=[record.create_uid.partner_id.id])
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'x_nivel_cliente' in vals:
+            self._notify_nivel_cliente_change(self)
+        return result
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records_to_notify = records.browse(
+            record.id for record, vals in zip(records, vals_list) if 'x_nivel_cliente' in vals
+        )
+        self._notify_nivel_cliente_change(records_to_notify)
+        return records
