@@ -370,6 +370,10 @@ def _fix_broken_l10n_mx_edi_reports(env):
 #   - `fleet.vehicle.vehicle_model` -> `model_id` (Many2one a
 #     `fleet.vehicle.model`; no existe un campo de texto aparte, `t-field`
 #     sobre un Many2one renderiza su nombre automáticamente).
+#   - `fleet.vehicle.figure_ids` -> `l10n_mx_figure_ids` (One2many de
+#     carta porte, ver `enterprise/l10n_mx_edi_stock/models/
+#     fleet_vehicle.py`; a diferencia de `vehicle_licence`/`vehicle_model`
+#     éste sí lleva el prefijo `l10n_mx_`).
 _STOCK_PICKING_MOVE_LINES_RE = re.compile(r'\bmove_lines\b')
 _STOCK_PICKING_MOVE_WITHOUT_PACKAGE_RE = re.compile(r'\bmove_ids_without_package\b')
 _STOCK_PICKING_QTY_DONE_RE = re.compile(r'\b(?:qty_done|quantity_done)\b')
@@ -387,12 +391,13 @@ _STOCK_PICKING_TAX_TOTALS_ROW_RE = re.compile(
 )
 _STOCK_PICKING_VEHICLE_LICENCE_RE = re.compile(r'\bvehicle_licence\b')
 _STOCK_PICKING_VEHICLE_MODEL_RE = re.compile(r'\bvehicle_model\b')
+_STOCK_PICKING_FIGURE_IDS_RE = re.compile(r'\bfigure_ids\b')
 
 
 def _fix_broken_stock_picking_reports(env):
     views = env['ir.ui.view'].search([
         ('type', '=', 'qweb'),
-        '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
+        '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
         ('arch_db', 'like', 'move_lines'),
         ('arch_db', 'like', 'move_ids_without_package'),
         ('arch_db', 'like', 'qty_done'),
@@ -407,6 +412,7 @@ def _fix_broken_stock_picking_reports(env):
         ('arch_db', 'like', 'o.sale_id.tax_totals'),
         ('arch_db', 'like', 'vehicle_licence'),
         ('arch_db', 'like', 'vehicle_model'),
+        ('arch_db', 'like', 'figure_ids'),
     ])
     for view in views:
         arch = view.arch_db
@@ -426,6 +432,7 @@ def _fix_broken_stock_picking_reports(env):
         new_arch = _STOCK_PICKING_TAX_TOTALS_ROW_RE.sub(r'<div class="row" t-if="o.sale_id">\2', new_arch)
         new_arch = _STOCK_PICKING_VEHICLE_LICENCE_RE.sub('license_plate', new_arch)
         new_arch = _STOCK_PICKING_VEHICLE_MODEL_RE.sub('model_id', new_arch)
+        new_arch = _STOCK_PICKING_FIGURE_IDS_RE.sub('l10n_mx_figure_ids', new_arch)
         if new_arch != arch:
             view.write({'arch_db': new_arch})
 
