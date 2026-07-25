@@ -121,6 +121,16 @@ def _fix_sale_order_menu_actions(env):
         action_ref = 'ir.actions.act_window,%d' % action.id
         if menu.action != action_ref:
             menu.write({'action': action_ref})
+        # MIGRACIÓN V19: estos 3 menús (Cotizaciones/Pedidos/Marketplace,
+        # todos hijos de "Contabilidad > Ventas") aparecen desactivados en
+        # la base real sin causa rastreable en el código -mismo fenómeno
+        # ya visto varias veces esta sesión-. "Marketplace" concretamente
+        # se encontró `active=False` mientras sus 2 hermanos seguían
+        # activos, haciendo que dejara de mostrarse en el menú aunque el
+        # registro siguiera existiendo. Se reactivan los 3 como red de
+        # seguridad en cada actualización del módulo.
+        if not menu.active:
+            menu.write({'active': True})
 
 
 # MIGRACIÓN V19: campos de Odoo Studio sin ningún uso detectado -no

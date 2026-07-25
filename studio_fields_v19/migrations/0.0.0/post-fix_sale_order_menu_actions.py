@@ -32,3 +32,5 @@ def migrate(cr, version):
         action_ref = 'ir.actions.act_window,%d' % action.id
         if menu.action != action_ref:
             menu.write({'action': action_ref})
+        if not menu.active:
+            menu.write({'active': True})
