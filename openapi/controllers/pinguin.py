@@ -23,7 +23,6 @@ Todo:
 """
 import base64
 import functools
-import traceback
 
 import werkzeug.wrappers
 
@@ -442,7 +441,12 @@ def route(controller_method):
             except werkzeug.exceptions.HTTPException as e:
                 response = e.response
             except Exception as e:
-                traceback.print_exc()
+                # MIGRACIÓN V19: `traceback.print_exc()` escribe a stdout
+                # crudo, sin pasar por `_logger` -el visor de LOGS de
+                # Odoo.sh no lo muestra como error buscable, sólo como
+                # ruido de proceso-. Se cambia a `_logger.exception` para
+                # que quede correctamente registrado.
+                _logger.exception("openapi: error no controlado al despachar la ruta")
                 if hasattr(e, "error") and isinstance(e.error, Exception):
                     e = e.error
                 response = error_response(
@@ -668,6 +672,13 @@ def wrap__resource__create_one(modelname, context, data, success_code, out_field
             # to create and to read fields from database
             request.env.cr.commit()
     except Exception as e:
+        # MIGRACIÓN V19: esta excepción nunca se registraba en ningún lado
+        # -ni `_logger` ni `print`-, así que un 400 aquí no dejaba rastro
+        # alguno en los logs de Odoo.sh, sólo el mensaje corto (tipo +
+        # `str(e)`, sin traceback) que ve el cliente de la API. Se agrega
+        # `_logger.exception` para que el traceback completo quede
+        # buscable en el LOGS de Odoo.sh.
+        _logger.exception("openapi: error al crear %s vía la API", modelname)
         return error_response(400, type(e).__name__, str(e))
 
     out_data = get_dict_from_record(created_obj, out_fields, (), ())
