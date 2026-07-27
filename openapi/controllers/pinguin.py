@@ -28,6 +28,7 @@ import traceback
 import werkzeug.wrappers
 
 import odoo
+import odoo.modules.registry
 
 from collections import OrderedDict
 import logging
@@ -284,7 +285,12 @@ def create_log_record(**kwargs):
     # request (we cannot use second cursor and we cannot use aborted
     # transaction)
     if not test_mode:
-        with odoo.registry(request.session.db).cursor() as cr:
+        # MIGRACIÓN V19: `odoo.registry(dbname)` (atajo expuesto por el
+        # antiguo `odoo/__init__.py`) ya no existe -en 19.0 ese archivo se
+        # reescribió como `odoo/init.py` y sólo expone `SUPERUSER_ID`/`_`/
+        # `_lt`/`Command`-. La clase vive ahora en `odoo.orm.registry`
+        # (re-exportada en `odoo.modules.registry` por compatibilidad).
+        with odoo.modules.registry.Registry(request.session.db).cursor() as cr:
             # use new to save data even in case of an error in the old cursor
             env = odoo.api.Environment(cr, request.session.uid, {})
             _create_log_record(env, **kwargs)
