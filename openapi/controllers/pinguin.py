@@ -148,6 +148,22 @@ def authenticate_token_for_user(token):
         request.session.session_token = user.id and security.compute_session_token(
             request.session, request.env
         )
+        # MIGRACIÓN V19: fijar `request.session.uid` NO reata `request.env`
+        # -éste queda ligado al uid que tenía la ruta al arrancar el
+        # dispatch (con `auth="none"`, sin usuario/`None`)-. El resto del
+        # código de este módulo ya usaba explícitamente `request.env(cr,
+        # uid)[model]` (ver `get_model_for_read`, `base_api/lib/pinguin.py`)
+        # para las operaciones directas sobre el modelo solicitado, pero
+        # `request.env.cr.commit()` (ver `wrap__resource__create_one` más
+        # abajo) sigue usando el `request.env` original sin autenticar. Al
+        # hacer flush en el commit, Odoo recorre TODOS los environments de
+        # la transacción -no sólo el correctamente autenticado-, y algún
+        # camino interno (ACL/rounding de un campo Monetary) termina
+        # resolviendo `self.env.user` sobre ese `request.env` sin
+        # autenticar, dando `res.users()` vacío y "Expected singleton:
+        # res.users()". `update_env()` (`odoo/http.py`) reata `request.env`
+        # de verdad al usuario autenticado, evitando el problema de raíz.
+        request.update_env(user=user.id)
 
         return user
 
