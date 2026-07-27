@@ -62,13 +62,17 @@ class AccountPayment(models.Model):
             # MIGRACIÓN V19: `move_id.line_ids` (ver nota en `get_endosos`);
             # `account_internal_type` -> `account_type`.
             pay_rec_lines = record.move_id.line_ids.filtered(lambda line: line.account_type in ('asset_receivable', 'liability_payable'))
+            # MIGRACIÓN V19: `payment_line`/`exchange_move`/`invoice` se
+            # calculaban aquí sin usarse para nada (ni `total_pagado` ni
+            # `record.amount_rest` dependen de ellos) -código muerto ya en
+            # 15.0-. `exchange_move_id` en particular ya no existe en
+            # `account.full.reconcile` en 19.0 (se movió a
+            # `account.partial.reconcile`, ver `addons/account/models/
+            # account_move.py`), así que ese cálculo muerto rompía la
+            # lectura del pago con AttributeError. Se quitan los tres.
             for field1, field2 in (('debit', 'credit'), ('credit', 'debit')):
                 for partial in pay_rec_lines[f'matched_{field1}_ids']:
-                    payment_line = partial[f'{field2}_move_id']
-                    invoice_line = partial[f'{field1}_move_id']
                     invoice_amount = partial[f'{field1}_amount_currency']
-                    exchange_move = invoice_line.full_reconcile_id.exchange_move_id
-                    invoice = invoice_line.move_id
                     total_pagado += invoice_amount
             record.amount_rest = record.amount - total_pagado
 
@@ -125,7 +129,15 @@ class AccountPaymentWidget(models.TransientModel):
                     to_reconcile = move_line
                     amount = move.porcent_assign
                     end = self.env['endoso.move'].search([('move_id', '=', move.id)])
-                    move.invoice_date = end.invoice_date
+                    # MIGRACIÓN V19: `account.move.write()` ahora rechaza
+                    # modificar `invoice_date` (entre otros campos) en un
+                    # movimiento ya `posted` -ver `unmodifiable_fields` en
+                    # `addons/account/models/account_move.py`, `write()`-,
+                    # algo que no existía en 15.0. Este endoso siempre está
+                    # posted cuando se llega aquí; `skip_readonly_check` es
+                    # el mismo escape hatch que usa el core para este tipo
+                    # de sincronización interna legítima.
+                    move.with_context(skip_readonly_check=True).invoice_date = end.invoice_date
                     # MIGRACIÓN V19: `l10n_mx_edi_cfdi_request` fue
                     # eliminado por completo (ver `endoso_proper`); esta
                     # asignación se quita.
@@ -150,7 +162,15 @@ class AccountPaymentWidget(models.TransientModel):
                             '''
                             amount = move.porcent_assign
                             end = self.env['endoso.move'].search([('move_id','=',move.id)])
-                            move.invoice_date = end.invoice_date
+                            # MIGRACIÓN V19: `account.move.write()` ahora rechaza
+                            # modificar `invoice_date` (entre otros campos) en un
+                            # movimiento ya `posted` -ver `unmodifiable_fields` en
+                            # `addons/account/models/account_move.py`, `write()`-,
+                            # algo que no existía en 15.0. Este endoso siempre está
+                            # posted cuando se llega aquí; `skip_readonly_check` es
+                            # el mismo escape hatch que usa el core para este tipo
+                            # de sincronización interna legítima.
+                            move.with_context(skip_readonly_check=True).invoice_date = end.invoice_date
                             move.payment_reference = end.origin_invoice.name
                             move.with_context({'paid_amount': amount}).js_assign_outstanding_line(move_line.id)
                             move.amount_residual = end.amount_residual
