@@ -11,6 +11,21 @@ class AccountPayment(models.Model):
     _inherit = 'account.payment'
     amount_rest = fields.Float(compute='get_invoices')
 
+    # MIGRACIÓN V19: red de seguridad para el mismo fenómeno ya visto en
+    # `studio_fields_v19` (ver `models/self_heal.py` ahí): esta vista
+    # apareció con `active=False` en un build de pruebas sin causa
+    # rastreable en el código, y al no depender de una comparación de
+    # versión de módulo -que puede saltarse migraciones enteras si el
+    # backup restaurado ya trae la versión "actual"-, `_register_hook()`
+    # es lo único confiable para reafirmarla en cada arranque del
+    # registro (cada reinicio de proceso, cada `-u`/`-i`), sin depender de
+    # un cron (que además está desactivado en bases no productivas).
+    def _register_hook(self):
+        super()._register_hook()
+        view = self.env.ref('add_invoice_to_paid.add_invoice_to_paid_inherit', raise_if_not_found=False)
+        if view and not view.active:
+            view.write({'active': True})
+
     # MIGRACIÓN V19: `action_process_edi_web_services()`/
     # `action_retry_edi_documents_error()` (overrides aquí) pertenecen al
     # módulo genérico `account_edi`, del que `l10n_mx_edi` ya NO depende en
