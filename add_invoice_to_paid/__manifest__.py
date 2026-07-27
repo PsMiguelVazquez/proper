@@ -15,7 +15,7 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
 
     # MIGRACIÓN V19: `endoso_proper` es dependencia real (usa el modelo
     # `endoso.move`), no declarada en el manifest original de v15.

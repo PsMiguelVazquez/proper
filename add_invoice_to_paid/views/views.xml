@@ -44,7 +44,16 @@
                    Se quita, pues el validador de vistas de 19.0 rechaza
                    campos inexistentes. -->
               <field name="amount_rest" invisible="1"/>
-              <button name="asign_invoices" type="object" string="Asignar Facturas" invisible="state != 'posted' or amount_rest == 0"/>
+              <!-- MIGRACIÓN V19: `account.payment.state` ya no tiene el
+                   valor `posted` -en 19.0 el flujo es draft/in_process/
+                   paid/canceled/rejected (ver `_compute_state` en
+                   `addons/account/models/account_payment.py`)-, así que
+                   `state != 'posted'` era siempre verdadero y el botón
+                   quedaba oculto sin importar `amount_rest`. El
+                   equivalente de "posted" (confirmado, no cancelado) es
+                   cualquier estado con asiento contable creado:
+                   `in_process` o `paid`. -->
+              <button name="asign_invoices" type="object" string="Asignar Facturas" invisible="state not in ('in_process', 'paid') or amount_rest == 0"/>
             </xpath>
           </field>
         </record>
