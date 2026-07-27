@@ -319,7 +319,11 @@ def _create_log_record(
     :returns: New 'openapi.log' record.
     :rtype: ..models.openapi_log.Log
     """
-    status = getattr(user_response, "status_code", 200)
+    status = (
+        user_response.get("status_code", 200)
+        if isinstance(user_response, dict)
+        else getattr(user_response, "status_code", 200)
+    )
     if True:  # just to keep original indent
         log_data = {
             "namespace_id": namespace_id,
@@ -338,10 +342,18 @@ def _create_log_record(
                 except KeyError:
                     pass
 
+        # MIGRACIÓN V19: para rutas `type="jsonrpc"`, `user_response` ahora
+        # puede ser el dict `{"status_code": ..., "data": ...}` producido por
+        # `successful_response`/`_http_response_to_dict` (ver `route()` más
+        # abajo), no sólo un `werkzeug.wrappers.Response` -un `dict` no tiene
+        # atributo `__dict__`-.
+        response_data = (
+            user_response if isinstance(user_response, dict) else user_response.__dict__
+        )
         if namespace_log_response == "debug":
-            log_data["response_data"] = user_response.__dict__
+            log_data["response_data"] = response_data
         elif namespace_log_response == "error" and status > 400:
-            log_data["response_data"] = user_response.__dict__
+            log_data["response_data"] = response_data
 
         return env["openapi.log"].create(log_data)
 
@@ -365,6 +377,30 @@ def _dict_to_http_response(result):
         status=status,
         headers=[("Content-Type", "application/json")],
     )
+
+
+def _http_response_to_dict(response):
+    """Inverse of `_dict_to_http_response`: unwrap a raw `werkzeug.wrappers.Response`
+    (as produced by `error_response`, imported from `base_api` and designed for
+    `type="http"` routes) into the `{"status_code": ..., "data": ...}` shape that
+    `successful_response` already uses, so a `type="jsonrpc"` route can serialize
+    it as its `result` value.
+
+    MIGRACIÓN V19: `create_one__POST`/`update_one__PUT`/`unlink_one__DELETE`/
+    `call_method_one__PATCH`/`call_method_multi__PATCH` son `type="jsonrpc"`, y sus
+    ramas de error devuelven `error_response(...)` -un `Response` crudo-. El
+    dispatcher jsonrpc de 19.0 (`odoo.http.JsonRPCDispatcher._response`) ya no
+    tolera eso: mete el `Response` tal cual en `"result"`, y como no es
+    serializable, `make_json_response` cae a `default=str`, dejando
+    `"result": "<Response 75 bytes [400 BAD REQUEST]>"` -un 200 OK que oculta el
+    código real (400/403/500) y el mensaje del error-. Se aplica el mismo patrón
+    que `_dict_to_http_response` (arriba) pero en la dirección contraria.
+    """
+    try:
+        data = json.loads(response.get_data(as_text=True))
+    except ValueError:
+        data = response.get_data(as_text=True)
+    return {"status_code": response.status_code, "data": data}
 
 
 # Patched http route
@@ -422,6 +458,11 @@ def route(controller_method):
             # que convertirlo a un Response real antes de devolverlo.
             if isinstance(response, dict) and request.dispatcher.routing_type == "http":
                 response = _dict_to_http_response(response)
+            elif (
+                isinstance(response, werkzeug.wrappers.Response)
+                and request.dispatcher.routing_type == "jsonrpc"
+            ):
+                response = _http_response_to_dict(response)
 
             data_for_log.update(
                 {"user_request": request.httprequest, "user_response": response}
