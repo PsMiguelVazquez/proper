@@ -36,6 +36,17 @@
           <field name="name">add_invoice_to_paid_inherit</field>
           <field name="model">account.payment</field>
           <field name="inherit_id" ref="account.view_account_payment_form"/>
+          <!-- MIGRACIÓN V19: esta vista apareció con `active=False` en un
+               build de pruebas sin que ningún código propio la hubiera
+               desactivado. Al no declarar antes el campo `active` en este
+               `<record>` (no tiene `noupdate`), Odoo sólo escribe en cada
+               actualización los campos listados aquí -nunca toca
+               `active` si no aparece-, así que una vez archivada (por la
+               razón que sea: restauración de un backup con ese estado,
+               neutralización de la plataforma, etc.) ningún `-u`
+               posterior la reactivaba solo. Declararlo aquí hace que se
+               reafirme en cada actualización del módulo. -->
+          <field name="active" eval="True"/>
           <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
               <!-- MIGRACIÓN V19: `invoice_line_ids` nunca fue un campo real
