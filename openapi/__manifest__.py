@@ -3,7 +3,7 @@
     "summary": """RESTful API to integrate Odoo with whatever system you need""",
     "category": "",
     "images": ["images/openapi-swagger.png"],
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "application": False,
     "author": "IT-Projects LLC, Ivan Yelizariev",
     "support": "help@itpp.dev",
