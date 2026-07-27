@@ -1,5 +1,7 @@
 import re
 
+from lxml import etree
+
 from . import models
 
 # MIGRACIÓN V19: las vistas/reportes formalizados aquí (ver views/) usan a
@@ -863,6 +865,7 @@ def _self_heal_idempotent_fixes(env):
     _fix_duplicate_manual_field_labels(env)
     _reactivate_studio_automations(env)
     _delete_old_studio_account_move_form_view(env)
+    _fix_duplicate_quotation_tree_columns(env)
     _fix_sale_order_menu_actions(env)
 
 
@@ -897,6 +900,47 @@ def _reactivate_studio_automations(env):
     ])
     if automations:
         automations.write({'active': True})
+
+
+# MIGRACIÓN V19: "Mis presupuestos" (Ventas) mostraba columnas duplicadas
+# (`x_studio_n_orden_de_compra`, `x_estado_compra`) comparado con "Pedidos".
+# Causa: `sale.sale_order_tree` (raíz) tiene una vista hija de Studio
+# (`odoo_studio_sale_ord_f72ed18a-...`) que agrega esas columnas; como
+# heredan de la raíz, tanto "Pedidos" (`sale.view_order_tree`) como
+# "Presupuestos" (`sale.view_quotation_tree` -> ...`_with_onboarding`) las
+# reciben igual. Pero "Presupuestos" pasa además por
+# `sale.view_quotation_tree_with_onboarding`, que tiene su PROPIA vista
+# hija de Studio (`odoo_studio_sale_ord_5540e2f3-...`, esta) con columnas
+# EN SU MAYORÍA distintas (`x_estado_factura`, `states_proposals`, etc.,
+# genuinamente exclusivas de presupuestos) pero que vuelve a agregar
+# `x_studio_n_orden_de_compra` y `x_estado_compra` -ya heredadas por la
+# otra vista vía la raíz-, duplicándolas sólo en "Presupuestos". No se
+# desactiva la vista completa (perdería las columnas que sí son propias),
+# se quitan sólo las dos partes duplicadas.
+DUPLICATE_QUOTATION_TREE_VIEW_XMLID = 'studio_customization.odoo_studio_sale_ord_5540e2f3-8cc7-4a6b-800a-7db9408fe51d'
+
+
+def _fix_duplicate_quotation_tree_columns(env):
+    view = env.ref(DUPLICATE_QUOTATION_TREE_VIEW_XMLID, raise_if_not_found=False)
+    if not view or not view.arch_db:
+        return
+    try:
+        root = etree.fromstring(view.arch_db.encode())
+    except etree.XMLSyntaxError:
+        return
+    changed = False
+    for xpath_node in root.findall(".//xpath[@expr=\"//list[1]/field[@name='name']\"]"):
+        field = xpath_node.find("field[@name='x_studio_n_orden_de_compra']")
+        if field is not None and len(xpath_node) == 1:
+            root.remove(xpath_node)
+            changed = True
+    for field in root.findall(".//field[@name='x_estado_compra']"):
+        parent = field.getparent()
+        if parent is not None:
+            parent.remove(field)
+            changed = True
+    if changed:
+        view.write({'arch_db': etree.tostring(root, encoding='unicode')})
 
 
 # MIGRACIÓN V19: esta es la vista que Odoo Studio generó automáticamente
