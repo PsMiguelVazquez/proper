@@ -865,7 +865,8 @@ def _self_heal_idempotent_fixes(env):
     _fix_duplicate_manual_field_labels(env)
     _reactivate_studio_automations(env)
     _delete_old_studio_account_move_form_view(env)
-    _fix_duplicate_quotation_tree_columns(env)
+    _fix_studio_sale_order_tree_columns_scope(env)
+    _restore_studio_quotation_tree_columns(env)
     _fix_sale_order_menu_actions(env)
 
 
@@ -902,25 +903,49 @@ def _reactivate_studio_automations(env):
         automations.write({'active': True})
 
 
-# MIGRACIÓN V19: "Mis presupuestos" (Ventas) mostraba columnas duplicadas
-# (`x_studio_n_orden_de_compra`, `x_estado_compra`) comparado con "Pedidos".
-# Causa: `sale.sale_order_tree` (raíz) tiene una vista hija de Studio
-# (`odoo_studio_sale_ord_f72ed18a-...`) que agrega esas columnas; como
-# heredan de la raíz, tanto "Pedidos" (`sale.view_order_tree`) como
-# "Presupuestos" (`sale.view_quotation_tree` -> ...`_with_onboarding`) las
-# reciben igual. Pero "Presupuestos" pasa además por
-# `sale.view_quotation_tree_with_onboarding`, que tiene su PROPIA vista
-# hija de Studio (`odoo_studio_sale_ord_5540e2f3-...`, esta) con columnas
-# EN SU MAYORÍA distintas (`x_estado_factura`, `states_proposals`, etc.,
-# genuinamente exclusivas de presupuestos) pero que vuelve a agregar
-# `x_studio_n_orden_de_compra` y `x_estado_compra` -ya heredadas por la
-# otra vista vía la raíz-, duplicándolas sólo en "Presupuestos". No se
-# desactiva la vista completa (perdería las columnas que sí son propias),
-# se quitan sólo las dos partes duplicadas.
+# MIGRACIÓN V19: "Mis presupuestos" (Ventas) mostraba columnas que en
+# producción (15.0) sólo pertenecen a "Pedidos" (Almacén, Cant. Solicitada/
+# Asignada/Entregada/x Entregar, Estado de surtido, Método de entrega,
+# Documentos de entrega, Estado de almacén de entrega, botón "Generar
+# Orden") -confirmado comparando capturas reales de producción: en 15.0
+# "Presupuestos" SÍ muestra "N° Orden de compra"/"Estado de compras", pero
+# NO las columnas de logística de entrega (tiene sentido: una cotización
+# sin confirmar no tiene albarán todavía)-.
+#
+# Causa real: la vista de Studio que agrega las columnas de logística
+# (`odoo_studio_sale_ord_f72ed18a-...`) cuelga de `sale.sale_order_tree`
+# -la raíz COMPARTIDA por "Pedidos" (`sale.view_order_tree`) y
+# "Presupuestos" (`sale.view_quotation_tree`)-, en vez de colgar
+# específicamente de `sale.view_order_tree` como en la base de producción
+# original. Probablemente un efecto del proceso de upgrade oficial de
+# Odoo (15.0 no tenía esta separación en tres niveles raíz/pedidos/
+# presupuestos; el upgrade tuvo que remapear el `inherit_id` original a
+# algo en 19.0, y remapeó a la raíz compartida en vez de al nodo
+# específico). Se reasigna por código al nodo correcto.
+STUDIO_SALE_ORDER_TREE_COLUMNS_XMLID = 'studio_customization.odoo_studio_sale_ord_f72ed18a-41b5-433e-a8f1-73221ffd3c98'
+
+
+def _fix_studio_sale_order_tree_columns_scope(env):
+    view = env.ref(STUDIO_SALE_ORDER_TREE_COLUMNS_XMLID, raise_if_not_found=False)
+    order_tree = env.ref('sale.view_order_tree', raise_if_not_found=False)
+    if not view or not order_tree:
+        return
+    if view.inherit_id.id != order_tree.id:
+        view.write({'inherit_id': order_tree.id})
+
+
+# MIGRACIÓN V19: deshace el fix `_fix_duplicate_quotation_tree_columns` de
+# una versión anterior de este módulo -diagnóstico incorrecto: asumía que
+# `x_studio_n_orden_de_compra`/`x_estado_compra` en esta vista eran
+# duplicados a eliminar, cuando en realidad SÍ pertenecen a "Presupuestos"
+# en producción (ver comentario arriba). El problema de fondo era la vista
+# de Studio equivocada (`_fix_studio_sale_order_tree_columns_scope`, ya
+# corregida). Se restauran ambos campos si faltan, sin duplicarlos si ya
+# están (p.ej. builds nuevos donde el fix incorrecto nunca corrió).
 DUPLICATE_QUOTATION_TREE_VIEW_XMLID = 'studio_customization.odoo_studio_sale_ord_5540e2f3-8cc7-4a6b-800a-7db9408fe51d'
 
 
-def _fix_duplicate_quotation_tree_columns(env):
+def _restore_studio_quotation_tree_columns(env):
     view = env.ref(DUPLICATE_QUOTATION_TREE_VIEW_XMLID, raise_if_not_found=False)
     if not view or not view.arch_db:
         return
@@ -929,16 +954,29 @@ def _fix_duplicate_quotation_tree_columns(env):
     except etree.XMLSyntaxError:
         return
     changed = False
-    for xpath_node in root.findall(".//xpath[@expr=\"//list[1]/field[@name='name']\"]"):
-        field = xpath_node.find("field[@name='x_studio_n_orden_de_compra']")
-        if field is not None and len(xpath_node) == 1:
-            root.remove(xpath_node)
+
+    if root.find(".//xpath[@expr=\"//list[1]/field[@name='name']\"]") is None:
+        xpath_node = etree.Element('xpath')
+        xpath_node.set('expr', "//list[1]/field[@name='name']")
+        xpath_node.set('position', 'after')
+        field = etree.SubElement(xpath_node, 'field')
+        field.set('name', 'x_studio_n_orden_de_compra')
+        field.set('optional', 'show')
+        root.insert(0, xpath_node)
+        changed = True
+
+    if root.find(".//field[@name='x_estado_compra']") is None:
+        currency_xpath = root.find(".//xpath[@expr=\"//field[@name='currency_id']\"]")
+        if currency_xpath is not None:
+            field = etree.Element('field')
+            field.set('name', 'x_estado_compra')
+            comentarios = currency_xpath.find("field[@name='x_studio_comentarios']")
+            if comentarios is not None:
+                comentarios.addnext(field)
+            else:
+                currency_xpath.append(field)
             changed = True
-    for field in root.findall(".//field[@name='x_estado_compra']"):
-        parent = field.getparent()
-        if parent is not None:
-            parent.remove(field)
-            changed = True
+
     if changed:
         view.write({'arch_db': etree.tostring(root, encoding='unicode')})
 

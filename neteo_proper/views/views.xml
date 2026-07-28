@@ -90,12 +90,12 @@
                     </notebook>
 
                 </sheet>
-                <div class="o_attachment_preview"/>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids" groups="base.group_user"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <!-- MIGRACIÓN V19: `<div class="oe_chatter">` con campos
+                     crudos ya no renderiza como widget de chatter en 19.0
+                     -cada campo se muestra como lista cruda de su propio
+                     modelo, descuadrando el formulario- (mismo fix ya
+                     aplicado en `endoso_proper`/`sale_purchase_confirm`). -->
+                <chatter/>
             </form>
         </field>
     </record>

@@ -42,10 +42,14 @@
                             </group>
                         </group>
                     </sheet>
-                    <div class="oe_chatter">
-                        <field name="message_follower_ids"/>
-                        <field name="message_ids"/>
-                    </div>
+                    <!-- MIGRACIÓN V19: el `<div class="oe_chatter">` viejo con
+                         campos crudos (`message_follower_ids`/`message_ids`) ya
+                         no renderiza como widget de chatter -cada campo se
+                         muestra como una lista cruda de su propio modelo
+                         (`mail.followers`/`mail.message`), y descuadra el resto
+                         del formulario-. Se reemplaza por el elemento `<chatter/>`
+                         nativo de 19.0 (mismo fix ya aplicado en `endoso_proper`).-->
+                    <chatter/>
                 </form>
             </field>
         </record>
@@ -193,10 +197,9 @@
                             </group>
                         </group>
                     </sheet>
-                    <div class="oe_chatter">
-                        <field name="message_follower_ids"/>
-                        <field name="message_ids"/>
-                    </div>
+                    <!-- MIGRACIÓN V19: mismo fix que en `requirement_form_view`
+                         arriba, ver ese comentario para el detalle. -->
+                    <chatter/>
                 </form>
             </field>
         </record>
