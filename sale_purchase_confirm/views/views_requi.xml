@@ -37,7 +37,7 @@
                             </group>
                             <newline/>
                             <separator/>
-                            <group>
+                            <group colspan="2">
                                 <field name="x_lines_proposal" colspan="4"/>
                             </group>
                         </group>

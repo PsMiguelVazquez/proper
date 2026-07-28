@@ -867,6 +867,7 @@ def _self_heal_idempotent_fixes(env):
     _delete_old_studio_account_move_form_view(env)
     _fix_studio_sale_order_tree_columns_scope(env)
     _restore_studio_quotation_tree_columns(env)
+    _fix_studio_quotation_tree_columns_anchor(env)
     _fix_sale_order_menu_actions(env)
 
 
@@ -979,6 +980,36 @@ def _restore_studio_quotation_tree_columns(env):
 
     if changed:
         view.write({'arch_db': etree.tostring(root, encoding='unicode')})
+
+
+# MIGRACIÓN V19: en la base de producción (15.0), "Estados de propuestas"/
+# "Estado de compras" (agregados por la vista de arriba con
+# `position="after"` sobre `currency_id`) aparecían al FINAL de la fila de
+# "Mis presupuestos", coincidiendo con la captura real de producción. En
+# 19.0 el core movió la declaración de `currency_id` en la vista base
+# `sale.sale_order_tree` (`addons/sale/views/sale_order_views.xml`) al
+# PRINCIPIO de la lista -es un campo invisible (`column_invisible`), sólo
+# ahí para que esté disponible temprano para el widget Monetary de otros
+# campos, pero su posición en el XML sigue determinando dónde caen los
+# campos insertados "después" de él-. El xpath de Studio sigue apuntando
+# literalmente a `currency_id`, así que ahora esas dos columnas aparecen
+# al PRINCIPIO en vez de al final -un efecto colateral de un cambio propio
+# del core, no de este proyecto-. Se reancla al final de la fila,
+# usando `invoice_status` (el último campo visible de la base) como
+# referencia, para reproducir la posición real de producción.
+def _fix_studio_quotation_tree_columns_anchor(env):
+    view = env.ref(DUPLICATE_QUOTATION_TREE_VIEW_XMLID, raise_if_not_found=False)
+    if not view or not view.arch_db:
+        return
+    try:
+        root = etree.fromstring(view.arch_db.encode())
+    except etree.XMLSyntaxError:
+        return
+    xpath_node = root.find(".//xpath[@expr=\"//field[@name='currency_id']\"]")
+    if xpath_node is None:
+        return
+    xpath_node.set('expr', "//field[@name='invoice_status']")
+    view.write({'arch_db': etree.tostring(root, encoding='unicode')})
 
 
 # MIGRACIÓN V19: esta es la vista que Odoo Studio generó automáticamente
