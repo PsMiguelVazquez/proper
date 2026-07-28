@@ -14,7 +14,7 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.2',
+    'version': '19.0.1.0.3',
     'license': 'LGPL-3',
     # MIGRACIÓN V19: se agrega 'stock_delivery', de donde viene
     # `carrier_tracking_ref` en stock.picking, usado por este módulo.
