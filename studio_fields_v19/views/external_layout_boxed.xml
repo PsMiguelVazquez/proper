@@ -9,7 +9,7 @@
     <template id="external_layout_boxed_header_padding"
               inherit_id="web.external_layout_boxed"
               name="External Layout Boxed - padding de encabezado">
-        <xpath expr="//div[hasclass('header')]" position="attributes">
+        <xpath expr="//div[contains(@t-attf-class, 'header')]" position="attributes">
             <attribute name="style">padding-top:20px</attribute>
         </xpath>
     </template>
