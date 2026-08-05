@@ -10,15 +10,13 @@ este `ir.asset` roto y por qué rompe el bundle de JS del backend).
 """
 from odoo import api, SUPERUSER_ID
 
-STALE_UPGRADE_ASSET_PATHS = [
-    'account_payment_widget_amount/static/src/js/account_payment_field.js',
-]
+STALE_UPGRADE_ASSET_PATH = 'account_payment_widget_amount/static/src/js/account_payment_field.js'
 
 
 def migrate(cr, version):
     env = api.Environment(cr, SUPERUSER_ID, {})
     assets = env['ir.asset'].search([
-        ('path', 'in', STALE_UPGRADE_ASSET_PATHS),
+        ('path', 'like', STALE_UPGRADE_ASSET_PATH),
         ('active', '=', True),
     ])
     if assets:

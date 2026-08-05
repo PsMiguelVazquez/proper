@@ -55,18 +55,50 @@ OWN_VIEW_KEYS = [
 # que se restaura el backup de PRD sobre esta rama, se desactiva aquí en
 # cada arranque del registro en vez de depender de que alguien lo
 # desactive a mano después de cada intento de upgrade.
-STALE_UPGRADE_ASSET_PATHS = [
-    'account_payment_widget_amount/static/src/js/account_payment_field.js',
-]
+# `like` (no `in`) a propósito: la ruta que genera la herramienta de
+# upgrade trae un `/` inicial (`/account_payment_widget_amount/...`,
+# confirmado en la base real), y un `in` con la ruta exacta sin esa barra
+# no encontraba el registro. `like` hace un `contains`, así que calza con
+# o sin el `/` inicial. No hay riesgo de que también atrape al archivo
+# nuevo (`account_payment_field_patch.js`): esa cadena no es substring de
+# esta ("field.js" != "field_patch.js").
+STALE_UPGRADE_ASSET_PATH = 'account_payment_widget_amount/static/src/js/account_payment_field.js'
 
 
 def _deactivate_stale_upgrade_asset_overrides(env):
     assets = env['ir.asset'].search([
-        ('path', 'in', STALE_UPGRADE_ASSET_PATHS),
+        ('path', 'like', STALE_UPGRADE_ASSET_PATH),
         ('active', '=', True),
     ])
     if assets:
         assets.write({'active': False})
+
+
+# MIGRACIÓN V19: `res.company.batch_payment_sequence_id` (`addons/account/
+# models/company.py`) sólo tiene `default=`, sin `compute=` -Odoo únicamente
+# corre ese `default` al CREAR una compañía nueva, nunca lo rellena
+# retroactivamente en compañías que ya existían antes de que este campo se
+# agregara al core (introducido varias versiones después de v15). El
+# resultado: la compañía real (viene del backup de v15) quedó con este
+# campo vacío, y el core no valida eso antes de usarlo -`get_next_batch_
+# payment_communication()` llama `self.sudo().batch_payment_sequence_id.
+# next_by_id()` sin comprobar que exista-, lo que revienta con
+# "psycopg2.errors.UndefinedFunction: operator does not exist: integer =
+# boolean" (intenta `... WHERE id=false`) al confirmar el asistente
+# "Registrar Pago" desde la lista de facturas. Se crea la secuencia
+# faltante con los mismos valores que usa el `default=` del core, para
+# cualquier compañía a la que le falte.
+def _fix_missing_batch_payment_sequence(env):
+    IrSequence = env['ir.sequence'].sudo()
+    for company in env['res.company'].sudo().search([('batch_payment_sequence_id', '=', False)]):
+        company.batch_payment_sequence_id = IrSequence.create({
+            'name': "Group Payments Number Sequence",
+            'implementation': 'no_gap',
+            'padding': 5,
+            'use_date_range': True,
+            'company_id': company.id,
+            'prefix': 'GROUP/%(year)s/',
+        })
 
 
 def _deactivate_old_studio_report_views(env):
@@ -956,6 +988,7 @@ def _fix_duplicate_manual_field_labels(env):
 def _self_heal_idempotent_fixes(env):
     _deactivate_old_studio_report_views(env)
     _deactivate_stale_upgrade_asset_overrides(env)
+    _fix_missing_batch_payment_sequence(env)
     _fix_accounting_menu_parents(env)
     _fix_customer_invoice_menu_action(env)
     _activate_payment_method_otros(env)
