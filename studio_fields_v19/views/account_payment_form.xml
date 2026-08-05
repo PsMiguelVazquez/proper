@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: `l10n_mx_edi.account_payment_form_inherit_l10n_mx_edi`
+        envuelve "Forma de pago"/"CFDI Origen" en un grupo con
+        `invisible="not l10n_mx_edi_is_cfdi_needed"`, que sólo da `True`
+        cuando el pago ya tiene `move_id` (o sea, ya fue confirmado). Se
+        relaja a la misma condición que ya usa cada campo por separado
+        (`country_code != 'MX'`) -igual que en v15, ver
+        `models/account_payment.py` para el detalle completo del porqué-,
+        para que el grupo aparezca desde que el pago está en Borrador, no
+        sólo después de confirmarlo. El resto de los campos del grupo
+        (estado SAT, folio fiscal, etc.) no se ven afectados: cada uno ya
+        trae su propio `invisible="not <campo>"`, así que siguen ocultos
+        mientras no exista el dato correspondiente (sólo existe una vez
+        generado el CFDI).
+    -->
+    <record id="view_account_payment_form_l10n_mx_edi_cfdi_group_studio" model="ir.ui.view">
+        <field name="name">account.payment.form.l10n.mx.edi.cfdi.group.studio</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="l10n_mx_edi.account_payment_form_inherit_l10n_mx_edi"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='l10n_mx_edi_main_group']" position="attributes">
+                <attribute name="invisible">country_code != 'MX'</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -5,6 +5,12 @@ from odoo.exceptions import ValidationError
 class ResPartner(models.Model):
     _inherit = 'res.partner'
     credit_rest = fields.Float('Credito Disponible', compute='get_credit')
+    # MIGRACIÓN V19: se restaura - se había borrado por error en una
+    # limpieza de la migración, pero `get_partner()` (`models/sale_order.py`)
+    # lo sigue usando en su dominio de búsqueda; sin el campo, el compute
+    # truena con "KeyError: 'agente_temporal'" para cualquier vendedor sin
+    # permiso de "ver todos los leads"/gerente al abrir una orden de venta.
+    agente_temporal = fields.Char("Agente temporal")
     x_studio_saldo_vencido = fields.Monetary('Saldo vencido', compute="get_saldo_vencido")
     x_studio_saldo_por_vencer = fields.Monetary('Saldo por vencer', compute="get_x_studio_saldo_por_vencer")
 

@@ -36,6 +36,39 @@ OWN_VIEW_KEYS = [
 ]
 
 
+# MIGRACIÓN V19: la herramienta oficial de upgrade de Odoo (usada para
+# migrar el backup de PRD -v15- a esta rama de pruebas) convirtió una
+# personalización vieja de assets -en v15, una vista que insertaba
+# `<script src=".../account_payment_field.js">` directo en el bundle del
+# backend- a un registro `ir.asset` nuevo (nombre autogenerado tipo
+# "account_payment_widget_amount.assets_backend--view_id:3927--1"). Ese
+# archivo ya no existe: se renombró a `account_payment_field_patch.js` al
+# reescribir el widget de `odoo.define`/AbstractField a un componente OWL
+# (ver `account_payment_widget_amount/static/src/js/
+# account_payment_field_patch.js`). El `ir.asset` viejo sigue intentando
+# incluirlo en cada bundle del backend, y como el archivo no existe, el
+# navegador falla al cargarlo -lo que puede romper en cascada el resto del
+# bundle que carga después, incluyendo botones/widgets que no tienen nada
+# que ver con pagos (confirmado: así se manifestaba, un botón "Reservar"
+# del reporte pronosticado que no hacía ninguna llamada al servidor)-.
+# Como este registro lo regenera la propia herramienta de upgrade cada vez
+# que se restaura el backup de PRD sobre esta rama, se desactiva aquí en
+# cada arranque del registro en vez de depender de que alguien lo
+# desactive a mano después de cada intento de upgrade.
+STALE_UPGRADE_ASSET_PATHS = [
+    'account_payment_widget_amount/static/src/js/account_payment_field.js',
+]
+
+
+def _deactivate_stale_upgrade_asset_overrides(env):
+    assets = env['ir.asset'].search([
+        ('path', 'in', STALE_UPGRADE_ASSET_PATHS),
+        ('active', '=', True),
+    ])
+    if assets:
+        assets.write({'active': False})
+
+
 def _deactivate_old_studio_report_views(env):
     IrUiView = env['ir.ui.view']
     to_deactivate = env['ir.ui.view']
@@ -83,6 +116,80 @@ def _fix_accounting_menu_parents(env):
         parent = env.ref(parent_xmlid, raise_if_not_found=False)
         if menu and parent and menu.parent_id != parent:
             menu.write({'parent_id': parent.id})
+
+
+# MIGRACIÓN V19: el menú "Contabilidad > Clientes > Facturas"
+# (`account.menu_action_move_out_invoice_type`) mostraba facturas Y notas
+# de crédito revueltas en la misma lista, sin el filtro que trae hoy el
+# core. El core reemplazó, hace varias versiones, la acción original de
+# ese menú (`account.action_move_out_invoice_type` -domain `move_type in
+# (out_invoice, out_refund, out_receipt)`, SIN filtro activo por defecto
+# en el buscador-) por una nueva `account.action_move_out_invoice` (mismo
+# domain, pero con `context={'search_default_out_invoice': 1,
+# 'search_default_out_receipt': 1, ...}`, que sí excluye las notas de
+# crédito por defecto vía el buscador -ver
+# `addons/account/views/account_move_views.xml` y el `<menuitem>` de
+# `addons/account/views/account_menuitem.xml`, que ya usa la acción
+# nueva-). El menú de esta base quedó `noupdate=True` (todo lo que toca
+# Studio termina así) apuntando todavía a la acción vieja de antes de la
+# migración, así que el upgrade de `account` nunca lo re-apunta solo -un
+# `<record>` en un XML de datos tampoco alcanzaría, mismo motivo que
+# `_fix_accounting_menu_parents`/`_fix_sale_order_menu_actions`-.
+def _fix_customer_invoice_menu_action(env):
+    menu = env.ref('account.menu_action_move_out_invoice_type', raise_if_not_found=False)
+    action = env.ref('account.action_move_out_invoice', raise_if_not_found=False)
+    if not (menu and action):
+        return
+    action_ref = 'ir.actions.act_window,%d' % action.id
+    if menu.action != action_ref:
+        menu.write({'action': action_ref})
+
+
+# MIGRACIÓN V19: `models/account_payment.py` redefine
+# `l10n_mx_edi_payment_method_id`/`l10n_mx_edi_cfdi_origin` en
+# `account.payment` de `related` (sin columna propia) a campos propios
+# almacenados (ver ese archivo para el porqué completo). Al agregar la
+# columna por primera vez, todo pago YA confirmado antes de instalar este
+# cambio queda con esos 2 campos en NULL -aunque el asiento (`move_id`) sí
+# tenga los valores reales-, así que sin este backfill esos pagos viejos
+# se verían con "Forma de pago"/"CFDI Origen" vacíos en la vista (aunque
+# el CFDI ya esté timbrado correctamente con el valor real). Se copia
+# desde `move_id` una sola vez por registro -sólo rellena huecos, nunca
+# pisa un valor que ya esté puesto-.
+# "99 - Por definir" (`l10n_mx_edi.payment_method_otros`) se reactiva a
+# pedido del cliente, para poder elegirla a mano en el desplegable de
+# "Forma de pago" cuando de verdad no se conoce la forma de pago real.
+# Odoo la instala inactiva a propósito -es el código SAT de "forma de pago
+# no identificada"-, ver `enterprise/l10n_mx_edi/data/
+# l10n_mx_edi_payment_method_data.xml`; confirmado que activarla no
+# cambia ningún default ni validación de timbrado (`account_move.py`
+# busca este código puntual con `active_test=False` a propósito, o sea ya
+# asume que puede estar inactivo), sólo si aparece en el buscador para
+# selección manual. Ese XML de `l10n_mx_edi` tiene `noupdate="0"`, así que
+# cualquier `-u l10n_mx_edi` que corra sin pasar también por este módulo
+# la vuelve a dejar en `active=False`; se reactiva aquí en cada arranque
+# del registro para que el cambio no se "pierda".
+def _activate_payment_method_otros(env):
+    payment_method = env.ref('l10n_mx_edi.payment_method_otros', raise_if_not_found=False)
+    if payment_method and not payment_method.active:
+        payment_method.write({'active': True})
+
+
+def _backfill_payment_mx_edi_fields(env):
+    payments = env['account.payment'].search([
+        ('move_id', '!=', False),
+        '|',
+        ('l10n_mx_edi_payment_method_id', '=', False),
+        ('l10n_mx_edi_cfdi_origin', '=', False),
+    ])
+    for payment in payments:
+        vals = {}
+        if not payment.l10n_mx_edi_payment_method_id and payment.move_id.l10n_mx_edi_payment_method_id:
+            vals['l10n_mx_edi_payment_method_id'] = payment.move_id.l10n_mx_edi_payment_method_id.id
+        if not payment.l10n_mx_edi_cfdi_origin and payment.move_id.l10n_mx_edi_cfdi_origin:
+            vals['l10n_mx_edi_cfdi_origin'] = payment.move_id.l10n_mx_edi_cfdi_origin
+        if vals:
+            payment.write(vals)
 
 
 # MIGRACIÓN V19: los 3 menús de "Contabilidad/Ventas" (Cotizaciones por
@@ -848,7 +955,11 @@ def _fix_duplicate_manual_field_labels(env):
 # cuando la versión del módulo "sube".
 def _self_heal_idempotent_fixes(env):
     _deactivate_old_studio_report_views(env)
+    _deactivate_stale_upgrade_asset_overrides(env)
     _fix_accounting_menu_parents(env)
+    _fix_customer_invoice_menu_action(env)
+    _activate_payment_method_otros(env)
+    _backfill_payment_mx_edi_fields(env)
     _cleanup_unused_studio_fields(env)
     _fix_broken_l10n_mx_edi_reports(env)
     _fix_broken_stock_picking_reports(env)

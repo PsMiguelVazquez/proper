@@ -3,6 +3,27 @@
         <record model="ir.ui.view" id="account_payment_register_form_compensate">
         <field name="name">account.payment.register.compensate</field>
         <field name="model">account.payment.register</field>
+        <!-- Sin `priority`, esta vista y la vista core
+             (`account.view_account_payment_register_form`, priority=16)
+             empatan como vistas primarias del mismo modelo; Odoo desempata
+             por nombre (`ir.ui.view._order = "priority,name,id"`), y
+             "account.payment.register.compensate" ordena antes que
+             "account.payment.register.form", así que esta vista terminaba
+             ganando y siendo usada como vista POR DEFECTO del wizard -
+             incluso para el botón "Pagar" genérico de la lista de
+             facturas, que no pide una vista en particular
+             (`account.move.line.action_register_payment`, `addons/account/
+             models/account_move_line.py`). Como esta vista sólo muestra
+             sus campos cuando `hide_button_payment_register == True` (sólo
+             lo pone el flujo de compensación real, ver
+             `view_compensate_wizard` en `models/account_move.py`), el
+             resultado era un wizard vacío con un botón "Compensar" que
+             fallaba al confirmarse sin datos. Se fija priority=99 (misma
+             convención que usa Studio para sus vistas) para que nunca
+             compita con la vista core; no afecta al flujo de compensación
+             real, que siempre abre esta vista pasando su `view_id`
+             explícito. -->
+        <field name="priority">99</field>
         <field name="arch" type="xml">
             <form>
                 <field name="hide_button_payment_register" invisible="1"/>
