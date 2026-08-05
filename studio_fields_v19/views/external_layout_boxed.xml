@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        MIGRACIÓN V19: el encabezado del layout "boxed" (usado por Factura
+        Moto, Factura Proper, PROPER, ...) salía cortado. Se agrega un
+        padding-top al div del encabezado, verificado manualmente, para no
+        repetir el ajuste a mano tras cada migración/rebuild.
+    -->
+    <template id="external_layout_boxed_header_padding"
+              inherit_id="web.external_layout_boxed"
+              name="External Layout Boxed - padding de encabezado">
+        <xpath expr="//div[hasclass('header')]" position="attributes">
+            <attribute name="style">padding-top:20px</attribute>
+        </xpath>
+    </template>
+</odoo>

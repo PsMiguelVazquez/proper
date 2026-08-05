@@ -172,6 +172,16 @@ class SaleOrder(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+
+            if vals.get('partner_child') and not vals.get('partner_id'):
+                partner = self.env['res.partner'].browse(vals['partner_child'])
+                vals['partner_id'] = (
+                    partner.parent_id.id
+                    if partner.parent_id
+                    else partner.id
+                )
+
+
             if 'user_id' in vals:
                 vals['user_id'] = self.env.user.id
         res = super(SaleOrder, self).create(vals_list)

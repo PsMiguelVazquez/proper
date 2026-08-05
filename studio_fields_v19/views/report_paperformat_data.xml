@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            MIGRACIÓN V19: el encabezado de los reportes PDF (Factura Moto,
+            Factura Proper, PROPER, ...) salía cortado con los márgenes por
+            defecto de `base.paperformat_euro` (margin_top=52,
+            margin_bottom=32, margin_left=0, margin_right=0,
+            header_spacing=52). Se ajustan a los valores verificados
+            manualmente para no repetir el ajuste a mano tras cada
+            migración/rebuild.
+        -->
+        <record id="base.paperformat_euro" model="report.paperformat">
+            <field name="margin_top">36</field>
+            <field name="margin_bottom">20</field>
+            <field name="margin_left">5</field>
+            <field name="margin_right">5</field>
+            <field name="header_spacing">36</field>
+        </record>
+    </data>
+</odoo>

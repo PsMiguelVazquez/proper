@@ -102,9 +102,22 @@
         # fallaría con "Element ... cannot be located in parent view".
         'account_edi',
         'stock_landed_costs',
+        # MIGRACIÓN V19: `models/account_payment.py` redefine
+        # `l10n_mx_edi_payment_method_id`/`l10n_mx_edi_cfdi_origin`
+        # (`account.payment`, de `related`/no-almacenados a campos propios
+        # almacenados) y sobrescribe `_generate_move_vals` -ambos definidos
+        # originalmente en `l10n_mx_edi`, no en `l10n_mx_edi_stock`-. Sin
+        # esta dependencia explícita, una instalación donde nada más
+        # arrastre `l10n_mx_edi` (aunque hoy siempre lo hace, vía
+        # `l10n_mx_edi_stock`) podría cargar este módulo antes y perder el
+        # override.
+        'l10n_mx_edi',
     ],
 
     'data': [
+        'views/report_paperformat_data.xml',
+        'views/external_layout_boxed.xml',
+        'views/account_payment_form.xml',
         'views/report_saleorder_document_copy_3.xml',
         'views/report_saleorder_document_copy_3_customization.xml',
         'views/document_tax_totals_copy_1.xml',
