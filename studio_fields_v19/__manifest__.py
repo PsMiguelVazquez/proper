@@ -112,6 +112,13 @@
         # `l10n_mx_edi_stock`) podría cargar este módulo antes y perder el
         # override.
         'l10n_mx_edi',
+        # MIGRACIÓN V19: `_reactivate_carta_porte_views` reactiva
+        # `carta_porte.view_picking_carta_porte` por xmlid con `env.ref`.
+        # Sin esta dependencia explícita, una instalación donde `carta_porte`
+        # cargue después de este módulo (o no esté instalado del todo)
+        # dejaría a `env.ref` sin encontrar nada -no falla, pero tampoco
+        # corrige nada- silenciosamente.
+        'carta_porte',
     ],
 
     'data': [

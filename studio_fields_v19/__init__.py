@@ -101,6 +101,28 @@ def _fix_missing_batch_payment_sequence(env):
         })
 
 
+# MIGRACIÓN V19: `carta_porte.view_picking_carta_porte` (inserta "Fecha de
+# recepción del cliente"/"Persona que recibe" en el formulario de
+# traslados, justo después de `location_dest_id`) aparece con
+# `active=False` sin causa rastreable -mismo fenómeno de menús/
+# automatizaciones de Studio que ya se ve varias veces en este archivo,
+# tras un rebuild/restauración de Odoo.sh-. Confirmado que el módulo y el
+# campo sí están instalados (Studio los ofrece como "campos existentes"
+# en el editor de vistas); sólo la vista que los inserta en el formulario
+# queda inactiva, así que el formulario se ve completo pero sin estos 2
+# campos.
+CARTA_PORTE_VIEW_XMLIDS = [
+    'carta_porte.view_picking_carta_porte',
+]
+
+
+def _reactivate_carta_porte_views(env):
+    for xmlid in CARTA_PORTE_VIEW_XMLIDS:
+        view = env.ref(xmlid, raise_if_not_found=False)
+        if view and not view.active:
+            view.write({'active': True})
+
+
 def _deactivate_old_studio_report_views(env):
     IrUiView = env['ir.ui.view']
     to_deactivate = env['ir.ui.view']
@@ -989,6 +1011,7 @@ def _self_heal_idempotent_fixes(env):
     _deactivate_old_studio_report_views(env)
     _deactivate_stale_upgrade_asset_overrides(env)
     _fix_missing_batch_payment_sequence(env)
+    _reactivate_carta_porte_views(env)
     _fix_accounting_menu_parents(env)
     _fix_customer_invoice_menu_action(env)
     _activate_payment_method_otros(env)
