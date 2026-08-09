@@ -891,8 +891,13 @@ class SaleOrderLine(models.Model):
 class AccountMoveReversal(models.TransientModel):
     _inherit = 'account.move.reversal'
 
-    def reverse_moves(self):
-        r = super(AccountMoveReversal, self).reverse_moves()
+    # MIGRACIÓN V19: mismo fix que en `account_move.py` (este módulo) y en
+    # `refacturacion` -`helpdesk_account`/`helpdesk_stock_account` llaman
+    # `super().reverse_moves(is_modify=is_modify)`, y sin este parámetro
+    # aquí la cadena de herencia truena con "TypeError: got an unexpected
+    # keyword argument 'is_modify'".
+    def reverse_moves(self, is_modify=False):
+        r = super(AccountMoveReversal, self).reverse_moves(is_modify=is_modify)
         move = self.env['account.move'].browse(r['res_id'])
         move.write({'reason': self.reason})
         return r

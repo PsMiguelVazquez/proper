@@ -270,8 +270,15 @@ class AccountMoveRevers(models.TransientModel):
             r['l10n_mx_edi_usage'] = self.uso_cfdi
         return r
 
-    def reverse_moves(self):
-        r = super(AccountMoveRevers, self).reverse_moves()
+    # MIGRACIÓN V19: `helpdesk_account`/`helpdesk_stock_account` (enterprise)
+    # llaman `super().reverse_moves(is_modify=is_modify)`; sin declarar el
+    # parámetro aquí, la cadena de herencia caía en este override y
+    # truena con "TypeError: got an unexpected keyword argument
+    # 'is_modify'" al confirmar el wizard de "Nota de crédito". Se agrega
+    # y se reenvía, igual que el core
+    # (`addons/account/wizard/account_move_reversal.py`).
+    def reverse_moves(self, is_modify=False):
+        r = super(AccountMoveRevers, self).reverse_moves(is_modify=is_modify)
         nota_credito = self.env['account.move'].browse(r['res_id'])
         nota_credito.reason = self.reason
         # MIGRACIÓN V19: `helpdesk_ticket_id` no está definido en ninguno de
