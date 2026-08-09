@@ -15,7 +15,7 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.18',
+    'version': '19.0.1.0.19',
 
     # MIGRACIÓN V19: se agrega `res_partner_fields` (formaliza
     # `x_grupo_cliente`, `x_estado_cli_actua`, `sales_agent`,
