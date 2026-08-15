@@ -16,16 +16,18 @@ def migrate(cr, version):
     env = api.Environment(cr, SUPERUSER_ID, {})
     views = env['ir.ui.view'].search([
         ('type', '=', 'qweb'),
-        '|', '|', '|',
+        '|', '|', '|', '|',
         ('arch_db', 'like', 'o.l10n_mx_edi_post_time'),
         ('arch_db', 'like', 'o.serie'),
         ('arch_db', 'like', 'o.folio'),
         ('arch_db', 'like', 'o.l10n_mx_edi_usage'),
+        ('arch_db', 'like', '.Complemento.xpath('),
     ])
     for view in views:
         arch = view.arch_db
         if not arch:
             continue
         new_arch = _PAYMENT_RECEIPT_MOVE_FIELD_RE.sub(r'o.move_id.\1', arch)
+        new_arch = new_arch.replace('.Complemento.xpath(', '.xpath(')
         if new_arch != arch:
             view.write({'arch_db': new_arch})
