@@ -614,24 +614,38 @@ def _fix_broken_stock_picking_reports(env):
 # `_fix_broken_studio_report_field_refs` de abajo (getattr silencioso en
 # v15, `KeyError` real en v19), pero en el reporte "Complemento de Pago"
 # (Contabilidad > Clientes > Pagos > engrane > Complemento de Pago). La
-# personalización de Studio agrega `o.l10n_mx_edi_post_time` -"o" es el
-# `account.payment`-, pero ese campo sólo existe en `account.move`/
-# `account.bank.statement.line` (`enterprise/l10n_mx_edi/models/
-# account_move.py`), nunca en `account.payment`. El resto de esa misma
-# plantilla (la base, no la personalización) sí accede correctamente a los
-# campos CFDI vía `o.move_id.XXX` (`o.move_id.l10n_mx_edi_cfdi_uuid`,
-# `o.move_id.l10n_mx_edi_cfdi_state`, etc.), así que fue un descuido puntual
-# de quien agregó esa línea en Studio -le faltó anteponer `.move_id.`-.
+# personalización de Studio agrega varios campos directo sobre `o` -el
+# `account.payment`- que en realidad sólo existen en `account.move`:
+# - `o.l10n_mx_edi_post_time` (`enterprise/l10n_mx_edi/models/account_move.py`)
+# - `o.serie`/`o.folio` (`sale_purchase_confirm/models/account_move.py`,
+#   campos propios calculados con `compute="set_folio"`)
+# - `o.l10n_mx_edi_usage` (`enterprise/l10n_mx_edi/models/account_move.py`;
+#   sólo se usa detrás de un `t-if="res_company.name=='True'"` -una
+#   condición de Studio rota que nunca es cierta en la práctica, ya que
+#   compara el nombre de la compañía contra el string "True"-, así que no
+#   truena hoy, pero revienta apenas alguien corrija esa condición)
+# El resto de esa misma plantilla (la base, no la personalización) sí
+# accede correctamente a los campos CFDI vía `o.move_id.XXX`
+# (`o.move_id.l10n_mx_edi_cfdi_uuid`, `o.move_id.l10n_mx_edi_cfdi_state`,
+# etc.), así que fue un descuido puntual de quien agregó estas líneas en
+# Studio -les faltó anteponer `.move_id.`-.
+_PAYMENT_RECEIPT_MOVE_FIELD_RE = re.compile(r'\bo\.(serie|folio|l10n_mx_edi_usage|l10n_mx_edi_post_time)\b')
+
+
 def _fix_broken_payment_receipt_post_time_ref(env):
     views = env['ir.ui.view'].search([
         ('type', '=', 'qweb'),
+        '|', '|', '|',
         ('arch_db', 'like', 'o.l10n_mx_edi_post_time'),
+        ('arch_db', 'like', 'o.serie'),
+        ('arch_db', 'like', 'o.folio'),
+        ('arch_db', 'like', 'o.l10n_mx_edi_usage'),
     ])
     for view in views:
         arch = view.arch_db
         if not arch:
             continue
-        new_arch = arch.replace('o.l10n_mx_edi_post_time', 'o.move_id.l10n_mx_edi_post_time')
+        new_arch = _PAYMENT_RECEIPT_MOVE_FIELD_RE.sub(r'o.move_id.\1', arch)
         if new_arch != arch:
             view.write({'arch_db': new_arch})
 
