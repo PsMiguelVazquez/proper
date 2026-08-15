@@ -610,6 +610,32 @@ def _fix_broken_stock_picking_reports(env):
             view.write({'arch_db': new_arch})
 
 
+# MIGRACIÓN V19: mismo tipo de bug preexistente de Studio que
+# `_fix_broken_studio_report_field_refs` de abajo (getattr silencioso en
+# v15, `KeyError` real en v19), pero en el reporte "Complemento de Pago"
+# (Contabilidad > Clientes > Pagos > engrane > Complemento de Pago). La
+# personalización de Studio agrega `o.l10n_mx_edi_post_time` -"o" es el
+# `account.payment`-, pero ese campo sólo existe en `account.move`/
+# `account.bank.statement.line` (`enterprise/l10n_mx_edi/models/
+# account_move.py`), nunca en `account.payment`. El resto de esa misma
+# plantilla (la base, no la personalización) sí accede correctamente a los
+# campos CFDI vía `o.move_id.XXX` (`o.move_id.l10n_mx_edi_cfdi_uuid`,
+# `o.move_id.l10n_mx_edi_cfdi_state`, etc.), así que fue un descuido puntual
+# de quien agregó esa línea en Studio -le faltó anteponer `.move_id.`-.
+def _fix_broken_payment_receipt_post_time_ref(env):
+    views = env['ir.ui.view'].search([
+        ('type', '=', 'qweb'),
+        ('arch_db', 'like', 'o.l10n_mx_edi_post_time'),
+    ])
+    for view in views:
+        arch = view.arch_db
+        if not arch:
+            continue
+        new_arch = arch.replace('o.l10n_mx_edi_post_time', 'o.move_id.l10n_mx_edi_post_time')
+        if new_arch != arch:
+            view.write({'arch_db': new_arch})
+
+
 # MIGRACIÓN V19: bug preexistente en las plantillas de Studio (ya estaba
 # roto en v15, no es algo que haya cambiado en la migración): usan
 # `o.x_num_pro` -"Num Pro"- directo sobre la factura (`account.move`), pero
@@ -1020,6 +1046,7 @@ def _self_heal_idempotent_fixes(env):
     _fix_broken_l10n_mx_edi_reports(env)
     _fix_broken_stock_picking_reports(env)
     _fix_broken_studio_report_field_refs(env)
+    _fix_broken_payment_receipt_post_time_ref(env)
     _fix_broken_purchase_order_uom_ref(env)
     _fix_broken_purchase_order_notes_ref(env)
     _fix_broken_studio_invoice_report_wrappers(env)
