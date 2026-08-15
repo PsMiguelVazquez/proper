@@ -629,23 +629,39 @@ def _fix_broken_stock_picking_reports(env):
 # (`o.move_id.l10n_mx_edi_cfdi_uuid`, `o.move_id.l10n_mx_edi_cfdi_state`,
 # etc.), así que fue un descuido puntual de quien agregó estas líneas en
 # Studio -les faltó anteponer `.move_id.`-.
+#
+# Además, la misma personalización usa
+# `cfdi_vals['cfdi_node'].Complemento.xpath(...)` para ubicar los nodos
+# `DoctoRelacionado` del XML de pago (repetido varias veces en la
+# plantilla). `cfdi_node` viene de `l10n_mx_edi.document.
+# _decode_cfdi_attachment()` (`enterprise/l10n_mx_edi/models/
+# l10n_mx_edi_document.py`), que en 19.0 lo arma con
+# `etree.fromstring()` -un `lxml.etree._Element` normal-, no con
+# `lxml.objectify` como asumía Studio; `.Complemento` como atributo
+# (acceso estilo objectify) ya no existe ahí y truena con "'lxml.etree.
+# _Element' object has no attribute 'Complemento'". El `.xpath('//...')`
+# que sigue ya busca en TODO el documento sin importar desde qué nodo se
+# llame -confirmado por prueba directa-, así que quitar el salto
+# `.Complemento` produce exactamente el mismo resultado.
 _PAYMENT_RECEIPT_MOVE_FIELD_RE = re.compile(r'\bo\.(serie|folio|l10n_mx_edi_usage|l10n_mx_edi_post_time)\b')
 
 
 def _fix_broken_payment_receipt_post_time_ref(env):
     views = env['ir.ui.view'].search([
         ('type', '=', 'qweb'),
-        '|', '|', '|',
+        '|', '|', '|', '|',
         ('arch_db', 'like', 'o.l10n_mx_edi_post_time'),
         ('arch_db', 'like', 'o.serie'),
         ('arch_db', 'like', 'o.folio'),
         ('arch_db', 'like', 'o.l10n_mx_edi_usage'),
+        ('arch_db', 'like', '.Complemento.xpath('),
     ])
     for view in views:
         arch = view.arch_db
         if not arch:
             continue
         new_arch = _PAYMENT_RECEIPT_MOVE_FIELD_RE.sub(r'o.move_id.\1', arch)
+        new_arch = new_arch.replace('.Complemento.xpath(', '.xpath(')
         if new_arch != arch:
             view.write({'arch_db': new_arch})
 
