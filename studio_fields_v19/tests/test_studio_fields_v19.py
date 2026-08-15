@@ -67,3 +67,31 @@ class TestStudioFieldsV19(TransactionCase):
     def test_res_partner_counts_do_not_crash(self):
         self.assertEqual(self.partner.x_partner_id_account_move_count, 0)
         self.assertEqual(self.partner.x_x_holding__res_partner_count, 0)
+
+    def test_fix_broken_payment_receipt_post_time_ref(self):
+        # MIGRACIÓN V19: reproduce en miniatura el bug real de la
+        # personalización de Studio del reporte "Complemento de Pago"
+        # (o.l10n_mx_edi_post_time, campo inexistente en account.payment -
+        # solo existe en account.move vía move_id-) y confirma que el
+        # self-heal lo corrige sin tocar nada más de la vista.
+        from .. import _fix_broken_payment_receipt_post_time_ref
+
+        view = self.env['ir.ui.view'].create({
+            'name': 'Studio Fields Test - Complemento de Pago roto',
+            'type': 'qweb',
+            'arch_db': (
+                '<div><span t-field="o.l10n_mx_edi_post_time"/>'
+                '<span t-field="o.move_id.l10n_mx_edi_cfdi_uuid"/></div>'
+            ),
+        })
+        _fix_broken_payment_receipt_post_time_ref(self.env)
+        view.invalidate_recordset(['arch_db'])
+        self.assertIn('o.move_id.l10n_mx_edi_post_time', view.arch_db)
+        self.assertNotIn('t-field="o.l10n_mx_edi_post_time"', view.arch_db)
+        # No debe alterar referencias que ya estaban correctas.
+        self.assertIn('o.move_id.l10n_mx_edi_cfdi_uuid', view.arch_db)
+
+        # Idempotente: correrlo de nuevo no debe romper ni duplicar el prefijo.
+        _fix_broken_payment_receipt_post_time_ref(self.env)
+        view.invalidate_recordset(['arch_db'])
+        self.assertEqual(view.arch_db.count('l10n_mx_edi_post_time'), 1)
