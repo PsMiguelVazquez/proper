@@ -643,23 +643,48 @@ def _fix_broken_stock_picking_reports(env):
 # que sigue ya busca en TODO el documento sin importar desde qué nodo se
 # llame -confirmado por prueba directa-, así que quitar el salto
 # `.Complemento` produce exactamente el mismo resultado.
-_PAYMENT_RECEIPT_MOVE_FIELD_RE = re.compile(r'\bo\.(serie|folio|l10n_mx_edi_usage|l10n_mx_edi_post_time)\b')
+#
+# La plantilla BASE de este reporte (no sólo la personalización -también
+# es un duplicado crudo de Studio, `studio_customization.
+# report_payment_recei_ddb786bf-f51e-484e-b163-2aa45af1a8c8`-) tiene el
+# mismo problema con
+# `o.l10n_mx_edi_cfdi_supplier_rfc`/`o.l10n_mx_edi_cfdi_customer_rfc`
+# (código de barras QR y bloque "XML VAT"): sólo existen en
+# `account.move` (`enterprise/l10n_mx_edi/models/account_move.py`), a
+# diferencia de `l10n_mx_edi_cfdi_uuid`, que sí es un `related` válido en
+# `account.payment` (`enterprise/l10n_mx_edi/models/account_payment.py`)
+# y por eso NO se toca aquí.
+#
+# IMPORTANTE: a diferencia de `o.l10n_mx_edi_post_time`/`o.serie`/
+# `o.folio` (nombres específicos de este módulo, sin colisión conocida),
+# `l10n_mx_edi_cfdi_supplier_rfc`/`l10n_mx_edi_cfdi_customer_rfc` SÍ
+# aparecen, de forma legítima, en otros reportes core/enterprise no
+# relacionados donde `o` es `account.move` -ahí el campo existe tal cual,
+# sin `.move_id.`- (ej. `l10n_mx_edi_extended.report_invoice_document`,
+# que además tiene otra vista que ubica un elemento suyo por xpath
+# buscando el texto exacto del atributo -`(//span[@t-out='o.l10n_mx_edi_
+# cfdi_customer_rfc or o.partner_id.vat'])[1]`-, así que reescribir esa
+# cadena en el lugar equivocado no sólo introduce un bug nuevo, rompe la
+# actualización entera con "cannot be located in parent view"). Por eso
+# esta función ya NO busca por contenido en TODAS las vistas qweb: sólo
+# toca las dos vistas conocidas de este reporte, por xmlid exacto.
+_PAYMENT_RECEIPT_MOVE_FIELD_RE = re.compile(
+    r'\bo\.(serie|folio|l10n_mx_edi_usage|l10n_mx_edi_post_time'
+    r'|l10n_mx_edi_cfdi_supplier_rfc|l10n_mx_edi_cfdi_customer_rfc)\b'
+)
+
+PAYMENT_RECEIPT_STUDIO_VIEW_XMLIDS = [
+    'studio_customization.report_payment_recei_ddb786bf-f51e-484e-b163-2aa45af1a8c8',
+    'studio_customization.odoo_studio_report_p_74cc6f4f-6ec6-4230-aaa5-d5c47e377cf4',
+]
 
 
 def _fix_broken_payment_receipt_post_time_ref(env):
-    views = env['ir.ui.view'].search([
-        ('type', '=', 'qweb'),
-        '|', '|', '|', '|',
-        ('arch_db', 'like', 'o.l10n_mx_edi_post_time'),
-        ('arch_db', 'like', 'o.serie'),
-        ('arch_db', 'like', 'o.folio'),
-        ('arch_db', 'like', 'o.l10n_mx_edi_usage'),
-        ('arch_db', 'like', '.Complemento.xpath('),
-    ])
-    for view in views:
-        arch = view.arch_db
-        if not arch:
+    for xmlid in PAYMENT_RECEIPT_STUDIO_VIEW_XMLIDS:
+        view = env.ref(xmlid, raise_if_not_found=False)
+        if not view or view.type != 'qweb' or not view.arch_db:
             continue
+        arch = view.arch_db
         new_arch = _PAYMENT_RECEIPT_MOVE_FIELD_RE.sub(r'o.move_id.\1', arch)
         new_arch = new_arch.replace('.Complemento.xpath(', '.xpath(')
         if new_arch != arch:
