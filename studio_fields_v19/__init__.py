@@ -1093,6 +1093,27 @@ def _fix_duplicate_manual_field_labels(env):
             field.write({'field_description': label})
 
 
+# MIGRACIÓN V19: `hr.work.location.address_id` (campo del core, `addons/
+# hr/models/hr_work_location.py`) es `required=True`, pero hay registros
+# en producción con `address_id` vacío -datos de antes de que el campo
+# se volviera obligatorio, probablemente-. Por eso el `_auto_init` de
+# `hr` no puede agregar el NOT NULL a nivel de base de datos y deja el
+# WARNING "Missing not-null constraint on hr.work.location.address_id"
+# en cada arranque. No es nada de `proper`; se corrige aquí (no se puede
+# corregir "antes" porque `hr` es de los primeros módulos en cargar, así
+# que este fix -como todo el resto de este self-heal- sólo hace efecto
+# a partir del SIGUIENTE arranque completo, no en el mismo en el que se
+# despliega). Se usa el partner de la propia compañía como dirección por
+# defecto -es el valor más razonable disponible sin más contexto-.
+def _fix_missing_work_location_address(env):
+    locations = env['hr.work.location'].with_context(active_test=False).search([
+        ('address_id', '=', False),
+    ])
+    for location in locations:
+        if location.company_id.partner_id:
+            location.write({'address_id': location.company_id.partner_id.id})
+
+
 # MIGRACIÓN V19: en 15.0 `product_product.default_code` no tenía índice
 # único, así que quedaron variantes con el mismo código -en los casos
 # encontrados, siempre una activa y una archivada (`active=False`)-. La
@@ -1162,6 +1183,7 @@ def _self_heal_idempotent_fixes(env):
     _fix_stale_manual_field_related(env)
     _fix_duplicate_manual_field_labels(env)
     _fix_duplicate_product_default_codes(env)
+    _fix_missing_work_location_address(env)
     _reactivate_studio_automations(env)
     _delete_old_studio_account_move_form_view(env)
     _fix_studio_sale_order_tree_columns_scope(env)
