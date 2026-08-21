@@ -1093,6 +1093,39 @@ def _fix_duplicate_manual_field_labels(env):
             field.write({'field_description': label})
 
 
+# MIGRACIÓN V19: en 15.0 `product_product.default_code` no tenía índice
+# único, así que quedaron variantes con el mismo código -en los casos
+# encontrados, siempre una activa y una archivada (`active=False`)-. La
+# migración a 19.0 intenta crear `product_product_default_code_unique` y
+# falla ("could not create unique index ... is duplicated"), lo que deja
+# la rama en Warning en Odoo.sh. Este fix sólo renombra la copia
+# ARCHIVADA (le agrega un sufijo con su id), y sólo cuando hay
+# exactamente un producto ACTIVO con ese código -si hay 0 o 2+ activos
+# compartiendo el código, es ambiguo qué producto es "el bueno" y se deja
+# sin tocar para revisión manual-. Usa SQL directo (no `write()`) para no
+# disparar recómputos/validaciones de otros módulos sobre un dato que
+# sólo necesita dejar de chocar con el índice.
+def _fix_duplicate_product_default_codes(env):
+    env.cr.execute("""
+        SELECT default_code,
+               array_agg(id) FILTER (WHERE active) AS active_ids,
+               array_agg(id) FILTER (WHERE NOT active) AS archived_ids
+          FROM product_product
+         WHERE default_code IS NOT NULL AND default_code != ''
+      GROUP BY default_code
+        HAVING count(*) > 1
+    """)
+    for default_code, active_ids, archived_ids in env.cr.fetchall():
+        if len(active_ids or []) != 1 or not archived_ids:
+            continue
+        for product_id in archived_ids:
+            new_code = '%s-ARCH%d' % (default_code, product_id)
+            env.cr.execute(
+                "UPDATE product_product SET default_code = %s WHERE id = %s",
+                (new_code, product_id),
+            )
+
+
 # MIGRACIÓN V19: subconjunto de las funciones de más abajo que es seguro
 # repetir en CUALQUIER momento, no sólo durante instalación/upgrade -todas
 # comprueban el estado actual antes de escribir-. Se excluye a propósito
@@ -1128,6 +1161,7 @@ def _self_heal_idempotent_fixes(env):
     _fix_broken_banner_route(env)
     _fix_stale_manual_field_related(env)
     _fix_duplicate_manual_field_labels(env)
+    _fix_duplicate_product_default_codes(env)
     _reactivate_studio_automations(env)
     _delete_old_studio_account_move_form_view(env)
     _fix_studio_sale_order_tree_columns_scope(env)
