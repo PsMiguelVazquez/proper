@@ -195,7 +195,12 @@ def _fix_customer_invoice_menu_action(env):
     if not (menu and action):
         return
     action_ref = 'ir.actions.act_window,%d' % action.id
-    if menu.action != action_ref:
+    # Ver el comentario en `_fix_sale_order_menu_actions` sobre por qué se
+    # compara recordset contra recordset (evita el `UserWarning` de
+    # `BaseModel.__eq__` al comparar un campo `Reference` roto/vacío
+    # contra un string).
+    current_action = menu.action
+    if not (current_action and current_action._name == action._name and current_action.id == action.id):
         menu.write({'action': action_ref})
 
 
@@ -282,7 +287,18 @@ def _fix_sale_order_menu_actions(env):
         if not (menu and action):
             continue
         action_ref = 'ir.actions.act_window,%d' % action.id
-        if menu.action != action_ref:
+        # MIGRACIÓN V19: `menu.action` (campo `Reference`) puede resolver a
+        # un recordset vacío (`ir.actions.act_window()`, no `False`) cuando
+        # la referencia guardada apunta a un id que ya no existe. Comparar
+        # ese recordset contra el string `action_ref` con `!=` dispara un
+        # `UserWarning` de `BaseModel.__eq__`
+        # (`unsupported operand type(s) for "==": ...`) -no rompe nada, el
+        # `if` igual evalúa como distinto y corrige el menú, pero ensucia
+        # el log y hace que Odoo.sh marque el build/deploy en amarillo-.
+        # Se compara recordset contra recordset (nunca contra el string)
+        # para evitar el warning por completo.
+        current_action = menu.action
+        if not (current_action and current_action._name == action._name and current_action.id == action.id):
             menu.write({'action': action_ref})
         # MIGRACIÓN V19: estos 3 menús (Cotizaciones/Pedidos/Marketplace,
         # todos hijos de "Contabilidad > Ventas") aparecen desactivados en
