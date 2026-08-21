@@ -2,7 +2,7 @@
     "name": "carta porte",
     "summary": "",
     "author": "Cesar Lopez R",
-    "version": "19.0.1.0.1",
+    "version": "19.0.1.0.2",
     "license": "LGPL-3",
     # MIGRACIÓN V19: la vista usa `fecha_recepcion_cliente`, un campo real
     # definido por `costo_promedio_proper` (no por `stock`), añadido aquí
