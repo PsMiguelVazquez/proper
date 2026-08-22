@@ -1096,15 +1096,22 @@ def _fix_duplicate_manual_field_labels(env):
 # MIGRACIÓN V19: `hr.work.location.address_id` (campo del core, `addons/
 # hr/models/hr_work_location.py`) es `required=True`, pero hay registros
 # en producción con `address_id` vacío -datos de antes de que el campo
-# se volviera obligatorio, probablemente-. Por eso el `_auto_init` de
-# `hr` no puede agregar el NOT NULL a nivel de base de datos y deja el
-# WARNING "Missing not-null constraint on hr.work.location.address_id"
-# en cada arranque. No es nada de `proper`; se corrige aquí (no se puede
-# corregir "antes" porque `hr` es de los primeros módulos en cargar, así
-# que este fix -como todo el resto de este self-heal- sólo hace efecto
-# a partir del SIGUIENTE arranque completo, no en el mismo en el que se
-# despliega). Se usa el partner de la propia compañía como dirección por
-# defecto -es el valor más razonable disponible sin más contexto-.
+# se volviera obligatorio, probablemente-. Por eso `hr` nunca pudo dejar
+# el NOT NULL puesto en la base y Odoo deja el WARNING "Missing not-null
+# constraint on hr.work.location.address_id" en cada arranque (ver
+# `odoo/orm/registry.py:check_null_constraints` -sólo lee el catálogo de
+# Postgres y avisa, no repara- vs. `odoo/orm/fields.py` -el que sí
+# intenta el `ALTER TABLE ... SET NOT NULL`, pero sólo como parte del
+# `_auto_init` del propio módulo dueño del campo, `hr`; como nunca se le
+# hace `-u hr` -es core, no se le sube versión-, ese intento nunca se
+# repite solo aunque el dato ya esté limpio-). No es nada de `proper`;
+# se corrige aquí en dos pasos: (1) limpiar el dato -no se puede "antes"
+# porque `hr` es de los primeros módulos en cargar, así que sólo hace
+# efecto a partir del SIGUIENTE arranque- y (2) poner la constraint por
+# SQL directo una vez que el dato está limpio, ya que esperar a que `hr`
+# la reintente solo nunca iba a pasar. Se usa el partner de la propia
+# compañía como dirección por defecto -es el valor más razonable
+# disponible sin más contexto-.
 def _fix_missing_work_location_address(env):
     locations = env['hr.work.location'].with_context(active_test=False).search([
         ('address_id', '=', False),
@@ -1112,6 +1119,18 @@ def _fix_missing_work_location_address(env):
     for location in locations:
         if location.company_id.partner_id:
             location.write({'address_id': location.company_id.partner_id.id})
+
+    env.cr.execute("""
+        SELECT 1 FROM information_schema.columns
+         WHERE table_name = 'hr_work_location' AND column_name = 'address_id'
+           AND is_nullable = 'YES'
+    """)
+    if not env.cr.fetchone():
+        return
+    env.cr.execute("SELECT COUNT(*) FROM hr_work_location WHERE address_id IS NULL")
+    if env.cr.fetchone()[0]:
+        return
+    env.cr.execute("ALTER TABLE hr_work_location ALTER COLUMN address_id SET NOT NULL")
 
 
 # MIGRACIÓN V19: en 15.0 `product_product.default_code` no tenía índice
