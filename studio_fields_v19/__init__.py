@@ -1080,6 +1080,10 @@ _DUPLICATE_LABEL_FIELDS = [
     ('sale.order', 'x_productos_si', 'Productos (sí)'),
     ('sale.order', 'x_productos_no', 'Productos (no)'),
     ('stock.picking', 'x_studio_otros_documentos_1', 'Otros Documentos (2)'),
+    # `x_proveedor` (relación a res.partner) y `x_proveedor_char` (texto
+    # libre) comparten la etiqueta "Proveedor" en el wizard de Studio
+    # `x_wizard_proposal`.
+    ('x_wizard_proposal', 'x_proveedor_char', 'Nombre del proveedor'),
 ]
 
 

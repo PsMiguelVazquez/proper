@@ -19,12 +19,23 @@ class Endoso(models.Model):
     amount = fields.Monetary(currency_field='currency_id')
     amount_residual = fields.Monetary('Monto restante')
     amount_paid = fields.Monetary('Monto pagado', compute='_compute_amount_paid')
+    # MIGRACIÓN V19: `_inherits` expone automáticamente TODOS los campos de
+    # `account.move` en `endoso.move` (incluidos `x_studio_n_orden_de_compra`,
+    # `x_referencia`, `x_studio_almacn`, `x_fecha_factura` -formalizados en
+    # `account_move_proper`/`studio_fields_v19`-), con la misma etiqueta que
+    # tienen ahí. Los 4 campos de abajo (`origin_invoice_orden_compra`,
+    # `origin_invoice_referencia`, `origin_invoice_warehouse_id`,
+    # `invoice_date`) son campos propios y distintos de `endoso.move` -leen
+    # el dato de `origin_invoice`, no del `move_id` delegado-, pero traían
+    # la misma etiqueta que sus homónimos delegados, lo que Odoo reporta
+    # como "Two fields ... have the same label" en cada arranque. Se les
+    # da una etiqueta propia para desambiguar.
     origin_invoice_sale_id = fields.Many2one('sale.order', compute='_compute_invoice_fields', string='Venta')
     origin_invoice_date = fields.Date(compute='_compute_invoice_fields', string='Fecha de la factura')
     origin_invoice_payment_term_id = fields.Many2one('account.payment.term', compute='_compute_invoice_fields', string='Términos de pago de la factura')
-    origin_invoice_warehouse_id = fields.Char(compute='_compute_invoice_fields', string='Almacén')
-    origin_invoice_orden_compra = fields.Char(compute='_compute_invoice_fields', string='Orden de compra')
-    origin_invoice_referencia = fields.Char(compute='_compute_invoice_fields', string='Referencia')
+    origin_invoice_warehouse_id = fields.Char(compute='_compute_invoice_fields', string='Almacén de la factura')
+    origin_invoice_orden_compra = fields.Char(compute='_compute_invoice_fields', string='Orden de compra de la factura')
+    origin_invoice_referencia = fields.Char(compute='_compute_invoice_fields', string='Referencia de la factura')
     origin_invoice_cfdi_uuid = fields.Char(string='Folio fiscal de la factura', related='origin_invoice.l10n_mx_edi_cfdi_uuid')
     l10n_mx_edi_cfdi_uuid = fields.Char(string='Folio fiscal',related='origin_invoice.l10n_mx_edi_cfdi_uuid')
     # MIGRACIÓN V19: `l10n_mx_edi_origin` -> `l10n_mx_edi_cfdi_origin`.
@@ -38,7 +49,7 @@ class Endoso(models.Model):
     # define `account.move.edi_document_ids`) no es dependencia de
     # `l10n_mx_edi` en 19.0 y no está instalado en este stack -el campo
     # `related` simplemente no existe si `account_edi` no está presente-.
-    invoice_date = fields.Date(string='Fecha de factura',related='origin_invoice.invoice_date')
+    invoice_date = fields.Date(string='Fecha de emisión de la factura',related='origin_invoice.invoice_date')
     payment_state = fields.Selection(string='Estado de pago', selection=[('not_paid','not_paid'),('paid','paid'), ('partial','partial')], default='not_paid', compute='_compute_payment_state')
 
     def _compute_amount_paid(self):
