@@ -14,7 +14,7 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.5',
+    'version': '19.0.1.0.6',
     'pre_init_hook': 'pre_init_hook',
 
     # MIGRACIÓN V19: `account_move_proper` (campos `x_studio_almacn`,

@@ -9,6 +9,16 @@
         </record>
         <record id="group_purchase_maneger" model="res.groups">
             <field name="name">Compras</field>
+            <!-- MIGRACIÓN V19: sin esta implicación, Odoo reporta
+                 "Inconsistencia de los permisos de acceso" en las vistas que
+                 restringen elementos a este grupo (p.ej. la pestaña
+                 "Compras" del producto), porque en teoría alguien podría
+                 tener este grupo sin `base.group_user` y no poder leer
+                 campos como `standard_price` que sí ve el elemento. En la
+                 práctica cualquier usuario con acceso a Compras siempre es
+                 usuario interno; se declara la implicación explícitamente
+                 para que el chequeo de consistencia de Odoo lo sepa. -->
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         </record>
         <!-- MIGRACIÓN V19: en v15 este grupo existía sólo como dato de
              Studio, con un ID externo generado automáticamente por Odoo
