@@ -7,6 +7,18 @@ def pre_init_hook(env):
     _delete_old_studio_account_move_form_view(env)
 
 
+# MIGRACIÓN V19: a diferencia de `_delete_old_studio_account_move_form_
+# view` (que sólo usa `env.ref`/SQL crudo), `_backfill_x_studio_almacn`
+# necesita el campo `account.move.x_studio_almacn` -definido en este mismo
+# módulo- ya registrado en el ORM. `pre_init_hook` corre ANTES de que este
+# módulo cargue sus propios modelos (mismo motivo por el que la migración
+# espejo es `post-`, no `pre-`), así que llamarlo desde ahí revienta con
+# "Invalid field account.move.x_studio_almacn" -confirmado en local-. Va
+# en `post_init_hook`, que corre después.
+def post_init_hook(env):
+    _backfill_x_studio_almacn(env)
+
+
 # MIGRACIÓN V19: `view_account_move_form_inherited_dates` (abajo, en
 # `views/views.xml`) aparecía desactivada (`active=False`) en la base real
 # sin causa rastreable en el código -mismo fenómeno observado con las
@@ -48,3 +60,24 @@ def _delete_old_studio_account_move_form_view(env):
     if view:
         env.cr.execute("DELETE FROM ir_model_data WHERE model = 'ir.ui.view' AND res_id = %s", (view.id,))
         env.cr.execute("DELETE FROM ir_ui_view WHERE id = %s", (view.id,))
+
+
+# MIGRACIÓN V19: `account.move.x_studio_almacn` (arriba, en `models/
+# account_move.py`) reutiliza el nombre de columna que ya existía como
+# metadato crudo de Studio en 15.0 -a propósito, según el comentario al
+# inicio de ese archivo, para que Odoo tomara la columna existente sin
+# perder datos-. El problema: al ser `store=True` sobre una columna que YA
+# EXISTÍA, Odoo nunca dispara el recompute inicial (eso sólo pasa cuando
+# la columna se crea por primera vez), así que cualquier factura cuyo
+# valor viejo de Studio ya viniera vacío en la columna se queda vacía para
+# siempre, aunque `sale_id.warehouse_id.code` sí tenga un valor real -
+# confirmado en producción: `INV/2026/03024` tenía `x_studio_almacn` vacío
+# con `sale_id.warehouse_id.code = 'ALM14'`-. Se recalcula una sola vez
+# para las facturas afectadas (con venta y almacén, pero sin el dato ya
+# guardado).
+def _backfill_x_studio_almacn(env):
+    moves = env['account.move'].search([
+        ('sale_id.warehouse_id.code', '!=', False),
+        ('x_studio_almacn', '=', False),
+    ])
+    moves._compute_x_studio_almacn()
