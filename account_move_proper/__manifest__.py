@@ -13,10 +13,11 @@
     'website': "",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.12',
+    'version': '19.0.1.0.13',
     'license': 'LGPL-3',
 
     'pre_init_hook': 'pre_init_hook',
+    'post_init_hook': 'post_init_hook',
 
     # MIGRACIÓN V19: `l10n_mx_edi` pasó a ser un módulo Enterprise (en 15.0
     # era Community); se sirve desde `/home/odoo19/odoo/enterprise`.
