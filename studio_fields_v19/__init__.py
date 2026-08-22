@@ -1028,10 +1028,19 @@ def _fix_broken_modifiers_attribute(env):
 # datos). El validador lo rechaza directo ("Invalid attribute banner_route
 # for element list") e invalida toda la vista. Se quita ese bloque de
 # xpath -no hacía falta, era sólo un banner informativo-.
-_BANNER_ROUTE_XPATH_RE = re.compile(
-    r'<xpath expr="//tree" position="attributes">\s*'
+#
+# El regex original sólo reconocía `expr="//tree"`: dejó de emparejar en
+# cuanto Odoo renombró automáticamente `<tree>`/`//tree` a `<list>`/
+# `//list` (el cambio de nombre de vista lista en v19) en el arch guardado
+# de esta vista concreta, así que el fix se quedó "arreglando" un patrón
+# que ya no existía mientras el warning real seguía sin tocarse. Se quita
+# sólo la etiqueta `<attribute name="banner_route">` en sí -sin fijar el
+# `expr=` del xpath que la envuelve- para que sobreviva a futuros cambios
+# de nombre de tag; el xpath contenedor puede quedar vacío
+# (`position="attributes"` sin atributos dentro), que es válido y no hace
+# nada.
+_BANNER_ROUTE_ATTR_RE = re.compile(
     r'<attribute name="banner_route">[^<]*</attribute>\s*'
-    r'</xpath>'
 )
 
 
@@ -1041,7 +1050,7 @@ def _fix_broken_banner_route(env):
         arch = view.arch_db
         if not arch:
             continue
-        new_arch = _BANNER_ROUTE_XPATH_RE.sub('', arch)
+        new_arch = _BANNER_ROUTE_ATTR_RE.sub('', arch)
         if new_arch != arch:
             view.write({'arch_db': new_arch})
 
