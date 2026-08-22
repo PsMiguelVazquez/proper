@@ -19,5 +19,9 @@ def migrate(cr, version):
     if not (menu and action):
         return
     action_ref = 'ir.actions.act_window,%d' % action.id
-    if menu.action != action_ref:
+    # Ver el comentario en `_fix_sale_order_menu_actions` (`__init__.py`)
+    # sobre por qué se compara recordset contra recordset en vez de
+    # contra el string `action_ref`.
+    current_action = menu.action
+    if not (current_action and current_action._name == action._name and current_action.id == action.id):
         menu.write({'action': action_ref})
