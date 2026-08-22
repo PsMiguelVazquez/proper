@@ -195,7 +195,12 @@ def _fix_customer_invoice_menu_action(env):
     if not (menu and action):
         return
     action_ref = 'ir.actions.act_window,%d' % action.id
-    if menu.action != action_ref:
+    # Ver el comentario en `_fix_sale_order_menu_actions` sobre por qué se
+    # compara recordset contra recordset (evita el `UserWarning` de
+    # `BaseModel.__eq__` al comparar un campo `Reference` roto/vacío
+    # contra un string).
+    current_action = menu.action
+    if not (current_action and current_action._name == action._name and current_action.id == action.id):
         menu.write({'action': action_ref})
 
 
@@ -282,7 +287,18 @@ def _fix_sale_order_menu_actions(env):
         if not (menu and action):
             continue
         action_ref = 'ir.actions.act_window,%d' % action.id
-        if menu.action != action_ref:
+        # MIGRACIÓN V19: `menu.action` (campo `Reference`) puede resolver a
+        # un recordset vacío (`ir.actions.act_window()`, no `False`) cuando
+        # la referencia guardada apunta a un id que ya no existe. Comparar
+        # ese recordset contra el string `action_ref` con `!=` dispara un
+        # `UserWarning` de `BaseModel.__eq__`
+        # (`unsupported operand type(s) for "==": ...`) -no rompe nada, el
+        # `if` igual evalúa como distinto y corrige el menú, pero ensucia
+        # el log y hace que Odoo.sh marque el build/deploy en amarillo-.
+        # Se compara recordset contra recordset (nunca contra el string)
+        # para evitar el warning por completo.
+        current_action = menu.action
+        if not (current_action and current_action._name == action._name and current_action.id == action.id):
             menu.write({'action': action_ref})
         # MIGRACIÓN V19: estos 3 menús (Cotizaciones/Pedidos/Marketplace,
         # todos hijos de "Contabilidad > Ventas") aparecen desactivados en
@@ -1077,6 +1093,79 @@ def _fix_duplicate_manual_field_labels(env):
             field.write({'field_description': label})
 
 
+# MIGRACIÓN V19: `hr.work.location.address_id` (campo del core, `addons/
+# hr/models/hr_work_location.py`) es `required=True`, pero hay registros
+# en producción con `address_id` vacío -datos de antes de que el campo
+# se volviera obligatorio, probablemente-. Por eso `hr` nunca pudo dejar
+# el NOT NULL puesto en la base y Odoo deja el WARNING "Missing not-null
+# constraint on hr.work.location.address_id" en cada arranque (ver
+# `odoo/orm/registry.py:check_null_constraints` -sólo lee el catálogo de
+# Postgres y avisa, no repara- vs. `odoo/orm/fields.py` -el que sí
+# intenta el `ALTER TABLE ... SET NOT NULL`, pero sólo como parte del
+# `_auto_init` del propio módulo dueño del campo, `hr`; como nunca se le
+# hace `-u hr` -es core, no se le sube versión-, ese intento nunca se
+# repite solo aunque el dato ya esté limpio-). No es nada de `proper`;
+# se corrige aquí en dos pasos: (1) limpiar el dato -no se puede "antes"
+# porque `hr` es de los primeros módulos en cargar, así que sólo hace
+# efecto a partir del SIGUIENTE arranque- y (2) poner la constraint por
+# SQL directo una vez que el dato está limpio, ya que esperar a que `hr`
+# la reintente solo nunca iba a pasar. Se usa el partner de la propia
+# compañía como dirección por defecto -es el valor más razonable
+# disponible sin más contexto-.
+def _fix_missing_work_location_address(env):
+    locations = env['hr.work.location'].with_context(active_test=False).search([
+        ('address_id', '=', False),
+    ])
+    for location in locations:
+        if location.company_id.partner_id:
+            location.write({'address_id': location.company_id.partner_id.id})
+
+    env.cr.execute("""
+        SELECT 1 FROM information_schema.columns
+         WHERE table_name = 'hr_work_location' AND column_name = 'address_id'
+           AND is_nullable = 'YES'
+    """)
+    if not env.cr.fetchone():
+        return
+    env.cr.execute("SELECT COUNT(*) FROM hr_work_location WHERE address_id IS NULL")
+    if env.cr.fetchone()[0]:
+        return
+    env.cr.execute("ALTER TABLE hr_work_location ALTER COLUMN address_id SET NOT NULL")
+
+
+# MIGRACIÓN V19: en 15.0 `product_product.default_code` no tenía índice
+# único, así que quedaron variantes con el mismo código -en los casos
+# encontrados, siempre una activa y una archivada (`active=False`)-. La
+# migración a 19.0 intenta crear `product_product_default_code_unique` y
+# falla ("could not create unique index ... is duplicated"), lo que deja
+# la rama en Warning en Odoo.sh. Este fix sólo renombra la copia
+# ARCHIVADA (le agrega un sufijo con su id), y sólo cuando hay
+# exactamente un producto ACTIVO con ese código -si hay 0 o 2+ activos
+# compartiendo el código, es ambiguo qué producto es "el bueno" y se deja
+# sin tocar para revisión manual-. Usa SQL directo (no `write()`) para no
+# disparar recómputos/validaciones de otros módulos sobre un dato que
+# sólo necesita dejar de chocar con el índice.
+def _fix_duplicate_product_default_codes(env):
+    env.cr.execute("""
+        SELECT default_code,
+               array_agg(id) FILTER (WHERE active) AS active_ids,
+               array_agg(id) FILTER (WHERE NOT active) AS archived_ids
+          FROM product_product
+         WHERE default_code IS NOT NULL AND default_code != ''
+      GROUP BY default_code
+        HAVING count(*) > 1
+    """)
+    for default_code, active_ids, archived_ids in env.cr.fetchall():
+        if len(active_ids or []) != 1 or not archived_ids:
+            continue
+        for product_id in archived_ids:
+            new_code = '%s-ARCH%d' % (default_code, product_id)
+            env.cr.execute(
+                "UPDATE product_product SET default_code = %s WHERE id = %s",
+                (new_code, product_id),
+            )
+
+
 # MIGRACIÓN V19: subconjunto de las funciones de más abajo que es seguro
 # repetir en CUALQUIER momento, no sólo durante instalación/upgrade -todas
 # comprueban el estado actual antes de escribir-. Se excluye a propósito
@@ -1112,6 +1201,8 @@ def _self_heal_idempotent_fixes(env):
     _fix_broken_banner_route(env)
     _fix_stale_manual_field_related(env)
     _fix_duplicate_manual_field_labels(env)
+    _fix_duplicate_product_default_codes(env)
+    _fix_missing_work_location_address(env)
     _reactivate_studio_automations(env)
     _delete_old_studio_account_move_form_view(env)
     _fix_studio_sale_order_tree_columns_scope(env)
