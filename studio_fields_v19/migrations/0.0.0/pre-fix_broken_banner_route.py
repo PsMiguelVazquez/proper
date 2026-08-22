@@ -2,16 +2,16 @@
 """
 MIGRACIÓN V19: mismo fix que `_fix_broken_banner_route` en `__init__.py`
 (llamada desde `pre_init_hook`), pero para el caso de actualización. Ver el
-comentario en `__init__.py` para el detalle.
+comentario en `__init__.py` para el detalle -incluyendo por qué se quita
+sólo la etiqueta `<attribute name="banner_route">` en vez de todo el
+bloque `<xpath expr="//tree" ...>`-.
 """
 import re
 
 from odoo import api, SUPERUSER_ID
 
-_BANNER_ROUTE_XPATH_RE = re.compile(
-    r'<xpath expr="//tree" position="attributes">\s*'
+_BANNER_ROUTE_ATTR_RE = re.compile(
     r'<attribute name="banner_route">[^<]*</attribute>\s*'
-    r'</xpath>'
 )
 
 
@@ -22,6 +22,6 @@ def migrate(cr, version):
         arch = view.arch_db
         if not arch:
             continue
-        new_arch = _BANNER_ROUTE_XPATH_RE.sub('', arch)
+        new_arch = _BANNER_ROUTE_ATTR_RE.sub('', arch)
         if new_arch != arch:
             view.write({'arch_db': new_arch})
