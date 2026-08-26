@@ -403,7 +403,18 @@
             <field name="name">sale.order.list.MKP</field>
             <field name="model">sale.order</field>
             <field name="arch" type="xml">
+                <!-- MIGRACIÓN V19: esta vista es independiente (no hereda de
+                     `sale.view_order_tree`), así que el botón "Subir factura
+                     externa" que `upload_invoice_wizard` agrega por herencia
+                     a las vistas de Cotizaciones/Pedidos nunca llegaba aquí.
+                     `upload_invoice()` (`upload_invoice_wizard/models/
+                     sale_order.py`) es un método genérico de `sale.order`,
+                     sin restricción de origen MKP, así que es seguro
+                     exponerlo aquí también. -->
                 <list string="Quotation" class="o_sale_order" multi_edit="1" sample="1">
+                    <header>
+                        <button string="Subir factura externa" name="upload_invoice" type="object"/>
+                    </header>
                     <field name="name" string="Number" readonly="1" decoration-bf="1"/>
                     <field name="warehouse_id" optional="show"/>
                     <field name="x_studio_n_orden_de_compra" optional="show"/>
