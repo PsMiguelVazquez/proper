@@ -325,7 +325,24 @@ class SaleOrder(models.Model):
                                    + ' producto(s) más. línea(' + str(i) + ')'
                         valid = False
             else:
-                disponibles_total = line.product_id.stock_quant_warehouse_zero - line.product_uom_qty
+                # MIGRACIÓN V19: antes se comparaba contra
+                # `stock_quant_warehouse_zero` (`ProductInherit`, más abajo
+                # en este archivo), que suma existencias de una ubicación
+                # fija (`location_id.id == 187`), sin importar el almacén
+                # real de esta orden. Como la rama de arriba (validación por
+                # almacén) nunca se activa (`team_id` es una referencia
+                # muerta), esta era la única validación de stock que
+                # realmente corría al confirmar -y bloqueaba la
+                # confirmación con "No hay stock suficiente" aunque el
+                # almacén real de la orden (p.ej. ALM14) sí tuviera
+                # existencia-. Se corrige para que valide contra el almacén
+                # real de la orden, igual que la rama de arriba, pero
+                # conservando el ajuste por `dic_cantidades_disponibles`
+                # (cantidades de compras en camino) que esta rama sí
+                # aplicaba y la de arriba no.
+                wh = line.order_id.warehouse_id.lot_stock_id
+                disponibles_total = sum(line.product_id.stock_quant_ids.filtered(lambda x: x.location_id == wh).mapped('available_quantity'))
+                disponibles_total = disponibles_total - line.product_uom_qty
                 if line.product_id.id in dic_cantidades_disponibles:
                     disponibles_total += dic_cantidades_disponibles[line.product_id.id]
                 if disponibles_total < 0.0:
