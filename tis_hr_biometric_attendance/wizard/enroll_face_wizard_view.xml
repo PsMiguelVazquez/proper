@@ -1,0 +1,17 @@
+<odoo>
+    <record id="view_enroll_face_wizard_form" model="ir.ui.view">
+    <field name="name">enroll.face.wizard.form</field>
+        <field name="model">enroll.face.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Enroll Face Confirmation">
+                <group>
+                    <field name="message" readonly="1"/>
+                </group>
+                <footer>
+                    <button string="Confirm" type="object" name="action_confirm" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

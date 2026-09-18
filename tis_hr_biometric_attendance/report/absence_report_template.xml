@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="absence_report_template">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <!-- Header Section -->
+                    <div class="row" style="margin-bottom: 30px;">
+                        <div class="col-12">
+                            <div style="text-align: center; border-bottom: 3px solid #875A7B; padding-bottom: 15px;">
+                                <h1 style="color: #875A7B; font-weight: bold; margin: 0; font-size: 28px;">
+                                    EMPLOYEE ABSENCE REPORT
+                                </h1>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Information Section -->
+                    <div class="row" style="margin-bottom: 25px;">
+                        <div class="col-6">
+                            <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #875A7B; border-radius: 5px;">
+                                <h4 style="color: #875A7B; margin: 0 0 10px 0; font-size: 16px;">Report Period</h4>
+                                <p style="margin: 5px 0;">
+                                    <strong>Start Date:</strong>
+                                    <span t-esc="date_from" style="color: #333;"/>
+                                </p>
+                                <p style="margin: 5px 0;">
+                                    <strong>End Date:</strong>
+                                    <span t-esc="date_to" style="color: #333;"/>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-6" >
+                            <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #875A7B; border-radius: 5px;">
+                                <h4 style="color: #dc3545; margin: 0 0 10px 0; font-size: 16px;">Summary</h4>
+                                <p style="margin: 5px 0;">
+                                    <strong>Total Absences:</strong>
+                                    <span t-esc="len(absent_lines) if absent_lines else 0" style="color: #dc3545; font-weight: bold; font-size: 18px;"/>
+                                </p>
+                                <p style="margin: 5px 0;">
+                                    <strong>Report Generated:</strong>
+                                    <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')" style="color: #666;"/>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Content Section -->
+                    <t t-if="absent_lines">
+                        <!-- Department-wise Summary (if needed) -->
+                        <div style="margin-bottom: 25px;">
+                            <h3 style="color: #875A7B; border-bottom: 2px solid #875A7B; padding-bottom: 8px; margin-bottom: 15px;">
+                                Absence Details
+                            </h3>
+                        </div>
+
+                        <!-- Enhanced Table -->
+                        <table class="table table-sm" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                            <thead>
+                                <tr style="background-color: #875A7B; color: white;">
+                                    <th style="padding: 12px 8px; text-align: center; border: 1px solid #fff; width: 8%;">
+                                        <strong>Sl. No</strong>
+                                    </th>
+                                    <th style="padding: 12px 8px; border: 1px solid #fff; width: 25%;">
+                                        <strong>Employee Name</strong>
+                                    </th>
+                                    <th style="padding: 12px 8px; border: 1px solid #fff; width: 20%;">
+                                        <strong>Department</strong>
+                                    </th>
+                                    <th style="padding: 12px 8px; border: 1px solid #fff; width: 20%;">
+                                        <strong>Company/Location</strong>
+                                    </th>
+                                    <th style="padding: 12px 8px; text-align: center; border: 1px solid #fff; width: 15%;">
+                                        <strong>Absence Date</strong>
+                                    </th>
+                                    <th style="padding: 12px 8px; text-align: center; border: 1px solid #fff; width: 12%;">
+                                        <strong>Day</strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="absent_lines" t-as="line">
+                                    <tr t-att-style="'background-color: %s;' % ('#f8f9fa' if line_index % 2 == 0 else '#ffffff')">
+                                        <td style="padding: 10px 8px; text-align: center; border: 1px solid #dee2e6; font-weight: bold;">
+                                            <span t-esc="line_index + 1"/>
+                                        </td>
+                                        <td style="padding: 10px 8px; border: 1px solid #dee2e6;">
+                                            <strong><span t-esc="line['name']"/></strong>
+                                        </td>
+                                        <td style="padding: 10px 8px; border: 1px solid #dee2e6; color: #666;">
+                                            <span t-esc="line['department'] or 'N/A'"/>
+                                        </td>
+                                        <td style="padding: 10px 8px; border: 1px solid #dee2e6; color: #666;">
+                                            <span t-esc="line['location'] or 'N/A'"/>
+                                        </td>
+                                        <td style="padding: 10px 8px; text-align: center; border: 1px solid #dee2e6; font-weight: bold; color: #dc3545;">
+                                            <span t-esc="line['absent_date']"/>
+                                        </td>
+                                        <td style="padding: 10px 8px; text-align: center; border: 1px solid #dee2e6; color: #666; font-style: italic;">
+                                            <span t-esc="datetime.datetime.strptime(line['absent_date'], '%Y-%m-%d').strftime('%a') if line.get('absent_date') else ''"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Footer Summary Section -->
+                        <div class="row" style="margin-top: 30px; page-break-inside: avoid;">
+                            <div class="col-12">
+                                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <h4 style="color: #875A7B; margin: 0 0 10px 0;">Report Summary</h4>
+                                            <p style="margin: 5px 0; font-size: 14px;">
+                                                <strong>Total Absence Records:</strong>
+                                                <span style="color: #dc3545; font-weight: bold; font-size: 16px;">
+                                                    <t t-esc="len(absent_lines)"/>
+                                                </span>
+                                            </p>
+                                            <p style="margin: 5px 0; font-size: 12px; color: #666;">
+                                                Period: <span t-esc="date_from"/> to <span t-esc="date_to"/>
+                                            </p>
+                                        </div>
+                                        <div class="col-6" style="text-align: right;">
+                                            <div style="margin-top: 20px;">
+                                                <p style="margin: 5px 0; font-size: 11px; color: #999;">
+                                                    Generated by: <strong><span t-esc="user.name"/></strong>
+                                                </p>
+                                                <p style="margin: 5px 0; font-size: 11px; color: #999;">
+                                                    <span t-esc="res_company.name"/>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </t>
+                    <t t-else="">
+                        <!-- No Data Section -->
+                        <div style="text-align: center; padding: 60px 20px; background-color: #f8f9fa; border-radius: 10px; margin-top: 30px;">
+                            <div style="color: #6c757d; font-size: 48px; margin-bottom: 20px;">
+                                📋
+                            </div>
+                            <h3 style="color: #6c757d; margin-bottom: 15px;">No Absence Records Found</h3>
+                            <p style="color: #999; font-size: 16px; margin: 0;">
+                                No employee absences were recorded for the period from
+                                <strong><span t-esc="date_from"/></strong> to <strong><span t-esc="date_to"/></strong>
+                            </p>
+                            <div style="margin-top: 20px; padding: 15px; background-color: #d4edda; border-radius: 5px; display: inline-block;">
+                                <p style="color: #155724; margin: 0; font-size: 14px;">
+                                     Perfect Attendance Period!
+                                </p>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

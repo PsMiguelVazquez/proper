@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Enhanced Absence Report PDF Action -->
+    <record id="action_absence_report_pdf" model="ir.actions.report">
+        <field name="name">Employee Absence Report</field>
+        <field name="model">absence.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">tis_hr_biometric_attendance.absence_report_template</field>
+        <field name="report_file">tis_hr_biometric_attendance.absence_report_template</field>
+        <field name="binding_model_id" ref="model_absence_report_wizard"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+        <field name="print_report_name">'Absence_Report_%s_%s' % (object.date_from, object.date_to)</field>
+        <field name="attachment_use" eval="False"/>
+    </record>
+
+</odoo>

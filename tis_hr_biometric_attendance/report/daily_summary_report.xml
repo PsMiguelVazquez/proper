@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="wizard_daily_summary_report_action" model="ir.actions.report">
+        <field name="name">Daily Summary Report</field>
+        <field name="model">daily.summary.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">tis_hr_biometric_attendance.daily_summary_report_template</field>
+        <field name="report_file">tis_hr_biometric_attendance.daily_summary_report_template</field>
+        <field name="binding_model_id" ref="model_daily_summary_report_wizard"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+        <field name="print_report_name">'Daily_Summary_Report_%s' % (object.date_of_summary or 'Unknown_Date')</field>
+        <field name="attachment_use" eval="False"/>
+    </record>
+</odoo>

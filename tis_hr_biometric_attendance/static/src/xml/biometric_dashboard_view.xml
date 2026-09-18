@@ -1,0 +1,210 @@
+<templates id="template" xml:space="preserve">
+    <t t-name="tis_hr_biometric_attendance.BiometricDashboard" owl="1">
+        <div class="o_biometric_dashboard container-fluid py-4">
+            <!-- Dashboard Cards -->
+            <div class="dashboard_box d-flex flex-wrap gap-3 justify-content-center">
+                <!-- Total Employees Card -->
+                <div class="stat_box card shadow-sm" style="min-width: 200px; flex: 1; max-width: 250px;" t-if="!state.isLoading">
+                    <div class="card-body d-flex flex-column align-items-center text-center p-4">
+                        <div class="mb-3">
+                            <i class="fa fa-users fa-2x text-primary"></i>
+                        </div>
+                        <h3 class="value display-6 fw-bold mb-1 text-dark" t-esc="state.total_employees"></h3>
+                        <p class="title text-muted mb-0 small">Total Employees</p>
+                    </div>
+                </div>
+
+                <!-- Present Employees Card -->
+                <div class="stat_box card shadow-sm" style="min-width: 200px; flex: 1; max-width: 250px;" t-if="!state.isLoading">
+                    <div class="card-body d-flex flex-column align-items-center text-center p-4">
+                        <div class="mb-3">
+                            <i class="fa fa-check-circle fa-2x text-success"></i>
+                        </div>
+                        <h3 class="value display-6 fw-bold mb-1 text-success" t-esc="state.presented_employees"></h3>
+                        <p class="title text-muted mb-0 small">Present Today</p>
+                    </div>
+                </div>
+
+                <!-- Absent Employees Card -->
+                <div class="stat_box card shadow-sm" style="min-width: 200px; flex: 1; max-width: 250px;" t-if="!state.isLoading">
+                    <div class="card-body d-flex flex-column align-items-center text-center p-4">
+                        <div class="mb-3">
+                            <i class="fa fa-times-circle fa-2x text-danger"></i>
+                        </div>
+                        <h3 class="value display-6 fw-bold mb-1 text-danger" t-esc="state.absented_employees"></h3>
+                        <p class="title text-muted mb-0 small">Absent Today</p>
+                    </div>
+                </div>
+
+                <!-- Late Arrivals Card -->
+                <div class="stat_box card shadow-sm" style="min-width: 200px; flex: 1; max-width: 250px;" t-if="!state.isLoading">
+                    <div class="card-body d-flex flex-column align-items-center text-center p-4">
+                        <div class="mb-3">
+                            <i class="fa fa-clock-o fa-2x text-warning"></i>
+                        </div>
+                        <h3 class="value display-6 fw-bold mb-1 text-warning" t-esc="state.late_arrival_employees"></h3>
+                        <p class="title text-muted mb-0 small">Late Arrivals</p>
+                    </div>
+                </div>
+
+                <!-- Early Leavings Card -->
+                <div class="stat_box card shadow-sm" style="min-width: 200px; flex: 1; max-width: 250px;" t-if="!state.isLoading">
+                    <div class="card-body d-flex flex-column align-items-center text-center p-4">
+                        <div class="mb-3">
+                            <i class="fa fa-sign-out fa-2x text-info"></i>
+                        </div>
+                        <h3 class="value display-6 fw-bold mb-1 text-info" t-esc="state.early_leaving_employees"></h3>
+                        <p class="title text-muted mb-0 small">Early Leavings</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div class="d-flex justify-content-center" t-if="state.isLoading">
+                <div class="stat_box card shadow-sm" style="min-width: 300px;">
+                    <div class="card-body text-center p-5">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h5 class="title text-muted mb-0">Loading Dashboard Data...</h5>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Employee Details Section  -->
+            <div class="row mt-4 g-3" t-if="!state.isLoading">
+
+                <!-- Presented Employees -->
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header  text-white d-flex align-items-center" style="background-color: #006400">
+                            <i class="fa fa-check-circle me-2"></i>
+                            <h5 class="mb-0 text-white">Presented</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="scrollspy-container p-3" style="height: 250px; overflow-y: auto;">
+                                <div>
+                                    <t t-foreach="state.presented_employee_details" t-as="emp" t-key="emp.name">
+                                        <div class="employee-item d-flex align-items-center mb-3 p-2 border-bottom">
+                                            <img t-if="emp.image" t-att-src="'data:image/png;base64,' + emp.image" class="rounded-circle me-3 border" width="45" height="45"/>
+                                            <div t-if="!emp.image" class="rounded-circle me-3 bg-success text-white d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; font-size: 18px;">
+                                                <i class="fa fa-user"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-0 fw-medium" t-esc="emp.name"></h6>
+                                                <small class="text-muted" t-esc="emp.job_title"/>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <div t-if="!state.presented_employee_details.length" class="text-center text-muted py-4">
+                                        <i class="fa fa-users fa-2x mb-2"></i>
+                                        <p class="mb-0">No employees present today</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Absented Employees -->
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header  text-white d-flex align-items-center" style="background-color: #8B0000;">
+                            <i class="fa fa-times-circle me-2"></i>
+                            <h5 class="mb-0 text-white">Absented</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="scrollspy-container p-3" style="height: 250px; overflow-y: auto;">
+                                <div>
+                                    <t t-foreach="state.absented_employee_details" t-as="emp" t-key="emp.name">
+                                        <div class="employee-item d-flex align-items-center mb-3 p-2 border-bottom">
+                                            <img t-if="emp.image" t-att-src="'data:image/png;base64,' + emp.image" class="rounded-circle me-3 border" width="45" height="45"/>
+                                            <div t-if="!emp.image" class="rounded-circle me-3 bg-danger text-white d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; font-size: 18px;">
+                                                <i class="fa fa-user"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-0 fw-medium" t-esc="emp.name"></h6>
+                                                <small class="text-muted" t-esc="emp.job_title"/>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <div t-if="!state.absented_employee_details.length" class="text-center text-muted py-4">
+                                        <i class="fa fa-user-times fa-2x mb-2"></i>
+                                        <p class="mb-0">No employees absent today</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Late Arrivals -->
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-warning text-dark d-flex align-items-center">
+                            <i class="fa fa-clock me-2"></i>
+                            <h5 class="mb-0">Late Arrivals</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="scrollspy-container p-3" style="height: 250px; overflow-y: auto;">
+                                <div>
+                                    <t t-foreach="state.late_arrival_employee_details" t-as="emp" t-key="emp.name">
+                                        <div class="employee-item d-flex align-items-center mb-3 p-2 border-bottom">
+                                            <img t-if="emp.image" t-att-src="'data:image/png;base64,' + emp.image" class="rounded-circle me-3 border" width="45" height="45"/>
+                                            <div t-if="!emp.image" class="rounded-circle me-3 bg-warning text-white d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; font-size: 18px;">
+                                                <i class="fa fa-user"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-0 fw-medium" t-esc="emp.name"/>
+                                                <small class="text-muted" t-esc="emp.job_title"/>
+                                                <div class="text-danger small">Late by: <t t-esc="emp.late_by"/></div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <div t-if="!state.late_arrival_employee_details.length" class="text-center text-muted py-4">
+                                        <i class="fa fa-clock fa-2x mb-2"></i>
+                                        <p class="mb-0">No late arrivals today</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Early Leavings -->
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-info text-white d-flex align-items-center">
+                            <i class="fa fa-sign-out-alt me-2"></i>
+                            <h5 class="mb-0">Early Leavings</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="scrollspy-container p-3" style="height: 250px; overflow-y: auto;">
+                                <div>
+                                    <t t-foreach="state.early_leaving_employee_details" t-as="emp" t-key="emp.name">
+                                        <div class="employee-item d-flex align-items-center mb-3 p-2 border-bottom">
+                                            <img t-if="emp.image" t-att-src="'data:image/png;base64,' + emp.image" class="rounded-circle me-3 border" width="45" height="45"/>
+                                            <div t-if="!emp.image" class="rounded-circle me-3 bg-info text-white d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; font-size: 18px;">
+                                                <i class="fa fa-user"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-0 fw-medium" t-esc="emp.name"/>
+                                                <small class="text-muted" t-esc="emp.job_title"/>
+                                                <div class="text-warning small">Left early by: <t t-esc="emp.left_early_by"/></div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <div t-if="!state.early_leaving_employee_details.length" class="text-center text-muted py-4">
+                                        <i class="fa fa-sign-out-alt fa-2x mb-2"></i>
+                                        <p class="mb-0">No early leavings today</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

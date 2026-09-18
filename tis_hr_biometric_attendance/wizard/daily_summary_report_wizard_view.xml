@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="view_daily_summary_report_wizard_form" model="ir.ui.view">
+        <field name="name">daily.summary.report.wizard.form</field>
+        <field name="model">daily.summary.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Daily Summary Report">
+                <group>
+                    <field name="date_of_summary" />
+                </group>
+                <footer>
+                    <button name="action_print_report" type="object" string="Print Report" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_daily_summary_report_wizard" model="ir.actions.act_window">
+        <field name="name">Daily Summary Report</field>
+        <field name="res_model">daily.summary.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_daily_summary_report"
+              name="Daily Summary Report"
+              parent="tis_hr_biometric_attendance.menu_attendance_manager_custom"
+              action="action_daily_summary_report_wizard"
+              sequence="25"/>
+
+</odoo>

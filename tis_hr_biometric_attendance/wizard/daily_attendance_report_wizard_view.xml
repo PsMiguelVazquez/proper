@@ -1,0 +1,36 @@
+<odoo>
+    <!-- Form View -->
+    <record id="view_daily_attendance_report_wizard_form" model="ir.ui.view">
+        <field name="name">daily.attendance.report.wizard.form</field>
+        <field name="model">daily.attendance.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Daily Attendance Report">
+                <group>
+                    <field name="date_of_report"/>
+                </group>
+                <footer>
+                    <button name="action_print_report" type="object" string="Print Report" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_daily_attendance_report_wizard" model="ir.actions.act_window">
+        <field name="name">Daily Attendance Report</field>
+        <field name="res_model">daily.attendance.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_daily_attendance_report_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem
+        id="menu_daily_attendance_report"
+        name="Daily Attendance Report"
+        parent="tis_hr_biometric_attendance.menu_attendance_manager_custom"
+        action="action_daily_attendance_report_wizard"
+        sequence="30"
+    />
+</odoo>

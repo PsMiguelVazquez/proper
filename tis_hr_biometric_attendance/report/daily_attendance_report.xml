@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="paperformat_daily_attendance" model="report.paperformat">
+            <field name="name">Daily Attendance Report Format</field>
+            <field name="format">A4</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">40</field>
+            <field name="margin_bottom">23</field>
+            <field name="margin_left">7</field>
+            <field name="margin_right">7</field>
+            <field name="header_line">False</field>
+            <field name="header_spacing">35</field>
+            <field name="dpi">90</field>
+        </record>
+
+        <!-- Report Action -->
+        <record id="action_daily_attendance_report_pdf" model="ir.actions.report">
+            <field name="name">Daily Attendance Report</field>
+            <field name="model">daily.attendance.report.wizard</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">tis_hr_biometric_attendance.daily_attendance_report_template</field>
+            <field name="report_file">tis_hr_biometric_attendance.daily_attendance_report_template</field>
+            <field name="binding_model_id" ref="model_daily_attendance_report_wizard"/>
+            <field name="binding_type">report</field>
+            <field name="paperformat_id" ref="paperformat_daily_attendance"/>
+        </record>
+    </data>
+</odoo>
