@@ -1068,6 +1068,12 @@ def _fix_broken_banner_route(env):
 # todas sus columnas). Se cambia el `replace` por ocultar la columna
 # (`column_invisible`) + insertar los mismos campos después: visualmente
 # queda igual y el campo sigue existiendo para las vistas que lo buscan.
+#
+# Va en `post_init_hook`/migración `post-*` (no en
+# `_self_heal_idempotent_fixes`, que corre en `pre_init_hook`): al
+# reescribir el arch Odoo valida la vista, y sus campos `x_studio_*` los
+# define este mismo módulo (`models/stock.py`), que en la etapa `pre`
+# todavía no están cargados.
 _QUANT_UOM_REPLACE_XPATH = '<xpath expr="//field[@name=\'product_uom_id\']" position="replace">'
 _QUANT_UOM_HIDE_AND_AFTER_XPATH = (
     '<xpath expr="//field[@name=\'product_uom_id\']" position="attributes">'
@@ -1265,7 +1271,6 @@ def _self_heal_idempotent_fixes(env):
     _fix_broken_tax_totals_structure(env)
     _fix_broken_modifiers_attribute(env)
     _fix_broken_banner_route(env)
-    _fix_studio_quant_tree_uom_replace(env)
     _fix_stale_manual_field_related(env)
     _fix_duplicate_manual_field_labels(env)
     _fix_duplicate_product_default_codes(env)
@@ -1471,3 +1476,4 @@ def _force_install_novu_modules(env):
 
 def post_init_hook(env):
     _fix_sale_order_menu_actions(env)
+    _fix_studio_quant_tree_uom_replace(env)

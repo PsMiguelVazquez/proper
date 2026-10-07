@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 MIGRACIÓN V19: mismo fix que `_fix_studio_quant_tree_uom_replace` en
-`__init__.py` (llamada desde `pre_init_hook`), pero para el caso de
-actualización. Ver el comentario en `__init__.py` para el detalle.
+`__init__.py` (llamada desde `post_init_hook`), pero para el caso de
+actualización. Va como migración `post-` (no `pre-`) a propósito: al
+reescribir el arch, Odoo valida la vista, y casi todos sus campos
+(`x_studio_producto`, `x_studio_precio_de_venta`, ...) los define este
+mismo módulo en `models/stock.py`; en una migración `pre-` todavía no
+están cargados y la validación hacía fallar la actualización. Ver
+`__init__.py` para el detalle.
 """
 from odoo import api, SUPERUSER_ID
 
