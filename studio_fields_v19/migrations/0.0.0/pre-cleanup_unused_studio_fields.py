@@ -96,9 +96,6 @@ UNUSED_STUDIO_FIELDS = [
     ('stock.picking', 'x_studio_related_field_zAbcR'),
     ('sale.order', 'x_studio_selection_field_hBVNg'),
     ('purchase.order', 'x_studio_text_field_uiFIR'),
-    # Ver el comentario en `__init__.py`: alias redundante y confirmado de
-    # `stock.picking.x_studio_facturas`, no un campo nunca configurado.
-    ('stock.picking', 'x_studio_related_field_4hu_1k0qhj11o'),
 ]
 
 

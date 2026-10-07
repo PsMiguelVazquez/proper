@@ -414,17 +414,6 @@ UNUSED_STUDIO_FIELDS = [
     ('stock.picking', 'x_studio_related_field_zAbcR'),
     ('sale.order', 'x_studio_selection_field_hBVNg'),
     ('purchase.order', 'x_studio_text_field_uiFIR'),
-    # MIGRACIÓN V19: a diferencia del resto de esta lista (campos nunca
-    # configurados), este SÍ está configurado -pero como
-    # `related='x_studio_facturas'`, un alias puro y redundante del campo
-    # ya formalizado `stock.picking.x_studio_facturas`
-    # (`sale_purchase_confirm/models/stock_move.py`)-. Confirmado en
-    # producción: mismo `ttype`/`relation`, sin dato propio (no
-    # almacenado). Generaba "Two fields ... have the same label: Facturas"
-    # en cada arranque. Seguro de eliminar por el mismo motivo que el
-    # resto de la lista: no tiene ningún uso que no cubra ya el campo
-    # formalizado.
-    ('stock.picking', 'x_studio_related_field_4hu_1k0qhj11o'),
 ]
 
 
@@ -1104,13 +1093,20 @@ _DUPLICATE_LABEL_FIELDS = [
     # libre) comparten la etiqueta "Proveedor" en el wizard de Studio
     # `x_wizard_proposal`.
     ('x_wizard_proposal', 'x_proveedor_char', 'Nombre del proveedor'),
+    # `stock.picking.x_studio_facturas` (formalizado en
+    # `sale_purchase_confirm/models/stock_move.py`) y este
+    # -`related='x_studio_facturas'`, alias redundante- comparten la
+    # etiqueta "Facturas". No se puede eliminar: el campo de Studio
+    # `stock.picking.x_studio_facturas_1` depende de él (eliminarlo hacía
+    # fallar la actualización con "No se puede eliminar el campo ...
+    # porque el campo 'stock.picking.x_studio_facturas_1' depende de él").
+    ('stock.picking', 'x_studio_related_field_4hu_1k0qhj11o', 'Facturas (relacionado)'),
     # `account.move.line.x_descripcion_corta` (campo propio) y este -
     # `related='sale_line_ids.x_descripcion_corta'`, trae el dato de la
     # línea de venta de origen, puede diferir si la línea de factura se
-    # editó después- comparten la etiqueta "Descripción corta". A
-    # diferencia del caso de `stock.picking` de arriba, este SÍ puede
-    # traer un dato distinto al campo propio, así que se renombra en vez
-    # de eliminarse.
+    # editó después- comparten la etiqueta "Descripción corta". Este SÍ
+    # puede traer un dato distinto al campo propio, así que se renombra en
+    # vez de eliminarse.
     ('account.move.line', 'x_studio_related_field_4dj_1k0qkavq7', 'Descripción corta de la venta'),
 ]
 
