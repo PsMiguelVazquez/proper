@@ -1055,6 +1055,44 @@ def _fix_broken_banner_route(env):
             view.write({'arch_db': new_arch})
 
 
+# MIGRACIÓN V19: la vista de Studio "Odoo Studio: stock.quant.tree
+# customization" (hereda de `stock.view_stock_quant_tree`) hacía
+# `position="replace"` sobre `product_uom_id` para poner en su lugar
+# "Costo Promedio"/"Precio de Venta". En 19.0, `stock_barcode` define una
+# vista PRIMARY (`stock_barcode.view_stock_quant_tree`) sobre esa misma
+# lista que busca `//field[@name='product_uom_id']`; al validar la vista
+# de Studio, Odoo también valida esas vistas primary hijas, y como el
+# campo ya no existe tras el `replace`, marcaba la vista de Studio como
+# inválida ("invalid custom view(s) for model stock.quant ... no puede
+# ser localizado en la vista padre") y la descartaba COMPLETA (se perdían
+# todas sus columnas). Se cambia el `replace` por ocultar la columna
+# (`column_invisible`) + insertar los mismos campos después: visualmente
+# queda igual y el campo sigue existiendo para las vistas que lo buscan.
+_QUANT_UOM_REPLACE_XPATH = '<xpath expr="//field[@name=\'product_uom_id\']" position="replace">'
+_QUANT_UOM_HIDE_AND_AFTER_XPATH = (
+    '<xpath expr="//field[@name=\'product_uom_id\']" position="attributes">'
+    '<attribute name="column_invisible">1</attribute>'
+    '</xpath>'
+    '<xpath expr="//field[@name=\'product_uom_id\']" position="after">'
+)
+
+
+def _fix_studio_quant_tree_uom_replace(env):
+    parent = env.ref('stock.view_stock_quant_tree', raise_if_not_found=False)
+    if not parent:
+        return
+    views = env['ir.ui.view'].search([
+        ('model', '=', 'stock.quant'),
+        ('inherit_id', '=', parent.id),
+        ('arch_db', 'like', 'product_uom_id'),
+    ])
+    for view in views:
+        arch = view.arch_db
+        if not arch or _QUANT_UOM_REPLACE_XPATH not in arch:
+            continue
+        view.write({'arch_db': arch.replace(_QUANT_UOM_REPLACE_XPATH, _QUANT_UOM_HIDE_AND_AFTER_XPATH)})
+
+
 # MIGRACIÓN V19: `x_area`/`x_area_trabajo` (res.partner) ya se formalizaron
 # como código (`_compute_x_area` en `models/res_partner.py`), pero el
 # registro `ir.model.fields` que quedó de Studio todavía guarda
@@ -1227,6 +1265,7 @@ def _self_heal_idempotent_fixes(env):
     _fix_broken_tax_totals_structure(env)
     _fix_broken_modifiers_attribute(env)
     _fix_broken_banner_route(env)
+    _fix_studio_quant_tree_uom_replace(env)
     _fix_stale_manual_field_related(env)
     _fix_duplicate_manual_field_labels(env)
     _fix_duplicate_product_default_codes(env)
