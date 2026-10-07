@@ -758,7 +758,11 @@ class SaleOrderLine(models.Model):
             if record.order_id:
                 if record.order_id.invoice_ids:
                     for i, inv in enumerate(record.order_id.invoice_ids):
-                        if inv.name == '/':
+                        # MIGRACIÓN V19: un borrador sin número tiene
+                        # `name = False` (en 15.0 era '/'); sin esto el
+                        # `join` de abajo truena con "expected str instance,
+                        # bool found" (p. ej. al exportar las líneas).
+                        if not inv.name or inv.name == '/':
                             lista_fact.append('(* ' + str(inv.id) + ')')
                         else:
                             lista_fact.append(inv.name)
