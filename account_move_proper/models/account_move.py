@@ -319,7 +319,8 @@ class AccountMove(models.Model):
                 move_lines_d = []
                 for line in invoice_id.invoice_line_ids:
                     move_line_vals = {
-                        'name': line.product_id.name,
+                        # MIGRACIÓN V19: `stock.move.name` ya no existe; la descripción
+                        # la calcula Odoo desde el producto (`description_picking`).
                         "product_id": line.product_id.id,
                         "product_uom_qty": line.quantity,
                         "quantity": line.quantity,
