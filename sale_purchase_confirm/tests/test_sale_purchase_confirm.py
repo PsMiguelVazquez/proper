@@ -194,6 +194,13 @@ class TestAccountMoveStudioFields(TransactionCase):
         move.set_folio()
         self.assertEqual(move.folio, '42')
 
+    def test_set_folio_non_numeric_suffix(self):
+        move = self.env['account.move'].create({'move_type': 'entry'})
+        move.name = 'PAGO/2026/4750.25'
+        move.set_folio()
+        self.assertEqual(move.serie, 'PAGO/2026/')
+        self.assertEqual(move.folio, '4750.25')
+
     def test_x_estado_actuali_cli_related(self):
         partner = self.env['res.partner'].create({'name': 'Cliente move test', 'x_estado_cli_actua': '3.3'})
         move = self.env['account.move'].create({'move_type': 'entry', 'partner_id': partner.id})

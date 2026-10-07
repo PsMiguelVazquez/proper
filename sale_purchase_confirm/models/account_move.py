@@ -87,7 +87,11 @@ class AccountMove(models.Model):
                 tmp = record.name.split('/') if record.name else ""
                 for i in range(len(tmp)):
                     if i == (len(tmp) - 1):
-                        folio = str(int(tmp[i]))
+                        # MIGRACIÓN V19: no todos los asientos terminan en un
+                        # consecutivo entero (p. ej. '.../4750.25'); `int()`
+                        # tronaba al leer el registro. Si no es numérico se
+                        # deja tal cual.
+                        folio = str(int(tmp[i])) if tmp[i].isdigit() else tmp[i]
                     else:
                         serie = serie + (tmp[i] + '/')
             record.serie = serie
