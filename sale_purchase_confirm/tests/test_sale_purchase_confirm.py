@@ -74,6 +74,44 @@ class TestSaleOrderStudioFields(TransactionCase):
         self.assertIn('documento de entrega', message)
         self.assertIn('método de entrega', message)
 
+    def _create_kit(self, component_qties):
+        """Crea un kit (BoM phantom) con un componente rastreado por cada
+        cantidad de `component_qties`, con esa existencia en el almacén de
+        la orden."""
+        if 'mrp.bom' not in self.env:
+            self.skipTest('mrp no está instalado')
+        stock_location = self.order.warehouse_id.lot_stock_id
+        kit = self.env['product.product'].create({
+            'name': 'Kit SO test', 'type': 'consu', 'is_storable': True, 'default_code': 'SPC-KIT-1',
+        })
+        bom_lines = []
+        for i, qty in enumerate(component_qties):
+            component = self.env['product.product'].create({
+                'name': 'Componente SO test %s' % i, 'type': 'consu', 'is_storable': True,
+                'default_code': 'SPC-KIT-C%s' % i,
+            })
+            if qty:
+                self.env['stock.quant']._update_available_quantity(component, stock_location, qty)
+            bom_lines.append((0, 0, {'product_id': component.id, 'product_qty': 1}))
+        self.env['mrp.bom'].create({
+            'product_tmpl_id': kit.product_tmpl_id.id, 'type': 'phantom', 'bom_line_ids': bom_lines,
+        })
+        self.env['sale.order.line'].create({
+            'order_id': self.order.id, 'product_id': kit.id, 'product_uom_qty': 1, 'price_unit': 100.0,
+        })
+
+    def test_is_valid_order_sale_kit_uses_component_stock(self):
+        # Un kit no tiene quants propios: su existencia sale de los componentes.
+        self._create_kit([1, 2, 3])
+        valid, message = self.order.is_valid_order_sale()
+        self.assertNotIn('No hay stock suficiente', message)
+
+    def test_is_valid_order_sale_kit_missing_component(self):
+        self._create_kit([1, 0])
+        valid, message = self.order.is_valid_order_sale()
+        self.assertFalse(valid)
+        self.assertIn('No hay stock suficiente', message)
+
     def test_x_utilidad_por_compute(self):
         line = self.env['sale.order.line'].create({
             'order_id': self.order.id,

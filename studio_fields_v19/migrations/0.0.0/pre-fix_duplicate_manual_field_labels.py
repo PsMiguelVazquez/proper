@@ -11,6 +11,7 @@ _DUPLICATE_LABEL_FIELDS = [
     ('sale.order', 'x_productos_no', 'Productos (no)'),
     ('stock.picking', 'x_studio_otros_documentos_1', 'Otros Documentos (2)'),
     ('x_wizard_proposal', 'x_proveedor_char', 'Nombre del proveedor'),
+    ('account.move.line', 'x_studio_related_field_4dj_1k0qkavq7', 'Descripción corta de la venta'),
 ]
 
 
