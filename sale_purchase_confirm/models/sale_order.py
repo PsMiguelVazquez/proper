@@ -313,8 +313,12 @@ class SaleOrder(models.Model):
             # (ver nota arriba); esta rama de validación de stock en
             # almacenes marketplace nunca se activa, se mantiene tal cual.
             if 'team_id' in line.order_id.partner_id._fields and line.order_id.partner_id.team_id and line.order_id.partner_id.team_id.id == 6:
+                # MIGRACIÓN V19: se usa `free_qty` en lugar de sumar los
+                # quants del producto: para kits (BoM tipo phantom) Odoo la
+                # calcula a partir de los componentes (un kit no tiene quants
+                # propios) e incluye las sububicaciones del almacén.
                 wh = line.order_id.warehouse_id.lot_stock_id
-                disponibles_total = sum(line.product_id.stock_quant_ids.filtered(lambda x: x.location_id == wh).mapped('available_quantity'))
+                disponibles_total = line.product_id.with_context(location=wh.id).free_qty
                 disponibles_total = disponibles_total - line.product_uom_qty
                 if disponibles_total < 0.0:
                     # MIGRACIÓN V19: `detailed_type` fue removido de
@@ -340,8 +344,13 @@ class SaleOrder(models.Model):
                 # conservando el ajuste por `dic_cantidades_disponibles`
                 # (cantidades de compras en camino) que esta rama sí
                 # aplicaba y la de arriba no.
+                # Se usa `free_qty` en lugar de sumar los quants del
+                # producto: para kits (BoM tipo phantom) Odoo la calcula a
+                # partir de los componentes (un kit no tiene quants propios,
+                # por lo que antes siempre daba 0 y bloqueaba la venta) e
+                # incluye las sububicaciones del almacén.
                 wh = line.order_id.warehouse_id.lot_stock_id
-                disponibles_total = sum(line.product_id.stock_quant_ids.filtered(lambda x: x.location_id == wh).mapped('available_quantity'))
+                disponibles_total = line.product_id.with_context(location=wh.id).free_qty
                 disponibles_total = disponibles_total - line.product_uom_qty
                 if line.product_id.id in dic_cantidades_disponibles:
                     disponibles_total += dic_cantidades_disponibles[line.product_id.id]
@@ -749,7 +758,11 @@ class SaleOrderLine(models.Model):
             if record.order_id:
                 if record.order_id.invoice_ids:
                     for i, inv in enumerate(record.order_id.invoice_ids):
-                        if inv.name == '/':
+                        # MIGRACIÓN V19: un borrador sin número tiene
+                        # `name = False` (en 15.0 era '/'); sin esto el
+                        # `join` de abajo truena con "expected str instance,
+                        # bool found" (p. ej. al exportar las líneas).
+                        if not inv.name or inv.name == '/':
                             lista_fact.append('(* ' + str(inv.id) + ')')
                         else:
                             lista_fact.append(inv.name)

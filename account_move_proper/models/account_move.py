@@ -273,16 +273,19 @@ class AccountMove(models.Model):
             'x_referencia': invoice.x_referencia,
             'journal_id': 1,
             'posted_before': False,
-            'invoice_payment_term_id': invoice.invoice_payment_term_id,
-            'partner_id': invoice.partner_id,
+            # MIGRACIÓN V19: los many2one deben recibir `.id`, no el registro;
+            # en 19.0 el registro llegaba tal cual al INSERT y fallaba con
+            # "can't adapt type 'account.payment.term'".
+            'invoice_payment_term_id': invoice.invoice_payment_term_id.id,
+            'partner_id': invoice.partner_id.id,
             'move_type': invoice.move_type,
-            'l10n_mx_edi_payment_method_id': invoice.l10n_mx_edi_payment_method_id,
+            'l10n_mx_edi_payment_method_id': invoice.l10n_mx_edi_payment_method_id.id,
             'l10n_mx_edi_payment_policy': invoice.l10n_mx_edi_payment_policy,
             'l10n_mx_edi_usage': invoice.l10n_mx_edi_usage,
             'version_cfdi': invoice.version_cfdi,
             'invoice_line_ids': product_list,
-            'sale_id': invoice.sale_id,
-            'partner_shipping_id':  invoice.partner_shipping_id,
+            'sale_id': invoice.sale_id.id,
+            'partner_shipping_id': invoice.partner_shipping_id.id,
             'x_comentarios': invoice.x_comentarios,
             'x_atencion': invoice.x_atencion,
             'x_observaciones': invoice.x_observaciones,
@@ -316,7 +319,8 @@ class AccountMove(models.Model):
                 move_lines_d = []
                 for line in invoice_id.invoice_line_ids:
                     move_line_vals = {
-                        'name': line.product_id.name,
+                        # MIGRACIÓN V19: `stock.move.name` ya no existe; la descripción
+                        # la calcula Odoo desde el producto (`description_picking`).
                         "product_id": line.product_id.id,
                         "product_uom_qty": line.quantity,
                         "quantity": line.quantity,

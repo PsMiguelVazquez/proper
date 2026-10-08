@@ -138,10 +138,14 @@ class WizardEliminateBalance(models.TransientModel):
             '''
                 Crea el apunte con el total de saldos menores con un cargo en la cuenta Gastos no deducibles
             '''
+        # MIGRACIÓN V19: `move_type` explícito para que no herede el
+        # `default_move_type` del contexto (p. ej. `out_invoice` si se lanza
+        # desde "Facturas de cliente") y Odoo rechace sus líneas.
         move = self.env['account.move'].create({
             'ref': _(', '.join(lineas.mapped(('invoice_name'))))
             , 'journal_id': self.journal_id.id
             , 'date': self.move_date
+            , 'move_type': 'entry'
         })
         move.write({"line_ids": move_lines_d})
         move.action_post()

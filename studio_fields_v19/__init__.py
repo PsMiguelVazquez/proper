@@ -1055,6 +1055,50 @@ def _fix_broken_banner_route(env):
             view.write({'arch_db': new_arch})
 
 
+# MIGRACIÓN V19: la vista de Studio "Odoo Studio: stock.quant.tree
+# customization" (hereda de `stock.view_stock_quant_tree`) hacía
+# `position="replace"` sobre `product_uom_id` para poner en su lugar
+# "Costo Promedio"/"Precio de Venta". En 19.0, `stock_barcode` define una
+# vista PRIMARY (`stock_barcode.view_stock_quant_tree`) sobre esa misma
+# lista que busca `//field[@name='product_uom_id']`; al validar la vista
+# de Studio, Odoo también valida esas vistas primary hijas, y como el
+# campo ya no existe tras el `replace`, marcaba la vista de Studio como
+# inválida ("invalid custom view(s) for model stock.quant ... no puede
+# ser localizado en la vista padre") y la descartaba COMPLETA (se perdían
+# todas sus columnas). Se cambia el `replace` por ocultar la columna
+# (`column_invisible`) + insertar los mismos campos después: visualmente
+# queda igual y el campo sigue existiendo para las vistas que lo buscan.
+#
+# Va en `post_init_hook`/migración `post-*` (no en
+# `_self_heal_idempotent_fixes`, que corre en `pre_init_hook`): al
+# reescribir el arch Odoo valida la vista, y sus campos `x_studio_*` los
+# define este mismo módulo (`models/stock.py`), que en la etapa `pre`
+# todavía no están cargados.
+_QUANT_UOM_REPLACE_XPATH = '<xpath expr="//field[@name=\'product_uom_id\']" position="replace">'
+_QUANT_UOM_HIDE_AND_AFTER_XPATH = (
+    '<xpath expr="//field[@name=\'product_uom_id\']" position="attributes">'
+    '<attribute name="column_invisible">1</attribute>'
+    '</xpath>'
+    '<xpath expr="//field[@name=\'product_uom_id\']" position="after">'
+)
+
+
+def _fix_studio_quant_tree_uom_replace(env):
+    parent = env.ref('stock.view_stock_quant_tree', raise_if_not_found=False)
+    if not parent:
+        return
+    views = env['ir.ui.view'].search([
+        ('model', '=', 'stock.quant'),
+        ('inherit_id', '=', parent.id),
+        ('arch_db', 'like', 'product_uom_id'),
+    ])
+    for view in views:
+        arch = view.arch_db
+        if not arch or _QUANT_UOM_REPLACE_XPATH not in arch:
+            continue
+        view.write({'arch_db': arch.replace(_QUANT_UOM_REPLACE_XPATH, _QUANT_UOM_HIDE_AND_AFTER_XPATH)})
+
+
 # MIGRACIÓN V19: `x_area`/`x_area_trabajo` (res.partner) ya se formalizaron
 # como código (`_compute_x_area` en `models/res_partner.py`), pero el
 # registro `ir.model.fields` que quedó de Studio todavía guarda
@@ -1093,6 +1137,21 @@ _DUPLICATE_LABEL_FIELDS = [
     # libre) comparten la etiqueta "Proveedor" en el wizard de Studio
     # `x_wizard_proposal`.
     ('x_wizard_proposal', 'x_proveedor_char', 'Nombre del proveedor'),
+    # `stock.picking.x_studio_facturas` (formalizado en
+    # `sale_purchase_confirm/models/stock_move.py`) y este
+    # -`related='x_studio_facturas'`, alias redundante- comparten la
+    # etiqueta "Facturas". No se puede eliminar: el campo de Studio
+    # `stock.picking.x_studio_facturas_1` depende de él (eliminarlo hacía
+    # fallar la actualización con "No se puede eliminar el campo ...
+    # porque el campo 'stock.picking.x_studio_facturas_1' depende de él").
+    ('stock.picking', 'x_studio_related_field_4hu_1k0qhj11o', 'Facturas (relacionado)'),
+    # `account.move.line.x_descripcion_corta` (campo propio) y este -
+    # `related='sale_line_ids.x_descripcion_corta'`, trae el dato de la
+    # línea de venta de origen, puede diferir si la línea de factura se
+    # editó después- comparten la etiqueta "Descripción corta". Este SÍ
+    # puede traer un dato distinto al campo propio, así que se renombra en
+    # vez de eliminarse.
+    ('account.move.line', 'x_studio_related_field_4dj_1k0qkavq7', 'Descripción corta de la venta'),
 ]
 
 
@@ -1417,3 +1476,4 @@ def _force_install_novu_modules(env):
 
 def post_init_hook(env):
     _fix_sale_order_menu_actions(env)
+    _fix_studio_quant_tree_uom_replace(env)
