@@ -87,7 +87,11 @@ class AccountMove(models.Model):
                 tmp = record.name.split('/') if record.name else ""
                 for i in range(len(tmp)):
                     if i == (len(tmp) - 1):
-                        folio = str(int(tmp[i]))
+                        # MIGRACIÓN V19: no todos los asientos terminan en un
+                        # consecutivo entero (p. ej. '.../4750.25'); `int()`
+                        # tronaba al leer el registro. Si no es numérico se
+                        # deja tal cual.
+                        folio = str(int(tmp[i])) if tmp[i].isdigit() else tmp[i]
                     else:
                         serie = serie + (tmp[i] + '/')
             record.serie = serie
@@ -100,13 +104,16 @@ class AccountMove(models.Model):
 
     def remove_other_lines(self, picking_lines):
         self = self.with_context({'check_move_validity': False})
+        # MIGRACIÓN V19: `account.move.line.recompute_tax_line` y
+        # `account.move._onchange_recompute_dynamic_lines()` ya no existen
+        # (se quitaron en 16.0). Odoo recalcula solo las líneas de impuestos
+        # y de plazo de pago en cada escritura de las líneas de factura
+        # (`_sync_dynamic_lines`), así que ya no hace falta forzarlo.
         self.invoice_line_ids = self.invoice_line_ids.filtered(lambda x: x.product_id.id in picking_lines.mapped('product_id.id'))
-        self.line_ids.filtered(lambda x: not x.product_id)[0].recompute_tax_line = True
         for linea in picking_lines:
             # MIGRACIÓN V19: `qty_done` -> `quantity`.
             self.invoice_line_ids.filtered(lambda x: x.product_id == linea.product_id)\
                 .write({'quantity': linea.quantity})
-        self._onchange_recompute_dynamic_lines()
 
 
 class Requirement(models.Model):

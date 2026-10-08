@@ -31,9 +31,16 @@ class FactoringWizard(models.TransientModel):
             journal = self.env['account.journal'].search([('name','ilike','neteo')])
             if not journal:
                 raise UserError('No existe diario para llevar a cabo la operación')
+            # MIGRACIÓN V19: `move_type` explícito. Sin él, el asiento toma
+            # el `default_move_type` del contexto: lanzado desde "Facturas
+            # de cliente" se creaba como `out_invoice`, y Odoo rechazaba la
+            # línea de la cuenta por pagar del gasto ("La cuenta ... es de
+            # tipo por pagar, pero se está utilizando en una operación de
+            # venta").
             move = self.env['account.move'].create({
                 'ref': _(', '.join(self.partner_bills.mapped(('name'))))
                 , 'journal_id': journal.id
+                , 'move_type': 'entry'
             })
             # MIGRACIÓN V19: `account.account.user_type_id` (Many2one a
             # `account.account.type`) fue eliminado; el tipo de cuenta es

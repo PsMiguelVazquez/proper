@@ -48,14 +48,18 @@ class AccountMove(models.Model):
         for move in moves:
             product_list = []
             for line in move.invoice_line_ids:
-                product_list.append({
+                # MIGRACIÓN V19: en `create` los many2one deben recibir `.id`
+                # (el registro llegaba tal cual al INSERT: "can't adapt type")
+                # y cada línea debe ir como comando `(0, 0, vals)`, no como
+                # dict suelto.
+                product_list.append((0, 0, {
                     'name': line.name,
                     'quantity': line.quantity,
-                    'product_id': line.product_id,
+                    'product_id': line.product_id.id,
                     'price_unit': line.price_unit,
-                    'tax_ids': line.tax_ids,
+                    'tax_ids': [(6, 0, line.tax_ids.ids)],
                     'product_uom_id': line.product_id.uom_id.id
-                })
+                }))
         partner = moves[0].partner_id
         invoice_dict = {
             'ref': ', '.join(moves.mapped('ref')),
@@ -67,7 +71,7 @@ class AccountMove(models.Model):
             'invoice_line_ids': product_list,
             'es_refacturacion': True,
             'almacen_refacturacion': 'ALM-9',
-            'sale_id': moves[0].sale_id,
+            'sale_id': moves[0].sale_id.id,
         }
         # MIGRACIÓN V19: `x_referencia`, `x_studio_almacn` en account.move y
         # `x_studio_mtodo_de_pago`/`x_nombre_corto_tpago`/`x_studio_uso_de_cfdi`
@@ -83,7 +87,7 @@ class AccountMove(models.Model):
         if 'x_studio_almacn' in move_fields:
             invoice_dict['x_studio_almacn'] = 'ALM-9'
         if 'l10n_mx_edi_payment_method_id' in move_fields and 'x_studio_mtodo_de_pago' in partner_fields:
-            invoice_dict['l10n_mx_edi_payment_method_id'] = partner.x_studio_mtodo_de_pago
+            invoice_dict['l10n_mx_edi_payment_method_id'] = partner.x_studio_mtodo_de_pago.id
         if 'l10n_mx_edi_payment_policy' in move_fields and 'x_nombre_corto_tpago' in partner_fields:
             invoice_dict['l10n_mx_edi_payment_policy'] = partner.x_nombre_corto_tpago
         if 'l10n_mx_edi_usage' in move_fields and 'x_studio_uso_de_cfdi' in partner_fields:
@@ -111,7 +115,8 @@ class AccountMove(models.Model):
             move_lines_d = []
             for line in record.invoice_line_ids:
                 move_line_vals = {
-                    'name': line.product_id.name,
+                    # MIGRACIÓN V19: `stock.move.name` ya no existe; la descripción
+                    # la calcula Odoo desde el producto (`description_picking`).
                     "product_id": line.product_id.id,
                     "product_uom_qty": line.quantity,
                     # MIGRACIÓN V19: `quantity_done` ya no existe en
@@ -151,7 +156,8 @@ class AccountMove(models.Model):
             move_lines_d = []
             for line in record.invoice_line_ids:
                 move_line_vals = {
-                    'name': line.product_id.name,
+                    # MIGRACIÓN V19: `stock.move.name` ya no existe; la descripción
+                    # la calcula Odoo desde el producto (`description_picking`).
                     "product_id": line.product_id.id,
                     "product_uom_qty": line.quantity,
                     "quantity": line.quantity,
