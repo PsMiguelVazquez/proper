@@ -52,7 +52,10 @@ class AccountMove(models.Model):
     # `Many2one` (`reversed_entry_id`/`sale_id`), se mantienen igual.
     x_studio_ref = fields.Char(related='reversed_entry_id.display_name', string='Ref.')
     x_num_pro = fields.Char(related='partner_id.x_num_pro', string='Número de Proveedor', tracking=True)
-    x_studio_mkp_1 = fields.Selection(related='sale_id.x_studio_origen_mkp', store=True, string='MKP (origen)')
+    # Many2one porque sale.order.x_studio_origen_mkp ya lo es (ver
+    # studio_fields_v19/models/sale_order.py): un related field debe
+    # declarar el mismo tipo que su origen.
+    x_studio_mkp_1 = fields.Many2one(related='sale_id.x_studio_origen_mkp', store=True, string='MKP (origen)')
     x_studio_nombre_del_solicitante = fields.Char(
         related='sale_id.partner_child.name', store=True, string='Nombre del solicitante')
     x_utilidad_venta = fields.Float(related='sale_id.x_utilidad_total', store=True, string='Utilidad venta')

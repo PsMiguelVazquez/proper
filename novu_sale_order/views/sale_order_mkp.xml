@@ -58,7 +58,7 @@
                                 <field name="x_studio_venta_mostrador"/>
                                 <field name="x_studio_referencia_de_venta_marketplace"/>
                                 <field name="x_studio_n_orden_de_compra"/>
-                                <field name="x_studio_origen_mkp"/>
+                                <field name="x_studio_origen_mkp" options="{'no_create': True, 'no_create_edit': True}"/>
                                 <field name="albaran" string="Referencia de surtido" invisible="albaran == False"/>
                             </group>
                             <group name="order_details">
@@ -418,7 +418,7 @@
                     <field name="name" string="Number" readonly="1" decoration-bf="1"/>
                     <field name="warehouse_id" optional="show"/>
                     <field name="x_studio_n_orden_de_compra" optional="show"/>
-                    <field name="x_studio_origen_mkp" optional="show"/>
+                    <field name="x_studio_origen_mkp" optional="show" options="{'no_create': True, 'no_create_edit': True}"/>
                     <field name="x_estado_surtido" readonly="1" decoration-bf="1"/>
                     <field name="create_date" string="Creation Date" widget="date" optional="show"/>
                     <field name="commitment_date" widget="date" optional="hide"/>

@@ -34,7 +34,7 @@
     'website': "http://www.novucentral.com",
 
     'category': 'Uncategorized',
-    'version': '19.0.1.0.71',
+    'version': '19.0.1.0.72',
     'license': 'LGPL-3',
 
     'pre_init_hook': 'pre_init_hook',
@@ -122,6 +122,7 @@
     ],
 
     'data': [
+        'security/ir.model.access.csv',
         'views/report_paperformat_data.xml',
         'views/external_layout_boxed.xml',
         'views/account_payment_form.xml',
