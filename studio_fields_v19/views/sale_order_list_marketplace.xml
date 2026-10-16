@@ -26,7 +26,7 @@
                 <field name="x_studio_referencia_de_venta_marketplace" invisible="1"/>
                 <field name="warehouse_id" optional="show"/>
                 <field name="x_studio_n_orden_de_compra"/>
-                <field name="x_studio_origen_mkp"/>
+                <field name="x_studio_origen_mkp" options="{'no_create': True, 'no_create_edit': True}"/>
                 <field name="partner_child" string="Solicitante" invisible="1"/>
                 <field name="x_estado_surtido" readonly="1" decoration-bf="1"/>
                 <field name="create_date" string="Creation Date" widget="date" optional="show"/>

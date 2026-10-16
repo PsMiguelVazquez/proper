@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_marketplace_list" model="ir.ui.view">
+        <field name="name">novu_sale_order.marketplace.list</field>
+        <field name="model">novu_sale_order.marketplace</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="name"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_marketplace" model="ir.actions.act_window">
+        <field name="name">Marketplaces</field>
+        <field name="res_model">novu_sale_order.marketplace</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- El permiso real (crear/editar) ya lo da el ACL de
+         studio_fields_v19 solo a Ventas / Administrador; este "groups"
+         es para que el menú tampoco se vea de más. -->
+    <menuitem id="menu_marketplace"
+        name="Marketplaces"
+        parent="sale.menu_sale_config"
+        action="action_marketplace"
+        groups="sales_team.group_sale_manager"
+        sequence="60"/>
+</odoo>

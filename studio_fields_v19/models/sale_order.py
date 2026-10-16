@@ -65,13 +65,15 @@ class SaleOrder(models.Model):
     x_aprovacion_compras = fields.Boolean(string='Aprovacion Compras')
     x_studio_almacn = fields.Char(related='warehouse_id.name', string='Almacén')
     x_studio_n_orden_de_compra = fields.Char(string='N° Orden de compra', tracking=True)
-    x_studio_origen_mkp = fields.Selection(
-        [('AMAZON', 'AMAZON'), ('MERCADO LIBRE', 'MERCADO LIBRE'), ('LIVERPOOL', 'LIVERPOOL'),
-         ('LINIO', 'LINIO'), ('CLARO SHOP', 'CLARO SHOP'), ('ELENAS', 'ELENAS'),
-         ('WALMART', 'WALMART'), ('SEARS', 'SEARS'), ('SHEIN', 'SHEIN'),
-         ('SANBORNS', 'SAMBORNS'), ('COPPEL', 'COPPEL'), ('ELEKTRA', 'ELEKTRA'),
-         ('FARMACIAS DEL AHORRO', 'FARMACIAS DEL AHORRO')],
-        string='Origen MKP')
+    # Antes era un Selection con la lista de marketplaces fija en este
+    # código -cada marketplace nuevo (p.ej. "SHOPIFY") exigía editar el
+    # código y desplegar-. Ahora es un catálogo editable por Ventas /
+    # Administrador (ver models/marketplace.py), con su pantalla de
+    # administración en novu_sale_order: Ventas > Configuración >
+    # Marketplaces. migrations/0.0.0/post-migrate_origen_mkp_a_m2o.py
+    # migra los valores existentes la primera vez que se actualiza.
+    x_studio_origen_mkp = fields.Many2one(
+        'novu_sale_order.marketplace', string='Origen MKP')
     x_studio_referencia_de_venta_marketplace = fields.Char(string='Referencia de venta Marketplace')
     x_studio_venta_mostrador = fields.Boolean(string='Venta Mostrador')
     # MIGRACIÓN V19: en Studio era `related='albaran.state'`; `albaran` es

@@ -45,7 +45,8 @@
                     <field name="x_studio_nivel"/>
                     <field name="x_studio_solicit" invisible="1"/>
                     <field name="x_studio_n_orden_de_compra"/>
-                    <field name="x_studio_origen_mkp" string="Origen MKP" invisible="x_studio_venta_mostrador == False"/>
+                    <field name="x_studio_origen_mkp" string="Origen MKP" invisible="x_studio_venta_mostrador == False"
+                        options="{'no_create': True, 'no_create_edit': True}"/>
                     <field name="x_studio_venta_mostrador" invisible="1"/>
                     <field name="x_studio_referencia_de_venta_marketplace" string="Referencia de venta Marketplace" invisible="x_studio_venta_mostrador == False"/>
                     <field name="x_studio_con_tiempo_de_entrega" string="Con tiempo de entrega"/>

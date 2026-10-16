@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_novu_sale_order_marketplace_user,novu_sale_order.marketplace.user,model_novu_sale_order_marketplace,base.group_user,1,0,0,0
+access_novu_sale_order_marketplace_manager,novu_sale_order.marketplace.manager,model_novu_sale_order_marketplace,sales_team.group_sale_manager,1,1,1,1
