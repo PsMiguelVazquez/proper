@@ -22,6 +22,7 @@
     'pre_init_hook': 'pre_init_hook',
     'data': [
             'security/ir.model.access.csv',
+            'views/marketplace_views.xml',
             'views/x_wizard_rechcoti_view.xml',
             'views/sale_order_view.xml',
             'views/sale_order_mkp.xml',
