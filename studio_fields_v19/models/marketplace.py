@@ -17,6 +17,11 @@ class Marketplace(models.Model):
     name = fields.Char(required=True)
     active = fields.Boolean(default=True)
 
-    _sql_constraints = [
-        ('name_uniq', 'unique(name)', 'Ya existe un marketplace con ese nombre.'),
-    ]
+    # `_sql_constraints` ya no existe desde 19.0 (sólo registra un WARNING
+    # en el log y la restricción nunca se crea en la base de datos, ver
+    # `odoo/orm/model_classes.py: add_to_registry`); el reemplazo real es
+    # `models.Constraint`.
+    _name_uniq = models.Constraint(
+        'UNIQUE (name)',
+        'Ya existe un marketplace con ese nombre.',
+    )
