@@ -22,14 +22,34 @@ class AccountMove(models.Model):
     # Se sobreescribe para conservar el nombre original tal como lo espera
     # el cliente.
     #
-    # Para PAGOS no existe un método público equivalente: el nombre del
-    # adjunto de CFDI de pago se arma inline dentro de un método privado
-    # (`f'{journal.code}-{name}-MX-Payment-20.xml'`, sin hook de
-    # extensión). Interceptarlo requeriría parchear un método privado no
-    # documentado, lo cual es fràgil ante futuros cambios de esta
-    # dependencia Enterprise; se opta por mantener el nombre por defecto
-    # de 19.0 para pagos y no tocar ese flujo, priorizando la estabilidad
-    # del módulo.
     def _l10n_mx_edi_get_invoice_cfdi_filename(self):
         self.ensure_one()
         return (self.name or '').replace('/', '') + '.xml'
+
+    # Para PAGOS no existe un método público equivalente al de facturas: el
+    # nombre del adjunto de CFDI de pago se arma inline dentro de un método
+    # privado no documentado dos niveles arriba
+    # (`l10n_mx_edi_cfdi_invoice_try_update_payment`, línea
+    # `cfdi_filename = f'{journal.code}-{name}-MX-Payment-20.xml'`), que a
+    # su vez pasa ese nombre a `l10n_mx_edi.document._send_api()` y de ahí a
+    # los callbacks de abajo. Parchear ese método directamente sería frágil
+    # (es privado y puede cambiar de forma en cualquier upgrade de
+    # Enterprise). En cambio, `_l10n_mx_edi_cfdi_payment_document_sent(_failed)`
+    # sí son un punto de extensión razonablemente estable: reciben el
+    # nombre ya calculado y solo lo usan para el campo `name` del
+    # `ir.attachment` final -el nombre no participa en el armado del CFDI,
+    # el sellado ni el envío al PAC (confirmado leyendo `_send_api` en
+    # `l10n_mx_edi_document.py`)-, así que sobreescribirlo aquí es seguro.
+    # El cliente pidió que el XML del complemento de pago se llame igual
+    # que el PDF de "Complemento de pago" (reporte Studio sobre
+    # `account.report_payment_receipt`, `print_report_name =
+    # object.name.replace('/','')`); se replica la misma fórmula.
+    def _l10n_mx_edi_cfdi_payment_document_sent(self, invoices, cfdi_filename, cfdi_str):
+        cfdi_filename = (self.name or '').replace('/', '') + '.xml'
+        return super()._l10n_mx_edi_cfdi_payment_document_sent(invoices, cfdi_filename, cfdi_str)
+
+    def _l10n_mx_edi_cfdi_payment_document_sent_failed(self, error, invoices, cfdi_filename=None, cfdi_str=None):
+        if cfdi_filename and cfdi_str:
+            cfdi_filename = (self.name or '').replace('/', '') + '.xml'
+        return super()._l10n_mx_edi_cfdi_payment_document_sent_failed(
+            error, invoices, cfdi_filename=cfdi_filename, cfdi_str=cfdi_str)
