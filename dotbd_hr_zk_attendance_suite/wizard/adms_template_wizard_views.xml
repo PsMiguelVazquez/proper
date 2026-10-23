@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_adms_template_wizard_form" model="ir.ui.view">
+        <field name="name">adms.template.wizard.form</field>
+        <field name="model">adms.template.wizard</field>
+        <field name="arch" type="xml">
+            <form string="ADMS Template JSON Backup/Restore">
+                <field name="state" invisible="1"/>
+                
+                <!-- Upload Mode Notes -->
+                <group invisible="state == 'download'">
+                    <div class="alert alert-info" role="alert">
+                        <i class="fa fa-info-circle" title="Info circle" aria-label="Info circle"/> <b>How it works:</b> As employees register on Device A, templates are pushed to Odoo. 
+                        You can export these templates at any time for backup. Later, you can use this screen to upload the backup file back into your Odoo database, and sync them seamlessly to Device B or C.
+                    </div>
+                </group>
+                <group invisible="state == 'download'">
+                    <field name="file_data" filename="file_name" required="state == 'upload'"/>
+                    <field name="file_name" invisible="1"/>
+                </group>
+
+                <!-- Download Mode -->
+                <group invisible="state == 'upload'">
+                    <div class="alert alert-success" role="alert">
+                        <i class="fa fa-check" title="Check" aria-label="Check"/> <field name="summary" readonly="1" nolabel="1"/>
+                    </div>
+                    <group>
+                        <field name="file_data" filename="file_name" readonly="1"/>
+                        <field name="file_name" invisible="1"/>
+                    </group>
+                </group>
+
+                <footer>
+                    <!-- Upload mode buttons -->
+                    <button name="action_process_upload" string="Upload &amp; Import Templates" type="object" class="btn-primary" icon="fa-upload" invisible="state == 'download'"/>
+                    
+                    <!-- Download mode buttons -->
+                    <button special="cancel" string="Close" class="btn-secondary" invisible="state == 'upload'"/>
+                    
+                    <button special="cancel" string="Cancel" class="btn-default" invisible="state == 'download'"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open this wizard to UPLOAD -->
+    <record id="action_upload_adms_json_templates" model="ir.actions.act_window">
+        <field name="name">Upload ADMS JSON Templates</field>
+        <field name="res_model">adms.template.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_state': 'upload'}</field>
+    </record>
+
+    <!-- Action to open this wizard to DOWNLOAD All directly -->
+    <record id="action_download_adms_json_templates" model="ir.actions.act_window">
+        <field name="name">Download All ADMS JSON Templates</field>
+        <field name="res_model">adms.template.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_state': 'download'}</field>
+    </record>
+
+    <!-- Server Action to trigger export of selected templates from list view -->
+    <record id="action_export_adms_json_templates" model="ir.actions.server">
+        <field name="name">Export to ADMS JSON Backup</field>
+        <field name="model_id" ref="model_biometric_fp_template"/>
+        <field name="binding_model_id" ref="model_biometric_fp_template"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+            if records:
+                wizard = env['adms.template.wizard'].create({
+                    'state': 'download',
+                    'template_ids': [(6, 0, records.ids)]
+                })
+                action = wizard.action_download_json()
+        </field>
+    </record>
+</odoo>
