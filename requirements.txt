@@ -1,2 +1,5 @@
 bravado_core
 jsonschema<4
+XlsxWriter
+pytz
+pyzk2
